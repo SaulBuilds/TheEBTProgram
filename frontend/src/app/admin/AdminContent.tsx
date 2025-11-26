@@ -108,7 +108,17 @@ export default function AdminContent() {
     isSuccess: isCloseFundraisingSuccess,
   } = useCloseFundraising();
 
-  const isOwner = connectedAddress && contractOwner && connectedAddress.toLowerCase() === (contractOwner as string).toLowerCase();
+  const isOwner: boolean = !!(connectedAddress && contractOwner && connectedAddress.toLowerCase() === (contractOwner as string).toLowerCase());
+  const isFundraisingClosed: boolean = fundraisingClosed === true;
+  const isFoodPaused: boolean = foodStampsPaused === true;
+
+  // Type-safe contract data
+  const tokensMinted: number = currentTokenId ? Number(currentTokenId as bigint) - 1 : 0;
+  const fundsRaisedEth: string = totalFundsRaised ? formatEther(totalFundsRaised as bigint) : '0';
+  const softCapEth: string = softCap ? formatEther(softCap as bigint) : '0';
+  const hardCapEth: string = hardCap ? formatEther(hardCap as bigint) : '0';
+  const isAddressBlacklisted: boolean = isBlacklistedResult === true;
+  const ownerAddress: string | undefined = contractOwner as string | undefined;
 
   const fetchApplications = useCallback(async () => {
     if (!adminToken) return;
@@ -509,25 +519,25 @@ export default function AdminContent() {
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
                 <p className="text-sm font-mono text-gray-500">Total Minted</p>
                 <p className="text-2xl font-mono font-bold text-white">
-                  {currentTokenId ? (Number(currentTokenId) - 1).toString() : '0'}
+                  {tokensMinted}
                 </p>
               </div>
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
                 <p className="text-sm font-mono text-gray-500">Funds Raised</p>
                 <p className="text-2xl font-mono font-bold text-ebt-gold">
-                  {totalFundsRaised ? formatEther(totalFundsRaised as bigint) : '0'} ETH
+                  {fundsRaisedEth} ETH
                 </p>
               </div>
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
                 <p className="text-sm font-mono text-gray-500">Soft Cap</p>
                 <p className="text-2xl font-mono font-bold text-white">
-                  {softCap ? formatEther(softCap as bigint) : '0'} ETH
+                  {softCapEth} ETH
                 </p>
               </div>
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
                 <p className="text-sm font-mono text-gray-500">Hard Cap</p>
                 <p className="text-2xl font-mono font-bold text-white">
-                  {hardCap ? formatEther(hardCap as bigint) : '0'} ETH
+                  {hardCapEth} ETH
                 </p>
               </div>
             </div>
@@ -536,14 +546,14 @@ export default function AdminContent() {
             <div className="grid md:grid-cols-3 gap-4">
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
                 <p className="text-sm font-mono text-gray-500">Fundraising Status</p>
-                <p className={`text-lg font-mono font-bold ${fundraisingClosed ? 'text-welfare-red' : 'text-green-400'}`}>
-                  {fundraisingClosed ? 'CLOSED' : 'ACTIVE'}
+                <p className={`text-lg font-mono font-bold ${isFundraisingClosed ? 'text-welfare-red' : 'text-green-400'}`}>
+                  {isFundraisingClosed ? 'CLOSED' : 'ACTIVE'}
                 </p>
               </div>
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
                 <p className="text-sm font-mono text-gray-500">$FOOD Token Status</p>
-                <p className={`text-lg font-mono font-bold ${foodStampsPaused ? 'text-welfare-red' : 'text-green-400'}`}>
-                  {foodStampsPaused ? 'PAUSED' : 'ACTIVE'}
+                <p className={`text-lg font-mono font-bold ${isFoodPaused ? 'text-welfare-red' : 'text-green-400'}`}>
+                  {isFoodPaused ? 'PAUSED' : 'ACTIVE'}
                 </p>
               </div>
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
@@ -558,7 +568,7 @@ export default function AdminContent() {
               <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
                 <p className="text-yellow-400 font-mono text-sm">
                   Connect with the contract owner wallet to access contract controls.
-                  Owner: {contractOwner ? (contractOwner as string).slice(0, 6) + '...' + (contractOwner as string).slice(-4) : 'Loading...'}
+                  Owner: {ownerAddress ? ownerAddress.slice(0, 6) + '...' + ownerAddress.slice(-4) : 'Loading...'}
                 </p>
               </div>
             )}
@@ -606,10 +616,10 @@ export default function AdminContent() {
                   <h3 className="text-lg font-mono font-bold text-white mb-4">Fundraising Controls</h3>
                   <button
                     onClick={() => closeFundraising()}
-                    disabled={isClosingFundraising || fundraisingClosed as boolean}
+                    disabled={isClosingFundraising || isFundraisingClosed}
                     className="px-6 py-3 bg-welfare-red text-white font-mono font-bold rounded-lg hover:bg-red-600 disabled:opacity-50"
                   >
-                    {isClosingFundraising ? 'Closing...' : fundraisingClosed ? 'Already Closed' : 'Close Fundraising'}
+                    {isClosingFundraising ? 'Closing...' : isFundraisingClosed ? 'Already Closed' : 'Close Fundraising'}
                   </button>
                   {isCloseFundraisingSuccess && <p className="text-green-400 font-mono text-sm mt-2">Fundraising closed!</p>}
                 </div>
@@ -620,14 +630,14 @@ export default function AdminContent() {
                   <div className="flex gap-4">
                     <button
                       onClick={() => pauseFood()}
-                      disabled={isPausePending || foodStampsPaused as boolean}
+                      disabled={isPausePending || isFoodPaused}
                       className="px-6 py-3 bg-welfare-red text-white font-mono font-bold rounded-lg hover:bg-red-600 disabled:opacity-50"
                     >
                       {isPausePending ? 'Pausing...' : 'Pause Minting'}
                     </button>
                     <button
                       onClick={() => unpauseFood()}
-                      disabled={isUnpausePending || !foodStampsPaused}
+                      disabled={isUnpausePending || !isFoodPaused}
                       className="px-6 py-3 bg-green-600 text-white font-mono font-bold rounded-lg hover:bg-green-500 disabled:opacity-50"
                     >
                       {isUnpausePending ? 'Unpausing...' : 'Unpause Minting'}
@@ -657,8 +667,8 @@ export default function AdminContent() {
                 />
               </div>
               {checkBlacklistAddress && isAddress(checkBlacklistAddress) && (
-                <p className={`font-mono ${isBlacklistedResult ? 'text-welfare-red' : 'text-green-400'}`}>
-                  Status: {isBlacklistedResult ? 'BLACKLISTED' : 'NOT BLACKLISTED'}
+                <p className={`font-mono ${isAddressBlacklisted ? 'text-welfare-red' : 'text-green-400'}`}>
+                  Status: {isAddressBlacklisted ? 'BLACKLISTED' : 'NOT BLACKLISTED'}
                 </p>
               )}
             </div>
