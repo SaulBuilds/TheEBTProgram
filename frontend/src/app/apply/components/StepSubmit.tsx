@@ -32,7 +32,7 @@ export function StepSubmit({ data, onNext, onBack }: StepSubmitProps) {
     try {
       const token = await getAccessToken();
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/applications`, {
+      const response = await fetch(`/api/applications`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

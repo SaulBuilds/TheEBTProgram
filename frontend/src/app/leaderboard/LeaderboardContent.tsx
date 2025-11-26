@@ -98,7 +98,7 @@ export function LeaderboardContent() {
       setIsLoading(true);
       try {
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/leaderboard?category=${activeCategory}&limit=50`
+          `/api/leaderboard?category=${activeCategory}&limit=50`
         );
         if (response.ok) {
           const data = await response.json();

@@ -25,7 +25,7 @@ interface DisplayStats {
 
 async function fetchStats(): Promise<DisplayStats> {
   try {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/stats/platform`);
+    const res = await fetch(`/api/stats/platform`);
     if (!res.ok) throw new Error('Failed to fetch stats');
     const data: PlatformStats = await res.json();
 

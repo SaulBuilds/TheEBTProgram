@@ -42,7 +42,7 @@ export default function AdminContent() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/admin/applications/pending`,
+        `/api/admin/applications/pending`,
         {
           headers: {
             'x-admin-token': adminToken,
@@ -86,7 +86,7 @@ export default function AdminContent() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/admin/applications/approve`,
+        `/api/admin/applications/approve`,
         {
           method: 'POST',
           headers: {
@@ -122,7 +122,7 @@ export default function AdminContent() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/admin/applications/reject`,
+        `/api/admin/applications/reject`,
         {
           method: 'POST',
           headers: {
@@ -152,7 +152,7 @@ export default function AdminContent() {
 
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/admin/applications/${applicationId}/snapshot`,
+        `/api/admin/applications/${applicationId}/snapshot`,
         {
           method: 'POST',
           headers: {

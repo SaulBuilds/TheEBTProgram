@@ -64,7 +64,7 @@ export default function ProfileContent() {
       try {
         const token = await getAccessToken();
         const response = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/profile/${userId}`,
+          `/api/profile/${userId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,

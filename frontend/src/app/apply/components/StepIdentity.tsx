@@ -22,7 +22,7 @@ export function StepIdentity({ data: initialData, onNext, walletAddress }: StepI
 
     setIsChecking(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/api/checkusername`, {
+      const res = await fetch(`/api/checkusername`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ username: name }),
