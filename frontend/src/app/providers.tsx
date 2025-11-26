@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { sepolia } from 'viem/chains';
 import { http } from 'viem';
 import { AuthRedirect } from '@/components/auth/AuthRedirect';
+import { BackendWakeUp } from '@/components/BackendWakeUp';
 
 const wagmiConfig = createConfig({
   chains: [sepolia],
@@ -103,6 +104,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
     >
       <QueryClientProvider client={queryClient}>
         <WagmiProvider config={wagmiConfig}>
+          <BackendWakeUp />
           <AuthRedirect>{children}</AuthRedirect>
         </WagmiProvider>
       </QueryClientProvider>
