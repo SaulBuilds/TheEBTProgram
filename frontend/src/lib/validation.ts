@@ -15,19 +15,35 @@ export const updateUserDataSchema = z.object({
   }),
 });
 
+// Helper to transform empty strings to null/undefined
+const optionalString = z.preprocess(
+  (val) => (val === '' || val === null || val === undefined ? undefined : val),
+  z.string().optional()
+);
+
+const optionalUrl = z.preprocess(
+  (val) => (val === '' || val === null || val === undefined ? undefined : val),
+  z.string().url().optional()
+);
+
+const optionalEmail = z.preprocess(
+  (val) => (val === '' || val === null || val === undefined ? undefined : val),
+  z.string().email().optional()
+);
+
 export const createApplicationSchema = z.object({
   userId: z.string(),
   username: z.string().min(3).max(20),
   walletAddress: z.string(),
-  profilePicURL: z.string().url().optional().nullable(),
-  twitter: z.string().optional().nullable(),
-  discord: z.string().optional().nullable(),
-  telegram: z.string().optional().nullable(),
-  github: z.string().optional().nullable(),
-  email: z.string().email().optional().nullable(),
-  zipCode: z.string().optional().nullable(),
-  hungerLevel: z.string().optional().nullable(),
-  monthlyIncome: z.string().optional().nullable(),
+  profilePicURL: optionalUrl,
+  twitter: optionalString,
+  discord: optionalString,
+  telegram: optionalString,
+  github: optionalString,
+  email: optionalEmail,
+  zipCode: optionalString,
+  hungerLevel: optionalString,
+  monthlyIncome: optionalString,
   dependents: z.number().int().min(0).default(0),
 });
 
