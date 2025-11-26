@@ -144,14 +144,6 @@ export default function ApplyContent() {
     setCurrentStep((prev) => Math.max(prev - 1, 0));
   };
 
-  // Clear state when application is completed
-  const clearState = useCallback(() => {
-    try {
-      sessionStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // Ignore
-    }
-  }, []);
 
   // Require wallet connection
   if (!authenticated || !isConnected) {

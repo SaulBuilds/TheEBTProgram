@@ -16,14 +16,9 @@ const headlines = [
 ];
 
 export function Hero() {
-  const [mounted, setMounted] = useState(false);
   const { ready, authenticated, login } = usePrivy();
   const router = useRouter();
   const [currentHeadline, setCurrentHeadline] = useState(0);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const interval = setInterval(() => {

@@ -11,11 +11,6 @@ export function Navbar() {
   const { ready, authenticated, user, login, logout } = usePrivy();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     const handleScroll = () => {
