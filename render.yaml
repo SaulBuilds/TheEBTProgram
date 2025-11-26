@@ -1,5 +1,11 @@
 # Render Blueprint for EBT Program Backend
 # https://render.com/docs/blueprint-spec
+#
+# FREE TIER NOTES:
+# - No persistent disk available on free tier
+# - SQLite database will reset on each deploy/restart
+# - For production with persistence, upgrade to paid tier or use external DB
+# - Consider using Turso (free SQLite cloud) or PlanetScale for persistent data
 
 services:
   # Main API Backend
@@ -17,8 +23,10 @@ services:
         value: production
       - key: PORT
         value: 8080
+      # SQLite stored in /tmp for free tier (ephemeral but works)
+      # For persistent data, use external DB and update this URL
       - key: DATABASE_URL
-        value: file:./data/prod.db
+        value: file:/tmp/ebt.db
       - key: CORS_ORIGIN
         sync: false  # Set manually in dashboard
       - key: PRIVY_APP_ID
@@ -35,7 +43,3 @@ services:
         sync: false  # Set manually after contract deployment
       - key: OPENAI_API_KEY
         sync: false  # Set manually - optional for card generation
-    disk:
-      name: ebt-data
-      mountPath: /opt/render/project/src/ebt-express/data
-      sizeGB: 1
