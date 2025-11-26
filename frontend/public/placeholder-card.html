@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>EBT Card Placeholder</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 20px;
+      background: #000;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      font-family: 'Courier New', monospace;
+    }
+    .card {
+      width: 600px;
+      height: 380px;
+      background: linear-gradient(135deg, #FFD700, #FFA500);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+      position: relative;
+      overflow: hidden;
+    }
+    .card::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      right: -50%;
+      width: 200%;
+      height: 200%;
+      background: repeating-linear-gradient(
+        45deg,
+        transparent,
+        transparent 10px,
+        rgba(255,255,255,0.1) 10px,
+        rgba(255,255,255,0.1) 20px
+      );
+    }
+    .chip {
+      width: 60px;
+      height: 45px;
+      background: linear-gradient(135deg, #888, #555);
+      border-radius: 8px;
+      margin: 40px 0 30px 0;
+    }
+    h1 {
+      margin: 0;
+      font-size: 48px;
+      color: #000;
+      text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+    }
+    .subtitle {
+      font-size: 18px;
+      color: #333;
+      margin-top: 10px;
+    }
+    .number {
+      font-size: 28px;
+      color: #000;
+      margin-top: 40px;
+      letter-spacing: 4px;
+    }
+    .bottom {
+      position: absolute;
+      bottom: 30px;
+      left: 30px;
+      right: 30px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+    .valid {
+      font-size: 14px;
+      color: #333;
+    }
+    .name {
+      font-size: 20px;
+      color: #000;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>EBT CARD</h1>
+    <div class="subtitle">UNIVERSAL BASIC FOOD</div>
+    <div class="chip"></div>
+    <div class="number">XXXX XXXX XXXX 0420</div>
+    <div class="bottom">
+      <div>
+        <div class="valid">VALID THRU</div>
+        <div class="valid">04/20 - 04/24</div>
+      </div>
+      <div class="name">WELFARE WARRIOR</div>
+    </div>
+  </div>
+</body>
+</html>

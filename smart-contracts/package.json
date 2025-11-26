@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "test": "forge test",
+    "build": "forge build",
+    "lint": "solhint 'contracts/**/*.sol'"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^4.9.5"
+  },
+  "devDependencies": {
+    "solhint": "^6.0.1"
+  }
+}

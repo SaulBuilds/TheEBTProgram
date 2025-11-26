@@ -1,0 +1,189 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER & APPLICATION ====================
+
+model User {
+  id           Int           @id @default(autoincrement())
+  username     String        @unique
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+}
+
+model Application {
+  id            Int       @id @default(autoincrement())
+  userId        String    @unique
+  username      String    @unique
+  walletAddress String
+  profilePicURL String?
+
+  // Social connections (from Privy)
+  twitter       String?   // Twitter handle
+  discord       String?   // Discord username
+  telegram      String?   // Telegram username
+  github        String?   // GitHub username
+  email         String?   // Email address
+
+  // Application data
+  zipCode       String?
+  hungerLevel   String?
+  monthlyIncome String?
+  dependents    Int       @default(0)
+
+  // Scoring
+  score         Int       @default(0)
+  scoreBreakdown String?  // JSON string of score breakdown
+
+  // Status flow: pending -> approved -> minted
+  status        String    @default("pending")
+  metadataURI   String?   // IPFS URI set at approval time
+  imageURI      String?   // IPFS URI for the generated card image
+
+  // Mint tracking
+  mintedTokenId Int?      @unique
+  approvedAt    DateTime?
+  appliedAt     DateTime  @default(now())
+
+  // Relations
+  user          User?     @relation(fields: [userRef], references: [id])
+  userRef       Int?
+  mints         Mint[]
+
+  // Rejection reason (if rejected)
+  rejectionReason String?
+
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  // Wallet snapshot at application time
+  walletSnapshot WalletSnapshot?
+
+  // Generated card
+  generatedCard  GeneratedCard?
+}
+
+model Mint {
+  id             Int         @id @default(autoincrement())
+  tokenId        Int         @unique
+  userId         String
+  accountAddress String?     // ERC-6551 token-bound account
+  metadataURI    String?
+  metadata       String?     // JSON string of metadata
+  txHash         String?     // Transaction hash
+  mintedAt       DateTime    @default(now())
+  application    Application @relation(fields: [applicationId], references: [id])
+  applicationId  Int
+}
+
+// ==================== SCORING CONFIGURATION ====================
+
+model ScoringConfig {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique  // e.g., "twitter_connected", "nft_boost", "token_liquidity"
+  description String?
+  weight      Int      @default(100)  // Points for this metric
+  enabled     Boolean  @default(true)
+  category    String   // "social", "wallet", "nft", "token"
+  metadata    String?  // JSON string for additional config (e.g., min values, thresholds)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// ==================== NFT BOOST CONFIGURATION ====================
+
+model NFTBoostConfig {
+  id              Int      @id @default(autoincrement())
+  contractAddress String   @unique  // NFT contract address (checksummed)
+  chainId         Int      @default(11155111)  // Chain ID (default Sepolia)
+  name            String   // Display name (e.g., "Bored Ape Yacht Club")
+  symbol          String?  // Token symbol
+  boostPoints     Int      @default(100)  // Points for holding this NFT
+  minBalance      Int      @default(1)    // Minimum tokens to qualify
+  maxBoost        Int?     // Maximum boost (cap for whales)
+  enabled         Boolean  @default(true)
+  imageURL        String?  // Logo/image for display
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+// ==================== TOKEN BOOST CONFIGURATION ====================
+
+model TokenBoostConfig {
+  id                  Int      @id @default(autoincrement())
+  contractAddress     String   @unique  // ERC20 token contract address
+  chainId             Int      @default(11155111)
+  name                String   // Token name
+  symbol              String?  // Token symbol (optional)
+  boostPoints         Int      @default(50)   // Points for holding this token
+  minBalanceUSD       Float    @default(100)  // Minimum USD value to qualify
+  minLiquidityUSD     Float    @default(5000) // Minimum liquidity on Uniswap
+  enabled             Boolean  @default(true)
+  imageURL            String?
+  createdAt           DateTime @default(now())
+  updatedAt           DateTime @updatedAt
+}
+
+// ==================== WALLET SNAPSHOT ====================
+
+model WalletSnapshot {
+  id            Int         @id @default(autoincrement())
+  applicationId Int         @unique
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  // ETH balance
+  ethBalance    String      // In wei (stored as string for precision)
+
+  // NFT holdings that qualify for boosts (JSON string)
+  nftHoldings   String?     // JSON array of {contractAddress, tokenIds[], balance}
+
+  // Token holdings that qualify for boosts (JSON string)
+  tokenHoldings String?     // JSON array of {contractAddress, balance, usdValue}
+
+  // Computed boosts
+  nftBoostTotal   Int       @default(0)
+  tokenBoostTotal Int       @default(0)
+
+  snapshotAt    DateTime    @default(now())
+}
+
+// ==================== BACKGROUND THEMES ====================
+
+model BackgroundTheme {
+  id          Int      @id @default(autoincrement())
+  name        String   @unique  // e.g., "rust_belt", "trailer_park", "urban_decay"
+  description String?
+  zipPatterns String   // JSON array of zip code patterns (e.g., '["481*", "482*"]' for Detroit)
+  promptHints String   // Hints for DALL-E generation
+  enabled     Boolean  @default(true)
+  createdAt   DateTime @default(now())
+}
+
+// ==================== GENERATED CARDS ====================
+
+model GeneratedCard {
+  id            Int         @id @default(autoincrement())
+  applicationId Int         @unique
+  application   Application @relation(fields: [applicationId], references: [id])
+
+  imageCid      String      // IPFS CID for image
+  metadataCid   String      // IPFS CID for metadata JSON
+  imageUrl      String      // ipfs:// URL for image
+  metadataUrl   String      // ipfs:// URL for metadata
+
+  // Generation inputs
+  prompt        String?     // The prompt used for generation
+  theme         String?     // Background theme used
+  badges        String?     // JSON array of badges earned
+
+  // Traits for NFT metadata
+  traits        String?     // JSON array of {trait_type, value}
+
+  generatedAt   DateTime    @default(now())
+}

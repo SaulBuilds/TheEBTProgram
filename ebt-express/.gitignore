@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+
+# Environment files (contains secrets!)
+.env
+.env.*
+!.env.example
+
+# Database files
+prisma/*.db
+prisma/*.db-journal
+*.sqlite
+*.sqlite3
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+*.log
+
+# Testing
+coverage/
+__tests__/*.db
+
+# Misc
+.DS_Store
+
+# TypeScript
+*.tsbuildinfo

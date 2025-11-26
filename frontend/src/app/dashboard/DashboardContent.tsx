@@ -1,0 +1,427 @@
+'use client';
+
+import React, { useState, useEffect } from 'react';
+import { usePrivy } from '@privy-io/react-auth';
+import { useAccount, useBalance } from 'wagmi';
+import { formatEther } from 'viem';
+import { motion } from 'framer-motion';
+import Link from 'next/link';
+import { Navbar } from '@/components/layout/Navbar';
+import {
+  useHasMinted,
+  useFoodBalance,
+  useInstallmentCount,
+  useMintedTimestamp,
+  useClaimInstallment,
+  useWalletApplication,
+} from '@/lib/hooks';
+import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID } from '@/lib/contracts/addresses';
+
+export default function DashboardContent() {
+  const { authenticated, login } = usePrivy();
+  const { address, isConnected } = useAccount();
+  const { data: ethBalance } = useBalance({ address });
+  const { data: hasMinted } = useHasMinted(address);
+  const { data: applicationData, isLoading: isLoadingApplication } = useWalletApplication(address);
+
+  // For demo, we'll assume tokenId 0 if they've minted - in production you'd query events
+  const tokenId = BigInt(0);
+  const { data: foodBalanceData } = useFoodBalance(address);
+  const foodBalance = foodBalanceData as bigint | undefined;
+  const { data: installmentCount } = useInstallmentCount(tokenId);
+  const { data: mintedTimestamp } = useMintedTimestamp(tokenId);
+
+  const { claim, isPending, isConfirming, isSuccess, error } = useClaimInstallment();
+
+  const [nextClaimTime, setNextClaimTime] = useState<Date | null>(null);
+  const [canClaim, setCanClaim] = useState(false);
+
+  // Calculate next claim time
+  useEffect(() => {
+    if (mintedTimestamp && installmentCount !== undefined) {
+      const mintedAt = new Date(Number(mintedTimestamp) * 1000);
+      const nextClaim = new Date(mintedAt);
+      nextClaim.setDate(nextClaim.getDate() + 30 * (Number(installmentCount) + 1));
+      setNextClaimTime(nextClaim);
+      setCanClaim(new Date() >= nextClaim && Number(installmentCount) < 3);
+    }
+  }, [mintedTimestamp, installmentCount]);
+
+  // Not connected
+  if (!authenticated || !isConnected) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-md"
+          >
+            <h1 className="text-3xl font-heading text-ebt-gold mb-4 tracking-wide">
+              CONNECT TO VIEW DASHBOARD
+            </h1>
+            <p className="text-gray-400 mb-8 font-sans">
+              Connect your wallet to view your EBT card and $FOOD balance.
+            </p>
+            <button
+              onClick={login}
+              className="px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
+            >
+              CONNECT WALLET
+            </button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Loading state
+  if (isLoadingApplication) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="flex items-center justify-center min-h-[80vh]">
+          <div className="animate-pulse text-ebt-gold font-heading text-xl tracking-wide">Loading your profile...</div>
+        </div>
+      </div>
+    );
+  }
+
+  // Has an existing application but hasn't minted yet
+  if (applicationData && !hasMinted) {
+    const { application } = applicationData;
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center"
+          >
+            {/* Profile Header */}
+            <div className="mb-8">
+              {application.profilePicURL && (
+                <img
+                  src={application.profilePicURL}
+                  alt={application.username}
+                  className="w-24 h-24 rounded-full mx-auto mb-4 border-2 border-ebt-gold"
+                />
+              )}
+              <h1 className="text-3xl font-heading text-ebt-gold mb-2 tracking-wide">
+                Welcome back, {application.username}
+              </h1>
+              <p className="text-gray-400 font-sans">
+                {address?.slice(0, 6)}...{address?.slice(-4)}
+              </p>
+            </div>
+
+            {/* Application Status Card */}
+            <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl mb-8">
+              <h2 className="text-xl font-heading text-white mb-4 tracking-wide">APPLICATION STATUS</h2>
+
+              <div className={`inline-flex items-center gap-2 px-4 py-2 rounded-full mb-4 ${
+                application.status === 'approved'
+                  ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                  : application.status === 'pending'
+                  ? 'bg-yellow-500/20 text-yellow-400 border border-yellow-500/50'
+                  : 'bg-red-500/20 text-red-400 border border-red-500/50'
+              }`}>
+                <span className={`w-2 h-2 rounded-full ${
+                  application.status === 'approved' ? 'bg-green-400 animate-pulse' :
+                  application.status === 'pending' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
+                }`} />
+                <span className="font-heading tracking-wide uppercase">{application.status}</span>
+              </div>
+
+              {application.status === 'pending' && (
+                <p className="text-gray-400 text-sm">
+                  Your application is being reviewed. You&apos;ll be able to mint your EBT Card once approved.
+                </p>
+              )}
+
+              {application.status === 'approved' && (
+                <div className="space-y-4">
+                  <p className="text-gray-400 text-sm mb-4">
+                    Your application has been approved! You can now mint your EBT Card.
+                  </p>
+                  <Link
+                    href="/apply?step=mint"
+                    className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
+                  >
+                    MINT YOUR EBT CARD
+                  </Link>
+                </div>
+              )}
+
+              {application.status === 'rejected' && (
+                <div className="space-y-4">
+                  <p className="text-gray-400 text-sm">
+                    Your application was not approved. You may apply again.
+                  </p>
+                  <Link
+                    href="/apply"
+                    className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
+                  >
+                    REAPPLY
+                  </Link>
+                </div>
+              )}
+            </div>
+
+            {/* Linked Accounts */}
+            <div className="p-6 bg-gray-900 border border-gray-800 rounded-xl">
+              <h2 className="text-lg font-heading text-white mb-4 tracking-wide">LINKED ACCOUNTS</h2>
+              <div className="grid grid-cols-2 gap-4">
+                {application.twitter && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-blue-400">Twitter:</span>
+                    <span className="text-gray-300">@{application.twitter}</span>
+                  </div>
+                )}
+                {application.discord && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-purple-400">Discord:</span>
+                    <span className="text-gray-300">{application.discord}</span>
+                  </div>
+                )}
+                {application.github && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-gray-400">GitHub:</span>
+                    <span className="text-gray-300">{application.github}</span>
+                  </div>
+                )}
+                {application.telegram && (
+                  <div className="flex items-center gap-2 text-sm">
+                    <span className="text-cyan-400">Telegram:</span>
+                    <span className="text-gray-300">{application.telegram}</span>
+                  </div>
+                )}
+              </div>
+              {application.score > 0 && (
+                <div className="mt-4 pt-4 border-t border-gray-800">
+                  <span className="text-gray-500 text-sm">Welfare Score: </span>
+                  <span className="text-ebt-gold font-heading text-lg tracking-wide">{application.score}</span>
+                </div>
+              )}
+            </div>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // No EBT card and no application yet
+  if (!hasMinted) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-md"
+          >
+            <h1 className="text-3xl font-heading text-ebt-gold mb-4 tracking-wide">
+              No EBT Card Found
+            </h1>
+            <p className="text-gray-400 mb-8 font-sans">
+              You haven&apos;t applied for an EBT card yet. Join the breadline today!
+            </p>
+            <Link
+              href="/apply"
+              className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
+            >
+              APPLY FOR EBT CARD
+            </Link>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  const handleClaim = () => {
+    if (canClaim) {
+      claim(tokenId);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-black">
+      <Navbar />
+
+      <div className="max-w-4xl mx-auto px-4 py-12">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {/* Header */}
+          <div className="text-center mb-12">
+            <h1 className="text-3xl font-heading text-ebt-gold mb-2 tracking-wide">
+              YOUR EBT DASHBOARD
+            </h1>
+            <p className="text-gray-400 font-sans">
+              Welcome to the blockchain breadline, welfare warrior.
+            </p>
+          </div>
+
+          {/* Stats Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            {/* ETH Balance */}
+            <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">ETH BALANCE</div>
+              <div className="text-2xl font-heading text-white tracking-wide">
+                {ethBalance ? formatEther(ethBalance.value).slice(0, 8) : '0'} ETH
+              </div>
+              <div className="text-xs text-gray-600 mt-1">Sepolia Testnet</div>
+            </div>
+
+            {/* $FOOD Balance */}
+            <div className="p-6 bg-gray-900 border border-ebt-gold/30 rounded-lg">
+              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">$FOOD BALANCE</div>
+              <div className="text-2xl font-heading text-ebt-gold tracking-wide">
+                {foodBalance ? Number(formatEther(foodBalance)).toLocaleString() : '0'}
+              </div>
+              <div className="text-xs text-gray-600 mt-1">Your welfare tokens</div>
+            </div>
+
+            {/* Installments Claimed */}
+            <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
+              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">STIPENDS CLAIMED</div>
+              <div className="text-2xl font-heading text-white tracking-wide">
+                {installmentCount?.toString() ?? '0'} / 3
+              </div>
+              <div className="text-xs text-gray-600 mt-1">Monthly distributions</div>
+            </div>
+          </div>
+
+          {/* EBT Card Display */}
+          <div className="mb-8">
+            <div className="relative p-6 bg-gradient-to-br from-ebt-gold/20 to-welfare-red/20 border border-ebt-gold/50 rounded-xl overflow-hidden">
+              {/* Card background pattern */}
+              <div className="absolute inset-0 opacity-10">
+                <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,215,0,0.1)_10px,rgba(255,215,0,0.1)_20px)]" />
+              </div>
+
+              <div className="relative flex flex-col md:flex-row items-center gap-6">
+                {/* Card Image */}
+                <div className="w-32 h-20 bg-gradient-to-br from-ebt-gold to-welfare-red rounded-lg flex items-center justify-center shadow-lg">
+                  <span className="text-black font-heading text-xl tracking-wide">EBT</span>
+                </div>
+
+                {/* Card Info */}
+                <div className="flex-1 text-center md:text-left">
+                  <h2 className="text-xl font-heading text-white mb-1 tracking-wide">
+                    EBT CARD #{tokenId.toString()}
+                  </h2>
+                  <p className="text-sm text-gray-400">
+                    Token-Bound Account
+                  </p>
+                  <p className="text-xs text-ebt-gold mt-2 break-all font-mono">
+                    {address}
+                  </p>
+                </div>
+
+                {/* View on Etherscan */}
+                <a
+                  href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].EBTProgram}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-sm text-blue-400 hover:underline"
+                >
+                  View Contract
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Claim Section */}
+          <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg mb-8">
+            <h3 className="text-lg font-heading text-white mb-4 tracking-wide">
+              MONTHLY $FOOD STIPEND
+            </h3>
+
+            {Number(installmentCount) >= 3 ? (
+              <div className="p-4 bg-gray-800 rounded-lg">
+                <p className="text-gray-400 text-sm">
+                  You&apos;ve claimed all 3 stipends this season. Reapply for the next season!
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <p className="text-sm text-gray-500">Next Claim Available</p>
+                    <p className="text-lg font-heading text-white tracking-wide">
+                      {nextClaimTime
+                        ? canClaim
+                          ? 'NOW!'
+                          : nextClaimTime.toLocaleDateString()
+                        : 'Calculating...'}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm text-gray-500">Amount</p>
+                    <p className="text-lg font-heading text-ebt-gold tracking-wide">20K-20M $FOOD</p>
+                  </div>
+                </div>
+
+                <button
+                  onClick={handleClaim}
+                  disabled={!canClaim || isPending || isConfirming}
+                  className={`
+                    w-full py-4 font-heading tracking-wide rounded-lg transition-colors
+                    ${
+                      canClaim && !isPending && !isConfirming
+                        ? 'bg-ebt-gold text-black hover:bg-ebt-gold/90'
+                        : 'bg-gray-800 text-gray-500 cursor-not-allowed'
+                    }
+                  `}
+                >
+                  {isPending
+                    ? 'CONFIRM IN WALLET...'
+                    : isConfirming
+                    ? 'CLAIMING...'
+                    : isSuccess
+                    ? 'CLAIMED!'
+                    : canClaim
+                    ? 'CLAIM $FOOD'
+                    : 'NOT YET AVAILABLE'}
+                </button>
+
+                {error && (
+                  <p className="mt-2 text-sm text-welfare-red">
+                    Error: {error instanceof Error ? error.message : 'Transaction failed'}
+                  </p>
+                )}
+              </>
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 gap-4">
+            <Link
+              href="/leaderboard"
+              className="p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-ebt-gold/50 transition-colors text-center"
+            >
+              <p className="font-heading text-sm text-white tracking-wide">LEADERBOARD</p>
+            </Link>
+            <button
+              onClick={() => {
+                const text = `I'm collecting $FOOD on the blockchain breadline!\n\nJoin the decentralized welfare state.\n\n#EBTCard`;
+                window.open(
+                  `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
+                  '_blank'
+                );
+              }}
+              className="p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-ebt-gold/50 transition-colors text-center"
+            >
+              <p className="font-heading text-sm text-white tracking-wide">SHARE</p>
+            </button>
+          </div>
+        </motion.div>
+      </div>
+    </div>
+  );
+}

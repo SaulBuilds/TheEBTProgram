@@ -1,0 +1,8 @@
+CREATE TABLE Users (
+    id SERIAL PRIMARY KEY,
+    username VARCHAR(255) NOT NULL,
+    profilePicURL VARCHAR(255),
+    twitter VARCHAR(255),
+    foodBudget INTEGER,
+    userID VARCHAR(255)
+);

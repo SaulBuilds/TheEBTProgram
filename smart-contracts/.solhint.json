@@ -1,0 +1,17 @@
+{
+  "extends": "solhint:recommended",
+  "rules": {
+    "max-line-length": ["warn", 140],
+    "func-visibility": ["error", { "ignoreConstructors": true }],
+    "reason-string": ["warn", { "maxLength": 64 }],
+    "compiler-version": ["warn", "^0.8.24"],
+    "use-natspec": "off",
+    "max-states-count": "off",
+    "no-global-import": "off",
+    "gas-custom-errors": "off",
+    "gas-strict-inequalities": "off",
+    "gas-small-strings": "off",
+    "gas-indexed-events": "off",
+    "avoid-low-level-calls": "off"
+  }
+}

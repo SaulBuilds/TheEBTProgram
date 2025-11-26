@@ -1,0 +1,10 @@
+<!-- This is a placeholder. Replace with actual EBT card image -->
+<svg width="600" height="400" xmlns="http://www.w3.org/2000/svg">
+  <rect width="600" height="400" fill="#FFD700" rx="20" ry="20"/>
+  <text x="50" y="100" font-family="monospace" font-size="48" font-weight="bold" fill="#000">EBT CARD</text>
+  <text x="50" y="150" font-family="monospace" font-size="24" fill="#333">UNIVERSAL BASIC FOOD</text>
+  <rect x="50" y="200" width="100" height="80" fill="#888" rx="5" ry="5"/>
+  <text x="50" y="320" font-family="monospace" font-size="18" fill="#333">XXXX XXXX XXXX 0420</text>
+  <text x="50" y="350" font-family="monospace" font-size="14" fill="#555">VALID: 04/20 - 04/24</text>
+  <text x="400" y="350" font-family="monospace" font-size="14" fill="#333">WELFARE WARRIOR</text>
+</svg>
