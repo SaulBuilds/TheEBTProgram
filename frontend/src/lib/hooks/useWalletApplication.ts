@@ -37,10 +37,8 @@ export interface WalletApplicationResponse {
   mint: WalletMint | null;
 }
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-
 async function fetchWalletApplication(walletAddress: string): Promise<WalletApplicationResponse | null> {
-  const response = await fetch(`${API_URL}/api/applications/wallet/${walletAddress}`);
+  const response = await fetch(`/api/applications/wallet/${walletAddress}`);
 
   if (response.status === 404) {
     return null;
