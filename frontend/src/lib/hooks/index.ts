@@ -39,3 +39,21 @@ export type {
   WalletMint,
   WalletApplicationResponse,
 } from './useWalletApplication';
+
+// Admin contract hooks
+export {
+  useIsBlacklisted,
+  useContractOwner,
+  useFundraisingClosed,
+  useWithdrawalPeriod,
+  useFundraisingDeadline,
+  useFoodStampsPaused,
+  useSetBlacklistStatus,
+  useSetCaps,
+  useSetBaseTokenURI,
+  useCloseFundraising,
+  useSetWithdrawalPeriod,
+  useSetPayoutAddresses,
+  usePauseFoodStamps,
+  useUnpauseFoodStamps,
+} from './useAdminContract';
