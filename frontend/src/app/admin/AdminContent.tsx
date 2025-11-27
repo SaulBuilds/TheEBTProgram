@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { formatEther, parseEther, isAddress } from 'viem';
 import { Navbar } from '@/components/layout/Navbar';
+import { OnChainStatus } from '@/components/admin/OnChainStatus';
 import {
   useContractOwner,
   useTotalRaised,
@@ -574,6 +575,9 @@ export default function AdminContent() {
                         <p className="font-mono text-gray-600 text-xs">
                           Applied: {new Date(app.createdAt).toLocaleDateString()}
                         </p>
+                        <div className="mt-2">
+                          <OnChainStatus userId={app.userId} />
+                        </div>
                       </div>
                     </div>
 

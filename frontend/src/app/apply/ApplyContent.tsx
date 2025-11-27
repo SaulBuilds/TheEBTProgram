@@ -20,6 +20,8 @@ export interface ApplicationData {
   // Identity
   username: string;
   profilePicURL: string;
+  // Locked wallet address - captured at start, cannot change
+  lockedWalletAddress: string;
   // Social connections
   twitter: string;
   discord: string;
@@ -42,6 +44,7 @@ export interface ApplicationData {
 const initialData: ApplicationData = {
   username: '',
   profilePicURL: '',
+  lockedWalletAddress: '',
   twitter: '',
   discord: '',
   telegram: '',
@@ -71,6 +74,7 @@ export default function ApplyContent() {
   const [applicationData, setApplicationData] = useState<ApplicationData>(initialData);
   const [unlockedAchievements, setUnlockedAchievements] = useState<string[]>([]);
   const [isRestored, setIsRestored] = useState(false);
+  const [walletMismatch, setWalletMismatch] = useState(false);
 
   const { authenticated, login } = usePrivy();
   const { address, isConnected } = useAccount();
@@ -90,6 +94,42 @@ export default function ApplyContent() {
     }
     setIsRestored(true);
   }, []);
+
+  // Lock wallet address on first connection - this is CRITICAL for preventing wallet crossing
+  useEffect(() => {
+    if (isRestored && address && isConnected && !applicationData.lockedWalletAddress) {
+      // Lock the wallet address when user first connects
+      setApplicationData((prev) => ({
+        ...prev,
+        lockedWalletAddress: address.toLowerCase(),
+      }));
+    }
+  }, [isRestored, address, isConnected, applicationData.lockedWalletAddress]);
+
+  // Detect wallet mismatch - user switched wallets after starting application
+  useEffect(() => {
+    if (
+      applicationData.lockedWalletAddress &&
+      address &&
+      applicationData.lockedWalletAddress.toLowerCase() !== address.toLowerCase()
+    ) {
+      setWalletMismatch(true);
+    } else {
+      setWalletMismatch(false);
+    }
+  }, [applicationData.lockedWalletAddress, address]);
+
+  // Function to reset application and start fresh with new wallet
+  const handleResetApplication = () => {
+    sessionStorage.removeItem(STORAGE_KEY);
+    setApplicationData({
+      ...initialData,
+      lockedWalletAddress: address?.toLowerCase() || '',
+    });
+    setCurrentStep(0);
+    setUnlockedAchievements([]);
+    setWalletMismatch(false);
+  };
 
   // Persist state to sessionStorage whenever it changes
   const saveState = useCallback(() => {
@@ -171,6 +211,52 @@ export default function ApplyContent() {
             >
               Connect Wallet
             </button>
+          </motion.div>
+        </div>
+      </div>
+    );
+  }
+
+  // Show wallet mismatch warning - prevents wallet crossing attacks
+  if (walletMismatch && applicationData.lockedWalletAddress) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+        <div className="flex flex-col items-center justify-center min-h-[80vh] px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="text-center max-w-md"
+          >
+            <div className="text-6xl mb-4">&#9888;</div>
+            <h1 className="text-3xl font-mono font-bold text-welfare-red mb-4">
+              Wallet Changed!
+            </h1>
+            <p className="text-gray-400 mb-4 font-mono">
+              You started this application with a different wallet.
+              Your application is locked to:
+            </p>
+            <p className="text-ebt-gold font-mono text-sm mb-4 break-all bg-gray-900 p-3 rounded-lg">
+              {applicationData.lockedWalletAddress}
+            </p>
+            <p className="text-gray-400 mb-6 font-mono text-sm">
+              Current wallet: <span className="text-white break-all">{address}</span>
+            </p>
+            <p className="text-gray-500 mb-8 font-mono text-sm">
+              To prevent account crossing, you must either reconnect your original wallet
+              or start a fresh application with this wallet.
+            </p>
+            <div className="flex flex-col gap-4">
+              <button
+                onClick={handleResetApplication}
+                className="px-8 py-4 bg-welfare-red text-white font-mono font-bold rounded-lg hover:bg-welfare-red/90 transition-colors"
+              >
+                Start Fresh Application
+              </button>
+              <p className="text-gray-600 font-mono text-xs">
+                This will clear your progress and start over with the current wallet.
+              </p>
+            </div>
           </motion.div>
         </div>
       </div>

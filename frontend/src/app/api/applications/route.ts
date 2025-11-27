@@ -10,13 +10,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const privyUserId = auth.userId; // Privy user ID from JWT token
+
     const body = await request.json();
     const parsed = createApplicationSchema.parse(body);
 
     // Normalize walletAddress to lowercase for consistent lookups
     parsed.walletAddress = parsed.walletAddress.toLowerCase();
 
-    // Check if user already applied (by userId, username, or walletAddress)
+    // ANTI-SYBIL CHECK 1: Check if this Privy account already has an application
+    // This is the strongest check - ties application to Privy auth identity
+    if (privyUserId && privyUserId !== 'dev-user') {
+      const existingByPrivyId = await prisma.application.findFirst({
+        where: { privyUserId },
+      });
+
+      if (existingByPrivyId) {
+        return NextResponse.json({
+          error: 'You already have an application with this account.',
+          existingApplication: {
+            id: existingByPrivyId.id,
+            status: existingByPrivyId.status,
+            username: existingByPrivyId.username,
+          },
+          duplicateType: 'privy_account',
+        }, { status: 409 });
+      }
+    }
+
+    // ANTI-SYBIL CHECK 2: Check if user already applied (by userId, username, or walletAddress)
     const existingByUser = await prisma.application.findFirst({
       where: {
         OR: [
@@ -39,7 +61,7 @@ export async function POST(request: NextRequest) {
       }, { status: 409 });
     }
 
-    // Check for duplicate social accounts
+    // ANTI-SYBIL CHECK 3: Check for duplicate social accounts
     const socialConditions = [];
     if (parsed.twitter) socialConditions.push({ twitter: parsed.twitter });
     if (parsed.discord) socialConditions.push({ discord: parsed.discord });
@@ -74,6 +96,7 @@ export async function POST(request: NextRequest) {
     const application = await prisma.application.create({
       data: {
         ...parsed,
+        privyUserId: privyUserId !== 'dev-user' ? privyUserId : null, // Store Privy ID for future checks
         status: 'pending',
       },
     });

@@ -63,6 +63,7 @@ export {
   useIsUserApproved,
   useUserDetails,
   useDoesUserIdExist,
+  useGetUserIdByAddress,
   useApply4EBT,
   useApproveUserWithMetadata,
   useApproveUsers,

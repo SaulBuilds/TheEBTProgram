@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useAccount } from 'wagmi';
 import { usePrivy } from '@privy-io/react-auth';
 import type { ApplicationData } from '../ApplyContent';
 
@@ -21,8 +20,10 @@ export function StepSubmit({ data, onNext, onBack }: StepSubmitProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
   const [duplicateInfo, setDuplicateInfo] = useState<DuplicateInfo | null>(null);
-  const { address } = useAccount();
   const { getAccessToken } = usePrivy();
+
+  // Use the locked wallet address from applicationData - prevents wallet switching attacks
+  const walletAddress = data.lockedWalletAddress;
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
@@ -41,7 +42,7 @@ export function StepSubmit({ data, onNext, onBack }: StepSubmitProps) {
         body: JSON.stringify({
           userId: data.userId,
           username: data.username,
-          walletAddress: address,
+          walletAddress: walletAddress, // Use locked wallet address, not current
           profilePicURL: data.profilePicURL,
           twitter: data.twitter,
           discord: data.discord,
@@ -117,7 +118,7 @@ export function StepSubmit({ data, onNext, onBack }: StepSubmitProps) {
             <div>
               <p className="font-mono font-bold text-white">{data.username}</p>
               <p className="text-xs font-mono text-gray-500 truncate max-w-[200px]">
-                {address}
+                {walletAddress}
               </p>
             </div>
           </div>

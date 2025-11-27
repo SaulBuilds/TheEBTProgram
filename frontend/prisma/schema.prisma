@@ -25,6 +25,9 @@ model Application {
   walletAddress String
   profilePicURL String?
 
+  // Privy authentication ID - prevents same Privy account from creating multiple apps
+  privyUserId   String?   @unique
+
   // Social connections (from Privy)
   twitter       String?   // Twitter handle
   discord       String?   // Discord username

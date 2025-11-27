@@ -37,6 +37,21 @@ export function useDoesUserIdExist(userId: string) {
   });
 }
 
+/**
+ * Get the userId registered for a wallet address on-chain
+ * Returns empty string if no userId is registered for this wallet
+ */
+export function useGetUserIdByAddress(address: `0x${string}` | undefined) {
+  return useReadContract({
+    ...ebtApplicationConfig,
+    functionName: 'getUserIDByAddress',
+    args: address ? [address] : undefined,
+    query: {
+      enabled: !!address,
+    },
+  });
+}
+
 // Write hooks
 export function useApply4EBT() {
   const { data: hash, writeContract, isPending, error } = useWriteContract();

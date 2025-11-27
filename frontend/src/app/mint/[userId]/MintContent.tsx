@@ -8,7 +8,7 @@ import { formatEther } from 'viem';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { Navbar } from '@/components/layout/Navbar';
-import { useMint, useHasMinted, useIsUserApproved, useDoesUserIdExist } from '@/lib/hooks';
+import { useMint, useHasMinted, useIsUserApproved, useDoesUserIdExist, useGetUserIdByAddress } from '@/lib/hooks';
 import { MIN_MINT_PRICE } from '@/lib/contracts/addresses';
 import { MintChecklist } from '@/components/mint/MintChecklist';
 import { MintSuccess } from '@/components/mint/MintSuccess';
@@ -45,6 +45,9 @@ export default function MintContent() {
   // On-chain approval checks
   const { data: isApprovedOnChain, isLoading: isLoadingApproval } = useIsUserApproved(userId);
   const { data: userExistsOnChain, isLoading: isLoadingUserExists } = useDoesUserIdExist(userId);
+
+  // Check if the connected wallet owns this userId on-chain
+  const { data: walletRegisteredUserId, isLoading: isLoadingWalletUserId } = useGetUserIdByAddress(address);
 
   const { mint, hash, isPending, isConfirming, isSuccess, error: mintError } = useMint();
 
@@ -144,9 +147,16 @@ export default function MintContent() {
     if (hasMinted === true) return 'error';
     return 'pending';
   };
+  const getWalletOwnershipStatus = (): ChecklistStatus => {
+    if (isLoadingWalletUserId) return 'loading';
+    if (walletRegisteredUserId === userId) return 'success';
+    if (address && walletRegisteredUserId !== undefined) return 'error';
+    return 'pending';
+  };
 
-  // Determine if ready to mint
-  const isOnChainReady = userExistsOnChain === true && isApprovedOnChain === true;
+  // Determine if ready to mint - now includes wallet ownership check
+  const walletOwnsUserId = walletRegisteredUserId === userId;
+  const isOnChainReady = userExistsOnChain === true && isApprovedOnChain === true && walletOwnsUserId;
 
   const checklistItems = [
     {
@@ -178,6 +188,16 @@ export default function MintContent() {
       label: 'Approved On-Chain',
       status: getOnChainApprovalStatus(),
       description: isApprovedOnChain ? 'Admin approved you on-chain' : 'Waiting for admin on-chain approval',
+    },
+    {
+      id: 'walletOwnership',
+      label: 'Wallet Owns This UserID',
+      status: getWalletOwnershipStatus(),
+      description: walletOwnsUserId
+        ? 'Your connected wallet is registered for this userId'
+        : walletRegisteredUserId
+          ? `This wallet is registered for "${walletRegisteredUserId}" not "${userId}"`
+          : 'Connect the wallet you used to apply',
     },
     {
       id: 'notMinted',
@@ -431,6 +451,8 @@ export default function MintContent() {
             ? 'MINTED!'
             : hasMinted
             ? 'ALREADY MINTED'
+            : !walletOwnsUserId && walletRegisteredUserId
+            ? 'WRONG WALLET CONNECTED'
             : !isOnChainReady
             ? 'WAITING FOR ON-CHAIN APPROVAL'
             : `MINT FOR ${mintPriceEth} ETH`}
