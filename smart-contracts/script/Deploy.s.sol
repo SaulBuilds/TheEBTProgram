@@ -15,8 +15,8 @@ import "../contracts/EBTApplication.sol";
 /// @dev Run with: forge script script/Deploy.s.sol --rpc-url $SEPOLIA_RPC_URL --broadcast --verify -vvvv
 contract Deploy is Script {
     // Deployment configuration
-    uint256 constant SOFT_CAP = 10 ether;      // Soft cap for fundraising
-    uint256 constant HARD_CAP = 1000 ether;    // Hard cap for fundraising
+    uint256 constant SOFT_CAP = 20 ether;      // Soft cap for fundraising
+    uint256 constant HARD_CAP = 2000 ether;   // Hard cap for fundraising
     uint256 constant FUNDRAISING_PERIOD = 30 days;
 
     function run() external {

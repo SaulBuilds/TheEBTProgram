@@ -11,19 +11,19 @@ interface StepHungerProps {
 }
 
 const incomeOptions = [
-  { value: 'poverty', label: 'Below Poverty Line', description: 'Ramen every night', emoji: '🍜' },
-  { value: 'struggling', label: 'Just Scraping By', description: 'Occasionally see daylight', emoji: '🌥️' },
-  { value: 'middle', label: 'Middle Class Cosplay', description: 'Avocado toast fears', emoji: '🥑' },
-  { value: 'comfortable', label: 'Comfortable But Anxious', description: 'What even is a 401k', emoji: '😰' },
-  { value: 'rich', label: 'Filthy Rich', description: 'Just here for the vibes', emoji: '💎' },
+  { value: 'poverty', label: 'Below Poverty Line', description: 'Ramen every night' },
+  { value: 'struggling', label: 'Just Scraping By', description: 'Occasionally see daylight' },
+  { value: 'middle', label: 'Middle Class Cosplay', description: 'Avocado toast fears' },
+  { value: 'comfortable', label: 'Comfortable But Anxious', description: 'What even is a 401k' },
+  { value: 'rich', label: 'Filthy Rich', description: 'Just here for the vibes' },
 ];
 
 const hungerOptions = [
-  { value: 'starving', label: 'Absolutely Starving', emoji: '💀' },
-  { value: 'hungry', label: 'Pretty Hungry', emoji: '😤' },
-  { value: 'peckish', label: 'Kinda Peckish', emoji: '🤔' },
-  { value: 'full', label: 'Just Ate Actually', emoji: '😋' },
-  { value: 'bored', label: 'Boredom Hunger', emoji: '📱' },
+  { value: 'starving', label: 'Absolutely Starving' },
+  { value: 'hungry', label: 'Pretty Hungry' },
+  { value: 'peckish', label: 'Kinda Peckish' },
+  { value: 'full', label: 'Just Ate Actually' },
+  { value: 'bored', label: 'Boredom Hunger' },
 ];
 
 export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProps) {
@@ -82,7 +82,9 @@ export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProp
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
               >
-                <span className="text-2xl">{option.emoji}</span>
+                <div className="w-8 h-8 rounded-full bg-gray-800 flex items-center justify-center text-ebt-gold font-bold text-sm">
+                  {option.value.charAt(0).toUpperCase()}
+                </div>
                 <div>
                   <p className="font-bold">{option.label}</p>
                   <p className="text-xs text-gray-500">{option.description}</p>
@@ -93,7 +95,9 @@ export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProp
                     animate={{ scale: 1 }}
                     className="ml-auto text-ebt-gold"
                   >
-                    ✓
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                    </svg>
                   </motion.div>
                 )}
               </motion.button>
@@ -169,7 +173,7 @@ export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProp
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
               >
-                {option.emoji} {option.label}
+                {option.label}
               </motion.button>
             ))}
           </div>

@@ -268,7 +268,7 @@ export function TokenFlowDiagram() {
         </div>
         <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg text-center">
           <div className="text-3xl font-heading text-[#2E7D32] mb-1 tracking-wide">1B</div>
-          <div className="text-sm text-gray-500">Team/Marketing (5%)</div>
+          <div className="text-sm text-gray-500">Team Vesting (5%)</div>
         </div>
         <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg text-center">
           <div className="text-3xl font-heading text-[#1A237E] mb-1 tracking-wide">19B</div>

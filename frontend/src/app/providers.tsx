@@ -44,7 +44,7 @@ export function Providers({ children }: { children: React.ReactNode }) {
         <div className="max-w-2xl w-full">
           <div className="bg-gray-900 border border-ebt-gold/50 rounded-lg p-8">
             <h1 className="text-3xl font-mono font-bold text-ebt-gold mb-6">
-              🔧 Privy Setup Required
+              Privy Setup Required
             </h1>
 
             <div className="space-y-6 font-mono text-sm">

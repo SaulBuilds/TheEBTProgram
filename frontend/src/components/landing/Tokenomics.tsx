@@ -6,9 +6,9 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
 const tokenData = [
   { name: 'Community Distribution (60%)', value: 60, color: '#FFD700' },
   { name: 'Liquidity & Buybacks (65% of NFT sale)', value: 20, color: '#2E7D32' },
-  { name: 'Marketing (30% of NFT sale)', value: 10, color: '#4169E1' },
+  { name: 'Marketing (20% of NFT sale)', value: 10, color: '#4169E1' },
+  { name: 'Treasury (10% of NFT sale)', value: 5, color: '#9C27B0' },
   { name: 'Team (5%)', value: 5, color: '#DC143C' },
-  { name: 'Team Treasury (5% NFT sale)', value: 5, color: '#8B4513' },
 ];
 
 const stats = [
@@ -184,18 +184,22 @@ export function Tokenomics() {
           <h3 className="text-2xl font-heading text-ebt-gold mb-6 tracking-wide">
             NFT SALE ALLOCATION
           </h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center p-4 border border-gray-800 rounded-lg">
               <div className="text-3xl font-heading text-ebt-gold mb-2">65%</div>
               <div className="text-sm text-gray-400">Liquidity Pools & Buybacks</div>
             </div>
             <div className="text-center p-4 border border-gray-800 rounded-lg">
-              <div className="text-3xl font-heading text-ebt-gold mb-2">30%</div>
-              <div className="text-sm text-gray-400">Marketing (Stables)</div>
+              <div className="text-3xl font-heading text-ebt-gold mb-2">20%</div>
+              <div className="text-sm text-gray-400">Marketing</div>
+            </div>
+            <div className="text-center p-4 border border-gray-800 rounded-lg">
+              <div className="text-3xl font-heading text-ebt-gold mb-2">10%</div>
+              <div className="text-sm text-gray-400">Treasury</div>
             </div>
             <div className="text-center p-4 border border-gray-800 rounded-lg">
               <div className="text-3xl font-heading text-ebt-gold mb-2">5%</div>
-              <div className="text-sm text-gray-400">Team Treasury (Stables)</div>
+              <div className="text-sm text-gray-400">Team</div>
             </div>
           </div>
         </motion.div>

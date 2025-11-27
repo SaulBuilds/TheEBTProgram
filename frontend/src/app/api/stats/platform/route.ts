@@ -37,8 +37,8 @@ export async function GET() {
       approvedApplications,
       nextDropTime,
       mintPrice: mintPrice.toString(),
-      softCap: '25',
-      hardCap: '50',
+      softCap: '10',
+      hardCap: '1000',
     });
   } catch (error) {
     console.error('Get platform stats error:', error);

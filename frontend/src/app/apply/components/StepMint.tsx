@@ -157,7 +157,10 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
         {isPending && (
           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
             <p className="font-mono text-blue-400 text-sm flex items-center gap-2">
-              <span className="animate-spin">⏳</span>
+              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
               Waiting for wallet confirmation...
             </p>
           </div>
@@ -166,7 +169,9 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
         {isConfirming && (
           <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
             <p className="font-mono text-yellow-400 text-sm flex items-center gap-2">
-              <span className="animate-pulse">⛓️</span>
+              <svg className="animate-pulse w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
               Transaction submitted! Waiting for confirmation...
             </p>
             {hash && (
@@ -189,7 +194,9 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
             className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg"
           >
             <p className="font-mono text-green-400 text-sm flex items-center gap-2">
-              <span>🎉</span>
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+              </svg>
               Mint successful! Welcome to the breadline!
             </p>
           </motion.div>

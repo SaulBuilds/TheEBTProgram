@@ -69,7 +69,11 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username }: MintSuc
           >
             <div className="w-full h-full bg-gradient-to-br from-ebt-gold/30 to-welfare-red/30 border-2 border-ebt-gold/50 rounded-xl flex flex-col items-center justify-center">
               <div className="animate-pulse">
-                <div className="text-6xl mb-4">🎴</div>
+                <div className="text-5xl mb-4">
+                  <svg className="w-16 h-16 text-ebt-gold mx-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                  </svg>
+                </div>
                 <p className="font-heading text-ebt-gold tracking-wide">TAP TO REVEAL</p>
               </div>
             </div>
@@ -213,7 +217,7 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username }: MintSuc
               </Link>
               <button
                 onClick={() => {
-                  const text = `I just joined the blockchain breadline and got my EBT Card!\n\n🎴 Card #${tokenId?.toString() || '???'}\n💰 Token Bound Account ready\n🏦 $EBTC incoming\n\n#EBTCard #Web3 #NFT`;
+                  const text = `I just joined the blockchain breadline and got my EBT Card!\n\nCard #${tokenId?.toString() || '???'}\nToken Bound Account ready\n$EBTC incoming\n\n#EBTCard #Web3 #NFT`;
                   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
                 }}
                 className="px-6 py-3 bg-gray-800 text-white font-heading tracking-wide rounded-lg hover:bg-gray-700 transition-colors"

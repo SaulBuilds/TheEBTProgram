@@ -4,14 +4,17 @@ import { useState } from 'react';
 import { motion } from 'framer-motion';
 
 export function FundraisingMechanics() {
-  const [simulatedRaise, setSimulatedRaise] = useState(15);
-  const softCap = 10;
-  const hardCap = 30;
+  const [simulatedRaise, setSimulatedRaise] = useState(100);
+  const softCap = 20;
+  const hardCap = 2000;
 
   const isSoftCapReached = simulatedRaise >= softCap;
   const progressPercent = Math.min((simulatedRaise / hardCap) * 100, 100);
-  const multisigAmount = isSoftCapReached ? simulatedRaise * 0.9 : 0;
-  const teamAmount = isSoftCapReached ? simulatedRaise * 0.1 : 0;
+  // Distribution: 65% liquidity, 20% marketing, 10% treasury, 5% team
+  const liquidityAmount = isSoftCapReached ? simulatedRaise * 0.65 : 0;
+  const marketingAmount = isSoftCapReached ? simulatedRaise * 0.20 : 0;
+  const treasuryAmount = isSoftCapReached ? simulatedRaise * 0.10 : 0;
+  const teamAmount = isSoftCapReached ? simulatedRaise * 0.05 : 0;
   const refundAmount = !isSoftCapReached ? simulatedRaise : 0;
 
   return (
@@ -40,16 +43,16 @@ export function FundraisingMechanics() {
           <input
             type="range"
             min="0"
-            max="35"
-            step="0.5"
+            max="2000"
+            step="10"
             value={simulatedRaise}
             onChange={(e) => setSimulatedRaise(Number(e.target.value))}
             className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-ebt-gold"
           />
           <div className="flex justify-between text-xs text-gray-500 mt-1">
             <span>0 ETH</span>
-            <span className="text-yellow-500">Soft Cap: 10 ETH</span>
-            <span className="text-welfare-red">Hard Cap: 30 ETH</span>
+            <span className="text-yellow-500">Soft Cap: 20 ETH</span>
+            <span className="text-welfare-red">Hard Cap: 2,000 ETH</span>
           </div>
         </div>
 
@@ -99,11 +102,19 @@ export function FundraisingMechanics() {
             </div>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
-                <span className="text-gray-400">Treasury (90%)</span>
-                <span className="text-green-400">{multisigAmount.toFixed(2)} ETH</span>
+                <span className="text-gray-400">Liquidity (65%)</span>
+                <span className="text-green-400">{liquidityAmount.toFixed(2)} ETH</span>
               </div>
               <div className="flex justify-between">
-                <span className="text-gray-400">Team (10%)</span>
+                <span className="text-gray-400">Marketing (20%)</span>
+                <span className="text-green-400">{marketingAmount.toFixed(2)} ETH</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Treasury (10%)</span>
+                <span className="text-green-400">{treasuryAmount.toFixed(2)} ETH</span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-gray-400">Team (5%)</span>
                 <span className="text-green-400">{teamAmount.toFixed(2)} ETH</span>
               </div>
               <div className="flex justify-between pt-2 border-t border-gray-700">
@@ -156,13 +167,13 @@ export function FundraisingMechanics() {
           },
           {
             title: 'Soft Cap',
-            value: '10 ETH',
+            value: '20 ETH',
             desc: 'Minimum to continue project',
             color: '#FFC107',
           },
           {
             title: 'Hard Cap',
-            value: '30 ETH',
+            value: '2,000 ETH',
             desc: 'Maximum raise amount',
             color: '#DC2626',
           },
@@ -194,12 +205,12 @@ export function FundraisingMechanics() {
             {[
               {
                 phase: 'Minting Opens',
-                desc: 'Users can mint EBT Cards for 0.02-2 ETH (you choose). NFTs and initial $FOOD distributed immediately.',
+                desc: 'Users can mint EBT Cards for 0.02-2 ETH (you choose). NFTs and initial $EBTC distributed immediately.',
                 icon: '1',
               },
               {
                 phase: 'Fundraising Period',
-                desc: 'One week window for minting. Hard cap of 30 ETH. Three block wait between mints to prevent bots.',
+                desc: 'One week window for minting. Hard cap of 2,000 ETH. Three block wait between mints to prevent bots.',
                 icon: '2',
               },
               {
@@ -209,7 +220,7 @@ export function FundraisingMechanics() {
               },
               {
                 phase: 'Distribution',
-                desc: 'If soft cap reached: 65% to liquidity/buybacks, 30% marketing, 5% team treasury. If not: refunds available.',
+                desc: 'If soft cap reached: 65% liquidity, 20% marketing, 10% treasury, 5% team. If not: refunds available.',
                 icon: '4',
               },
             ].map((item, index) => (
@@ -237,7 +248,7 @@ export function FundraisingMechanics() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {[
             { title: 'Refund Guarantee', desc: 'If soft cap not reached, get your ETH back' },
-            { title: 'Hard Cap Protection', desc: 'No overselling, maximum 30 ETH raise' },
+            { title: 'Hard Cap Protection', desc: 'No overselling, maximum 2,000 ETH raise' },
             { title: 'Bot Prevention', desc: '3 block wait between mints' },
             { title: 'Blacklist System', desc: 'Block bad actors from participating' },
             { title: 'One Card Per Wallet', desc: 'Fair distribution, no hoarding' },
