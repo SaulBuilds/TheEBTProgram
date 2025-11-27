@@ -16,12 +16,12 @@ const steps = [
   {
     number: '03',
     title: 'Receive EBT Card',
-    description: 'Get your NFT EBT card with ERC-6551 smart wallet. Initial 200K-20M $FOOD tokens included.',
+    description: 'Get your NFT EBT card with ERC-6551 smart wallet. Initial 200K-20M $EBTC tokens included.',
   },
   {
     number: '04',
     title: 'Claim Monthly',
-    description: 'Return monthly to claim additional $FOOD tokens. Build your streak. Climb the leaderboard.',
+    description: 'Return monthly to claim additional $EBTC tokens. Build your streak. Climb the leaderboard.',
   },
 ];
 

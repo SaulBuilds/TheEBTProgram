@@ -10,6 +10,8 @@ import Confetti from 'react-confetti';
 import { Navbar } from '@/components/layout/Navbar';
 import { useMint, useHasMinted } from '@/lib/hooks';
 import { MINT_PRICE } from '@/lib/contracts/addresses';
+import { MintChecklist } from '@/components/mint/MintChecklist';
+import { MintSuccess } from '@/components/mint/MintSuccess';
 
 interface GeneratedCard {
   imageCid: string;
@@ -94,12 +96,12 @@ export default function MintContent() {
   useEffect(() => {
     if (isSuccess) {
       setShowConfetti(true);
+      // Keep confetti going for longer, don't auto-redirect
       setTimeout(() => {
         setShowConfetti(false);
-        router.push(`/profile/${userId}`);
-      }, 5000);
+      }, 8000);
     }
-  }, [isSuccess, router, userId]);
+  }, [isSuccess]);
 
   const handleMint = () => {
     if (!userId) return;
@@ -108,6 +110,51 @@ export default function MintContent() {
 
   const mintPriceEth = formatEther(MINT_PRICE);
   const hasEnoughBalance = balanceData && balanceData.value >= MINT_PRICE;
+
+  // Build checklist items
+  type ChecklistStatus = 'pending' | 'success' | 'error' | 'loading';
+  const getBalanceStatus = (): ChecklistStatus => {
+    if (hasEnoughBalance) return 'success';
+    if (address) return 'error';
+    return 'pending';
+  };
+  const getApprovalStatus = (): ChecklistStatus => {
+    if (profile?.status === 'approved') return 'success';
+    if (profile) return 'error';
+    return 'pending';
+  };
+  const getMintedStatus = (): ChecklistStatus => {
+    if (hasMinted === false) return 'success';
+    if (hasMinted === true) return 'error';
+    return 'pending';
+  };
+
+  const checklistItems = [
+    {
+      id: 'wallet',
+      label: 'Wallet Connected',
+      status: (address ? 'success' : 'pending') as ChecklistStatus,
+      description: address ? `${address.slice(0, 6)}...${address.slice(-4)}` : 'Connect your wallet to continue',
+    },
+    {
+      id: 'balance',
+      label: `Sufficient Balance (${mintPriceEth} ETH)`,
+      status: getBalanceStatus(),
+      description: balanceData ? `${formatEther(balanceData.value).slice(0, 8)} ETH available` : undefined,
+    },
+    {
+      id: 'approved',
+      label: 'Application Approved',
+      status: getApprovalStatus(),
+      description: profile?.status === 'approved' ? 'Ready to mint' : undefined,
+    },
+    {
+      id: 'notMinted',
+      label: 'NFT Not Yet Minted',
+      status: getMintedStatus(),
+      description: hasMinted ? 'You already have an EBT Card' : undefined,
+    },
+  ];
 
   if (!authenticated) {
     return (
@@ -167,6 +214,34 @@ export default function MintContent() {
     );
   }
 
+  // Show success view after mint
+  if (isSuccess && hash) {
+    return (
+      <div className="min-h-screen bg-black">
+        <Navbar />
+
+        {showConfetti && (
+          <Confetti
+            width={windowSize.width}
+            height={windowSize.height}
+            recycle={false}
+            numberOfPieces={300}
+            colors={['#D4AF37', '#8B0000', '#FFD700', '#FF6B6B', '#FFD700']}
+          />
+        )}
+
+        <div className="max-w-2xl mx-auto px-4 py-12">
+          <MintSuccess
+            tokenId={profile.mintedTokenId !== undefined ? BigInt(profile.mintedTokenId) : undefined}
+            txHash={hash}
+            cardImageUrl={profile.generatedCard?.imageUrl}
+            username={profile.username}
+          />
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-black">
       <Navbar />
@@ -187,12 +262,22 @@ export default function MintContent() {
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <h1 className="text-3xl font-mono font-bold text-ebt-gold mb-2">
-            Mint Your EBT Card
+          <h1 className="text-3xl font-heading text-ebt-gold tracking-wide mb-2">
+            MINT YOUR EBT CARD
           </h1>
-          <p className="text-gray-400 font-mono">
+          <p className="text-gray-400">
             Your application has been approved! Time to claim your spot on the blockchain breadline.
           </p>
+        </motion.div>
+
+        {/* Pre-Mint Checklist */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="mb-6"
+        >
+          <MintChecklist items={checklistItems} />
         </motion.div>
 
         {/* Card Preview */}
@@ -200,7 +285,7 @@ export default function MintContent() {
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.1 }}
+            transition={{ delay: 0.2 }}
             className="mb-8"
           >
             <img
@@ -215,32 +300,26 @@ export default function MintContent() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.2 }}
+          transition={{ delay: 0.3 }}
           className="p-6 bg-gray-900 border border-gray-800 rounded-lg mb-6"
         >
           <div className="space-y-3">
-            <div className="flex justify-between font-mono">
+            <div className="flex justify-between">
               <span className="text-gray-400">Username</span>
               <span className="text-white">{profile.username}</span>
             </div>
-            <div className="flex justify-between font-mono">
-              <span className="text-gray-400">Score</span>
-              <span className="text-ebt-gold">{profile.score}</span>
+            <div className="flex justify-between">
+              <span className="text-gray-400">Welfare Score</span>
+              <span className="text-ebt-gold font-heading">{profile.score}</span>
             </div>
             <div className="border-t border-gray-800 my-3" />
-            <div className="flex justify-between font-mono">
+            <div className="flex justify-between">
               <span className="text-gray-400">Mint Price</span>
               <span className="text-white">{mintPriceEth} ETH</span>
             </div>
-            <div className="flex justify-between font-mono">
+            <div className="flex justify-between">
               <span className="text-gray-400">Network</span>
               <span className="text-white">Sepolia Testnet</span>
-            </div>
-            <div className="flex justify-between font-mono">
-              <span className="text-gray-400">Your Balance</span>
-              <span className={hasEnoughBalance ? 'text-green-400' : 'text-welfare-red'}>
-                {balanceData ? formatEther(balanceData.value).slice(0, 8) : '0'} ETH
-              </span>
             </div>
           </div>
         </motion.div>
@@ -249,38 +328,22 @@ export default function MintContent() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
+          transition={{ delay: 0.4 }}
           className="p-4 bg-ebt-gold/10 border border-ebt-gold/30 rounded-lg mb-6"
         >
-          <h4 className="font-mono font-bold text-ebt-gold mb-2">What You Get:</h4>
-          <ul className="text-sm font-mono text-gray-300 space-y-1">
-            <li>• 1 Unique EBT Card NFT (pre-generated just for you)</li>
-            <li>• Token-bound account (ERC-6551)</li>
-            <li>• 10,000 $FOOD tokens on mint</li>
-            <li>• Monthly $FOOD distributions</li>
+          <h4 className="font-heading text-ebt-gold tracking-wide mb-2">WHAT YOU GET:</h4>
+          <ul className="text-sm text-gray-300 space-y-1">
+            <li>1 Unique EBT Card NFT (pre-generated just for you)</li>
+            <li>Token-bound account (ERC-6551 wallet)</li>
+            <li>10,000 $EBTC tokens on mint</li>
+            <li>Monthly $EBTC distributions (3 installments)</li>
           </ul>
         </motion.div>
 
-        {/* Warnings */}
-        {hasMinted && (
-          <div className="p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg mb-6">
-            <p className="font-mono text-welfare-red text-sm">
-              You have already minted an EBT card! One per wallet, just like real welfare.
-            </p>
-          </div>
-        )}
-
-        {!hasEnoughBalance && !hasMinted && (
-          <div className="p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg mb-6">
-            <p className="font-mono text-welfare-red text-sm">
-              Insufficient balance. You need at least {mintPriceEth} ETH plus gas.
-            </p>
-          </div>
-        )}
-
+        {/* Error Display */}
         {mintError && (
           <div className="p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg mb-6">
-            <p className="font-mono text-welfare-red text-sm">
+            <p className="text-welfare-red text-sm">
               {mintError instanceof Error ? mintError.message : 'Transaction failed'}
             </p>
           </div>
@@ -289,8 +352,8 @@ export default function MintContent() {
         {/* Transaction Status */}
         {isPending && (
           <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg mb-6">
-            <p className="font-mono text-blue-400 text-sm flex items-center gap-2">
-              <span className="animate-spin">⏳</span>
+            <p className="text-blue-400 text-sm flex items-center gap-2">
+              <span className="animate-spin">&#8987;</span>
               Waiting for wallet confirmation...
             </p>
           </div>
@@ -298,8 +361,8 @@ export default function MintContent() {
 
         {isConfirming && (
           <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mb-6">
-            <p className="font-mono text-yellow-400 text-sm flex items-center gap-2">
-              <span className="animate-pulse">⛓️</span>
+            <p className="text-yellow-400 text-sm flex items-center gap-2">
+              <span className="animate-pulse">&#9918;</span>
               Transaction submitted! Waiting for confirmation...
             </p>
             {hash && (
@@ -309,44 +372,30 @@ export default function MintContent() {
                 rel="noopener noreferrer"
                 className="text-xs text-blue-400 hover:underline mt-2 block"
               >
-                View on Etherscan →
+                View on Etherscan
               </a>
             )}
           </div>
-        )}
-
-        {isSuccess && (
-          <motion.div
-            initial={{ scale: 0.9, opacity: 0 }}
-            animate={{ scale: 1, opacity: 1 }}
-            className="p-4 bg-green-500/10 border border-green-500/30 rounded-lg mb-6"
-          >
-            <p className="font-mono text-green-400 text-sm flex items-center gap-2">
-              <span>🎉</span>
-              Mint successful! Welcome to the blockchain breadline!
-            </p>
-            <p className="text-xs text-gray-500 mt-2">Redirecting to your profile...</p>
-          </motion.div>
         )}
 
         {/* Mint Button */}
         <motion.button
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
+          transition={{ delay: 0.5 }}
           onClick={handleMint}
           disabled={isPending || isConfirming || isSuccess || hasMinted || !hasEnoughBalance}
-          className="w-full py-4 bg-ebt-gold text-black font-mono font-bold rounded-lg hover:bg-ebt-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="w-full py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending
-            ? 'Confirm in Wallet...'
+            ? 'CONFIRM IN WALLET...'
             : isConfirming
-            ? 'Minting...'
+            ? 'MINTING...'
             : isSuccess
-            ? 'Minted!'
+            ? 'MINTED!'
             : hasMinted
-            ? 'Already Minted'
-            : `Mint for ${mintPriceEth} ETH`}
+            ? 'ALREADY MINTED'
+            : `MINT FOR ${mintPriceEth} ETH`}
         </motion.button>
       </div>
     </div>

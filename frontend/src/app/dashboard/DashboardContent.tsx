@@ -16,6 +16,8 @@ import {
   useWalletApplication,
 } from '@/lib/hooks';
 import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID } from '@/lib/contracts/addresses';
+import { TBAWallet } from '@/components/tba/TBAWallet';
+import { InstallmentTimeline } from '@/components/dashboard/InstallmentTimeline';
 
 export default function DashboardContent() {
   const { authenticated, login } = usePrivy();
@@ -24,26 +26,26 @@ export default function DashboardContent() {
   const { data: hasMinted } = useHasMinted(address);
   const { data: applicationData, isLoading: isLoadingApplication } = useWalletApplication(address);
 
-  // For demo, we'll assume tokenId 0 if they've minted - in production you'd query events
-  const tokenId = BigInt(0);
+  // Get tokenId from mint data if available, otherwise default to 0
+  const tokenId = applicationData?.mint?.tokenId !== undefined
+    ? BigInt(applicationData.mint.tokenId)
+    : BigInt(0);
   const { data: foodBalanceData } = useFoodBalance(address);
   const foodBalance = foodBalanceData as bigint | undefined;
   const { data: installmentCount } = useInstallmentCount(tokenId);
   const { data: mintedTimestamp } = useMintedTimestamp(tokenId);
 
-  const { claim, isPending, isConfirming, isSuccess, error } = useClaimInstallment();
+  const { claim, isPending, isConfirming, error } = useClaimInstallment();
 
-  const [nextClaimTime, setNextClaimTime] = useState<Date | null>(null);
   const [canClaim, setCanClaim] = useState(false);
 
-  // Calculate next claim time
+  // Calculate if user can claim
   useEffect(() => {
     if (mintedTimestamp && installmentCount !== undefined) {
       const mintedAt = new Date(Number(mintedTimestamp) * 1000);
-      const nextClaim = new Date(mintedAt);
-      nextClaim.setDate(nextClaim.getDate() + 30 * (Number(installmentCount) + 1));
-      setNextClaimTime(nextClaim);
-      setCanClaim(new Date() >= nextClaim && Number(installmentCount) < 3);
+      const nextClaimTime = new Date(mintedAt);
+      nextClaimTime.setDate(nextClaimTime.getDate() + 30 * (Number(installmentCount) + 1));
+      setCanClaim(new Date() >= nextClaimTime && Number(installmentCount) < 3);
     }
   }, [mintedTimestamp, installmentCount]);
 
@@ -62,7 +64,7 @@ export default function DashboardContent() {
               CONNECT TO VIEW DASHBOARD
             </h1>
             <p className="text-gray-400 mb-8 font-sans">
-              Connect your wallet to view your EBT card and $FOOD balance.
+              Connect your wallet to view your EBT card and $EBTC balance.
             </p>
             <button
               onClick={login}
@@ -279,7 +281,7 @@ export default function DashboardContent() {
 
             {/* $FOOD Balance */}
             <div className="p-6 bg-gray-900 border border-ebt-gold/30 rounded-lg">
-              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">$FOOD BALANCE</div>
+              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">$EBTC BALANCE</div>
               <div className="text-2xl font-heading text-ebt-gold tracking-wide">
                 {foodBalance ? Number(formatEther(foodBalance)).toLocaleString() : '0'}
               </div>
@@ -336,66 +338,27 @@ export default function DashboardContent() {
             </div>
           </div>
 
-          {/* Claim Section */}
-          <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg mb-8">
-            <h3 className="text-lg font-heading text-white mb-4 tracking-wide">
-              MONTHLY $FOOD STIPEND
-            </h3>
+          {/* TBA Wallet Section */}
+          {address && hasMinted && (
+            <div className="mb-8">
+              <TBAWallet tokenId={tokenId} userAddress={address} />
+            </div>
+          )}
 
-            {Number(installmentCount) >= 3 ? (
-              <div className="p-4 bg-gray-800 rounded-lg">
-                <p className="text-gray-400 text-sm">
-                  You&apos;ve claimed all 3 stipends this season. Reapply for the next season!
-                </p>
-              </div>
-            ) : (
-              <>
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <p className="text-sm text-gray-500">Next Claim Available</p>
-                    <p className="text-lg font-heading text-white tracking-wide">
-                      {nextClaimTime
-                        ? canClaim
-                          ? 'NOW!'
-                          : nextClaimTime.toLocaleDateString()
-                        : 'Calculating...'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm text-gray-500">Amount</p>
-                    <p className="text-lg font-heading text-ebt-gold tracking-wide">20K-20M $FOOD</p>
-                  </div>
-                </div>
-
-                <button
-                  onClick={handleClaim}
-                  disabled={!canClaim || isPending || isConfirming}
-                  className={`
-                    w-full py-4 font-heading tracking-wide rounded-lg transition-colors
-                    ${
-                      canClaim && !isPending && !isConfirming
-                        ? 'bg-ebt-gold text-black hover:bg-ebt-gold/90'
-                        : 'bg-gray-800 text-gray-500 cursor-not-allowed'
-                    }
-                  `}
-                >
-                  {isPending
-                    ? 'CONFIRM IN WALLET...'
-                    : isConfirming
-                    ? 'CLAIMING...'
-                    : isSuccess
-                    ? 'CLAIMED!'
-                    : canClaim
-                    ? 'CLAIM $FOOD'
-                    : 'NOT YET AVAILABLE'}
-                </button>
-
-                {error && (
-                  <p className="mt-2 text-sm text-welfare-red">
-                    Error: {error instanceof Error ? error.message : 'Transaction failed'}
-                  </p>
-                )}
-              </>
+          {/* Installment Timeline */}
+          <div className="mb-8">
+            <InstallmentTimeline
+              installmentCount={Number(installmentCount ?? 0)}
+              mintedTimestamp={Number(mintedTimestamp ?? 0)}
+              onClaim={handleClaim}
+              canClaim={canClaim}
+              isPending={isPending}
+              isConfirming={isConfirming}
+            />
+            {error && (
+              <p className="mt-2 text-sm text-welfare-red">
+                Error: {error instanceof Error ? error.message : 'Transaction failed'}
+              </p>
             )}
           </div>
 
@@ -409,7 +372,7 @@ export default function DashboardContent() {
             </Link>
             <button
               onClick={() => {
-                const text = `I'm collecting $FOOD on the blockchain breadline!\n\nJoin the decentralized welfare state.\n\n#EBTCard`;
+                const text = `I'm collecting $EBTC on the blockchain breadline!\n\nJoin the decentralized welfare state.\n\n#EBTCard`;
                 window.open(
                   `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
                   '_blank'

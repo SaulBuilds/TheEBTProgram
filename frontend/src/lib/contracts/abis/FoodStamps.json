@@ -6,7 +6,59 @@
   },
   {
     "type": "function",
+    "name": "MARKETING_ALLOCATION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "MAX_SUPPLY",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "NFT_HOLDER_ALLOCATION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "PROTOCOL_ALLOCATION",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "TEAM_ALLOCATION",
     "inputs": [],
     "outputs": [
       {
@@ -22,12 +74,12 @@
     "name": "allowance",
     "inputs": [
       {
-        "name": "ownerAddr",
+        "name": "owner",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "spenderAddr",
+        "name": "spender",
         "type": "address",
         "internalType": "address"
       }
@@ -67,12 +119,17 @@
   },
   {
     "type": "function",
-    "name": "approveProxy",
+    "name": "approveSpender",
     "inputs": [
       {
-        "name": "account",
+        "name": "spender",
         "type": "address",
         "internalType": "address"
+      },
+      {
+        "name": "amount",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [
@@ -142,6 +199,47 @@
   },
   {
     "type": "function",
+    "name": "ebtProgram",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getAllocationInfo",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "protocol",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "marketing",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "nftHolder",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "team",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "pure"
+  },
+  {
+    "type": "function",
     "name": "hasReceivedFoodStamps",
     "inputs": [
       {
@@ -182,6 +280,73 @@
       }
     ],
     "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "initialDistribution",
+    "inputs": [
+      {
+        "name": "_liquidityVault",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_teamVesting",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_marketingWallet",
+        "type": "address",
+        "internalType": "address"
+      },
+      {
+        "name": "_ebtProgram",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "initialDistributionDone",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "liquidityVault",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "marketingWallet",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
   },
   {
     "type": "function",
@@ -249,6 +414,19 @@
   },
   {
     "type": "function",
+    "name": "remainingMintableSupply",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "renounceOwnership",
     "inputs": [],
     "outputs": [],
@@ -259,7 +437,46 @@
     "name": "setEBTProgram",
     "inputs": [
       {
-        "name": "ebtProgramAddress",
+        "name": "_ebtProgram",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setLiquidityVault",
+    "inputs": [
+      {
+        "name": "_liquidityVault",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setMarketingWallet",
+    "inputs": [
+      {
+        "name": "_marketingWallet",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setTeamVesting",
+    "inputs": [
+      {
+        "name": "_teamVesting",
         "type": "address",
         "internalType": "address"
       }
@@ -295,6 +512,19 @@
         "name": "",
         "type": "string",
         "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "teamVesting",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
       }
     ],
     "stateMutability": "view"
@@ -341,12 +571,12 @@
     "name": "transferFrom",
     "inputs": [
       {
-        "name": "sender",
+        "name": "from",
         "type": "address",
         "internalType": "address"
       },
       {
-        "name": "recipient",
+        "name": "to",
         "type": "address",
         "internalType": "address"
       },
@@ -451,6 +681,63 @@
   },
   {
     "type": "event",
+    "name": "InitialDistributionCompleted",
+    "inputs": [
+      {
+        "name": "liquidityVault",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "teamVesting",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "marketingWallet",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      },
+      {
+        "name": "ebtProgram",
+        "type": "address",
+        "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "LiquidityVaultUpdated",
+    "inputs": [
+      {
+        "name": "newLiquidityVault",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MarketingWalletUpdated",
+    "inputs": [
+      {
+        "name": "newMarketingWallet",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
     "name": "OwnershipTransferred",
     "inputs": [
       {
@@ -476,6 +763,19 @@
         "name": "account",
         "type": "address",
         "indexed": false,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "TeamVestingUpdated",
+    "inputs": [
+      {
+        "name": "newTeamVesting",
+        "type": "address",
+        "indexed": true,
         "internalType": "address"
       }
     ],

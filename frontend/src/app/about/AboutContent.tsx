@@ -124,7 +124,7 @@ export function AboutContent() {
           </h3>
           <p className="text-sm text-gray-400">
             This is a satirical art project about wealth inequality and the social safety net.
-            $FOOD tokens are cryptocurrency with no guaranteed value. This is NOT real government
+            $EBTC tokens are cryptocurrency with no guaranteed value. This is NOT real government
             assistance and is not affiliated with any government program. Invest only what you
             can afford to lose. DYOR.
           </p>
@@ -147,7 +147,7 @@ function OverviewSection() {
     },
     {
       title: 'Token-Bound Account',
-      description: 'Each NFT has its own smart wallet (ERC-6551) that holds your $FOOD tokens. Your card IS your wallet.',
+      description: 'Each NFT has its own smart wallet (ERC-6551) that holds your $EBTC tokens. Your card IS your wallet.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
@@ -155,8 +155,8 @@ function OverviewSection() {
       ),
     },
     {
-      title: '$FOOD Tokens',
-      description: 'ERC-20 tokens distributed to cardholders. 200K-20M $FOOD on mint, plus monthly stipends.',
+      title: '$EBTC Tokens',
+      description: 'ERC-20 tokens distributed to cardholders. 200K-20M $EBTC on mint, plus monthly stipends.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -165,7 +165,7 @@ function OverviewSection() {
     },
     {
       title: 'Monthly Rewards',
-      description: 'Claim $FOOD every month based on your activity. Reapply every 3 months with proof of activity.',
+      description: 'Claim $EBTC every month based on your activity. Reapply every 3 months with proof of activity.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -185,7 +185,7 @@ function OverviewSection() {
           <p className="text-gray-400 leading-relaxed">
             EBT Card is a satirical Web3 project that reimagines food stamps for the blockchain era.
             Instead of government-issued benefits, we issue NFT cards with built-in smart wallets
-            that automatically receive $FOOD token distributions.
+            that automatically receive $EBTC token distributions.
           </p>
           <p className="text-gray-400 leading-relaxed">
             The project comments on wealth inequality by giving everyone access to &quot;benefits&quot;
@@ -224,7 +224,7 @@ function OverviewSection() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Supply', value: '20B $FOOD' },
+            { label: 'Total Supply', value: '20B $EBTC' },
             { label: 'Initial Drop', value: '200K-20M' },
             { label: 'Monthly Stipend', value: '20K-20M' },
             { label: 'Team Allocation', value: '1B (5%)' },
@@ -254,7 +254,7 @@ function OverviewSection() {
               { step: '1', title: 'Apply', desc: 'Fill out the satirical application form' },
               { step: '2', title: 'Get Approved', desc: 'Applications reviewed (mostly everyone gets in)' },
               { step: '3', title: 'Mint NFT', desc: 'Pay mint fee to get your EBT Card' },
-              { step: '4', title: 'Receive $FOOD', desc: '200K-20M $FOOD sent to your card wallet' },
+              { step: '4', title: 'Receive $EBTC', desc: '200K-20M $EBTC sent to your card wallet' },
               { step: '5', title: 'Claim Monthly', desc: 'Return to claim additional rewards' },
             ].map((item, index) => (
               <motion.div

@@ -551,7 +551,7 @@ export default function AdminContent() {
                 </p>
               </div>
               <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
-                <p className="text-sm font-mono text-gray-500">$FOOD Token Status</p>
+                <p className="text-sm font-mono text-gray-500">$EBTC Token Status</p>
                 <p className={`text-lg font-mono font-bold ${isFoodPaused ? 'text-welfare-red' : 'text-green-400'}`}>
                   {isFoodPaused ? 'PAUSED' : 'ACTIVE'}
                 </p>
@@ -626,7 +626,7 @@ export default function AdminContent() {
 
                 {/* Token Controls */}
                 <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
-                  <h3 className="text-lg font-mono font-bold text-white mb-4">$FOOD Token Controls</h3>
+                  <h3 className="text-lg font-mono font-bold text-white mb-4">$EBTC Token Controls</h3>
                   <div className="flex gap-4">
                     <button
                       onClick={() => pauseFood()}

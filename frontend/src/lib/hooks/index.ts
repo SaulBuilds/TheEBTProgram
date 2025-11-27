@@ -57,3 +57,17 @@ export {
   usePauseFoodStamps,
   useUnpauseFoodStamps,
 } from './useAdminContract';
+
+// TBA (Token Bound Account) hooks
+export {
+  useTBAAddress,
+  useTokenAccountAddress,
+  useTBABalance,
+  useTBAInfo,
+  useTBALocked,
+  useTBAOwner,
+  useTBATransferERC20,
+  useTBAExecuteCall,
+  useTBAData,
+  encodeERC20Transfer,
+} from './useTBA';

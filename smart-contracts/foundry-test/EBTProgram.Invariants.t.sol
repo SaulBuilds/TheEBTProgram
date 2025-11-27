@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.30;
 
 import "forge-std/Test.sol";
 import "../contracts/EBTProgram.sol";
 import "../contracts/EBTApplication.sol";
 import "../contracts/FoodStamps.sol";
+import "../contracts/LiquidityVault.sol";
 import "../contracts/ERC6551Registry.sol";
 import "../contracts/ERC6551Account.sol";
 
@@ -12,37 +13,60 @@ contract EBTProgramInvariants is Test {
     EBTProgram internal program;
     EBTApplication internal app;
     FoodStamps internal food;
+    LiquidityVault internal vault;
     ERC6551Registry internal registry;
     ERC6551Account internal accountImpl;
 
     address internal user1 = address(0x1);
     address internal user2 = address(0x2);
     address internal user3 = address(0x3);
+    address internal protocolCaller = address(0x4);
+    address internal treasury = address(0x5);
+    address internal marketing = address(0x6);
+    address internal team = address(0x7);
 
-    uint256 internal constant MINT_PRICE = 0.02 ether;
+    uint256 internal constant MIN_PRICE = 0.02 ether;
 
     function setUp() public {
         app = new EBTApplication();
         food = new FoodStamps();
         registry = new ERC6551Registry();
         accountImpl = new ERC6551Account();
+        vault = new LiquidityVault(address(food));
 
-        program = new EBTProgram(address(registry), address(food), address(app));
+        program = new EBTProgram(address(registry), address(app));
 
         // Set implementation directly on registry before transferring ownership
         registry.setImplementation(address(accountImpl));
         registry.transferOwnership(address(program));
 
-        // Set account implementation on EBTProgram (internal tracking)
-        program.setAccountImplementationInternal(address(accountImpl));
-        program.setPayoutAddresses(address(0xA), address(0xB));
+        // Initialize program with all required addresses
+        program.initialize(
+            address(vault),
+            protocolCaller,
+            treasury,
+            marketing,
+            team,
+            address(accountImpl),
+            address(food)
+        );
 
-        food.setEBTProgram(address(program));
+        // Set up vault
+        vault.setEBTProgram(address(program));
+
+        // Initial distribution
+        food.initialDistribution(
+            address(vault),
+            address(0x100), // team vesting placeholder
+            marketing,
+            address(program)
+        );
+
         app.setProgramAsAdmin(address(program));
 
-        vm.deal(user1, 10 ether);
-        vm.deal(user2, 10 ether);
-        vm.deal(user3, 10 ether);
+        vm.deal(user1, 100 ether);
+        vm.deal(user2, 100 ether);
+        vm.deal(user3, 100 ether);
 
         vm.startPrank(user1);
         app.apply4EBT("u1", "pic", "tw", 100, "u1");
@@ -59,74 +83,70 @@ contract EBTProgramInvariants is Test {
         app.approveUsers(_single("u1"));
         app.approveUsers(_single("u2"));
         app.approveUsers(_single("u3"));
+
+        // Set scores for claim calculations
+        app.setUserScore("u1", 500);
+        app.setUserScore("u2", 500);
+        app.setUserScore("u3", 500);
     }
 
-    function invariant_totalFundsRaisedAlwaysEqualsMintPriceTimesSupply() public view {
-        uint256 supply = program.currentTokenId();
-        assertEq(program.currentTokenId(), supply);
-        assertEq(address(program).balance, program.totalFundsRaised(), "program balance matches tracked funds");
-        assertEq(program.totalFundsRaised(), supply * MINT_PRICE, "funds raised equals mints * price");
+    function invariant_totalRaisedAlwaysMatchesBalance() public view {
+        assertEq(address(program).balance, program.totalRaised(), "program balance matches tracked funds");
     }
 
     function invariant_noOverMintBeyondHardCap() public view {
-        // ensures never more than hard cap of funds collected
-        assertLe(program.totalFundsRaised(), program.hardCap());
+        assertLe(program.totalRaised(), program.hardCap());
     }
 
-    function invariant_installmentCountMaxThree() public view {
+    function invariant_claimCountMaxThree() public view {
         uint256 supply = program.currentTokenId();
-        for (uint256 i = 0; i < supply; i++) {
-            assertLe(program.installmentCount(i), 3);
+        for (uint256 i = 1; i < supply; i++) {
+            (,uint256 claimCount,,,, ) = program.tokenData(i);
+            assertLe(claimCount, 3);
         }
     }
 
     function invariant_accountExistsForMintedTokens() public view {
         uint256 supply = program.currentTokenId();
-        for (uint256 i = 0; i < supply; i++) {
-            string memory uid = program.tokenIdToUserID(i);
-            bytes32 salt = keccak256(abi.encodePacked(uid));
-            address acct = registry.account(address(accountImpl), block.chainid, address(program), i, salt);
-            assertTrue(acct != address(0), "account must exist");
+        for (uint256 i = 1; i < supply; i++) {
+            address tba = program.getTBA(i);
+            assertTrue(tba != address(0), "TBA must exist");
         }
     }
 
     // handlers
     function mintU1() public {
-        _mintMaybe(user1, "u1");
+        _mintMaybe(user1, "u1", MIN_PRICE);
     }
 
     function mintU2() public {
-        _mintMaybe(user2, "u2");
+        _mintMaybe(user2, "u2", 0.5 ether);
     }
 
     function claimU1(uint256 tokenId) public {
-        _claim(user1, tokenId);
+        _claim(tokenId);
     }
 
-    function claimU2(uint256 tokenId) public {
-        _claim(user2, tokenId);
-    }
-
-    function _mintMaybe(address caller, string memory userId) internal {
+    function _mintMaybe(address caller, string memory userId, uint256 price) internal {
         vm.roll(block.number + 4);
         vm.prank(caller);
-        try program.mint{value: MINT_PRICE}(userId) {
+        try program.mint{value: price}(userId) {
         } catch {
             // ignore reverts in invariant harness
         }
     }
 
-    function _claim(address caller, uint256 tokenId) internal {
+    function _claim(uint256 tokenId) internal {
         vm.warp(block.timestamp + 31 days);
-        vm.prank(caller);
-        try program.claimInstallment(tokenId) {
+        vm.prank(protocolCaller);
+        try program.claim(tokenId) {
         } catch {
             // ignore reverts
         }
     }
 
     function mintU3() public {
-        _mintMaybe(user3, "u3");
+        _mintMaybe(user3, "u3", 1 ether);
     }
 
     function _single(string memory id) internal pure returns (string[] memory ids) {

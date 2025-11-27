@@ -1,11 +1,13 @@
 //SPDX-License-Identifier: MIT
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
 /// @title EBT application gatekeeper
 /// @notice Handles user applications, approvals, and metadata URIs for EBT minting
-contract EBTApplication is AccessControl {
+/// @dev Uses ReentrancyGuard for protection against reentrancy attacks
+contract EBTApplication is AccessControl, ReentrancyGuard {
 
     error AlreadyApplied();
     error NotAdmin();
@@ -22,7 +24,7 @@ contract EBTApplication is AccessControl {
         bool hasApplied;
         bool isApproved;
         uint256 installmentCount;
-        uint256 score;           // User's calculated score
+        uint256 score;           // User's calculated score (0-1000)
         string metadataURI;      // IPFS URI for NFT metadata (set at approval)
     }
 
@@ -30,7 +32,6 @@ contract EBTApplication is AccessControl {
 
     mapping(string => EBTApplicant) public applicants;
     mapping(address => uint256) public userBalanceAtApplication;
-    mapping(uint256 => bool) public headOfHouseHold;
     mapping(address => string) public addressToUserID; // Map wallet address to userID
 
     // Events for tracking
@@ -40,9 +41,6 @@ contract EBTApplication is AccessControl {
     event ScoreUpdated(string indexed userID, uint256 score);
 
     constructor() {
-        headOfHouseHold[0] = true;
-        headOfHouseHold[1] = true;
-
         _setupRole(ADMIN_ROLE, msg.sender);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -58,13 +56,14 @@ contract EBTApplication is AccessControl {
     }
 
     /// @notice Submit an application for EBT
+    /// @dev No automatic approval - all users must be approved by admin
     function apply4EBT(
         string memory _username,
         string memory _profilePicURL,
         string memory _twitter,
         uint256 _foodBudget,
         string memory _userID
-    ) public {
+    ) public nonReentrant {
         if (applicants[_userID].hasApplied) revert AlreadyApplied();
 
         applicants[_userID] = EBTApplicant({
@@ -83,9 +82,8 @@ contract EBTApplication is AccessControl {
         // Map sender address to userID for lookup
         addressToUserID[msg.sender] = _userID;
 
-        if (headOfHouseHold[uint256(keccak256(abi.encodePacked(_userID)))]) {
-            applicants[_userID].isApproved = true;
-        }
+        // NOTE: Automatic approval removed - admin must explicitly approve all users
+        // This prevents hash collision attacks where crafted userIDs could bypass approval
 
         emit ApplicationSubmitted(_userID, msg.sender);
     }

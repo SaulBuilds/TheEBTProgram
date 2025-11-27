@@ -110,7 +110,7 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
             <div className="border-t border-gray-800 my-3" />
             <div className="flex justify-between font-mono">
               <span className="text-gray-400">You Receive</span>
-              <span className="text-ebt-gold">1 EBT Card NFT + 10K $FOOD</span>
+              <span className="text-ebt-gold">1 EBT Card NFT + 10K $EBTC</span>
             </div>
           </div>
         </div>
@@ -121,8 +121,8 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
           <ul className="text-sm font-mono text-gray-300 space-y-1">
             <li>• 1 EBT Card NFT (your welfare passport)</li>
             <li>• Token-bound account (ERC-6551)</li>
-            <li>• 10,000 $FOOD tokens on mint</li>
-            <li>• Monthly $FOOD distributions (3x total)</li>
+            <li>• 10,000 $EBTC tokens on mint</li>
+            <li>• Monthly $EBTC distributions (3x total)</li>
             <li>• Bragging rights on the breadline</li>
           </ul>
         </div>

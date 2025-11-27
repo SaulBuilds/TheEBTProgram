@@ -188,7 +188,7 @@ NO realistic human faces. Abstract or pixelated avatar area only.`;
 
     // Generate NFT metadata
     const metadata: NFTMetadata = {
-      name: `EBT Card #${input.userId}`,
+      name: `The EBT Program #${input.userId}`,
       description: `Welcome to the blockchain breadline. This EBT Card belongs to ${input.username} with a welfare score of ${input.score}. ${badges.length} badges earned.`,
       image: '', // Will be set after IPFS upload
       external_url: `https://ebtcard.xyz/profile/${input.userId}`,

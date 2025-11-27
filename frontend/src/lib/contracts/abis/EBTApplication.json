@@ -32,6 +32,25 @@
   },
   {
     "type": "function",
+    "name": "addressToUserID",
+    "inputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "applicants",
     "inputs": [
       {
@@ -80,6 +99,16 @@
         "name": "installmentCount",
         "type": "uint256",
         "internalType": "uint256"
+      },
+      {
+        "name": "score",
+        "type": "uint256",
+        "internalType": "uint256"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -119,6 +148,24 @@
   },
   {
     "type": "function",
+    "name": "approveUserWithMetadata",
+    "inputs": [
+      {
+        "name": "_userID",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_metadataURI",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "approveUsers",
     "inputs": [
       {
@@ -145,6 +192,25 @@
         "name": "",
         "type": "bool",
         "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getMetadataURI",
+    "inputs": [
+      {
+        "name": "_userID",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
       }
     ],
     "stateMutability": "view"
@@ -223,8 +289,56 @@
             "name": "installmentCount",
             "type": "uint256",
             "internalType": "uint256"
+          },
+          {
+            "name": "score",
+            "type": "uint256",
+            "internalType": "uint256"
+          },
+          {
+            "name": "metadataURI",
+            "type": "string",
+            "internalType": "string"
           }
         ]
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getUserIDByAddress",
+    "inputs": [
+      {
+        "name": "_address",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "getUserScore",
+    "inputs": [
+      {
+        "name": "_userID",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "stateMutability": "view"
@@ -260,25 +374,6 @@
         "name": "account",
         "type": "address",
         "internalType": "address"
-      }
-    ],
-    "outputs": [
-      {
-        "name": "",
-        "type": "bool",
-        "internalType": "bool"
-      }
-    ],
-    "stateMutability": "view"
-  },
-  {
-    "type": "function",
-    "name": "headOfHouseHold",
-    "inputs": [
-      {
-        "name": "",
-        "type": "uint256",
-        "internalType": "uint256"
       }
     ],
     "outputs": [
@@ -373,12 +468,48 @@
   },
   {
     "type": "function",
+    "name": "setMetadataURI",
+    "inputs": [
+      {
+        "name": "_userID",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_metadataURI",
+        "type": "string",
+        "internalType": "string"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setProgramAsAdmin",
     "inputs": [
       {
         "name": "programAddress",
         "type": "address",
         "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setUserScore",
+    "inputs": [
+      {
+        "name": "_userID",
+        "type": "string",
+        "internalType": "string"
+      },
+      {
+        "name": "_score",
+        "type": "uint256",
+        "internalType": "uint256"
       }
     ],
     "outputs": [],
@@ -421,6 +552,44 @@
       }
     ],
     "stateMutability": "view"
+  },
+  {
+    "type": "event",
+    "name": "ApplicationSubmitted",
+    "inputs": [
+      {
+        "name": "userID",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      },
+      {
+        "name": "applicant",
+        "type": "address",
+        "indexed": true,
+        "internalType": "address"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "MetadataURISet",
+    "inputs": [
+      {
+        "name": "userID",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
   },
   {
     "type": "event",
@@ -498,6 +667,44 @@
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "ScoreUpdated",
+    "inputs": [
+      {
+        "name": "userID",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      },
+      {
+        "name": "score",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "event",
+    "name": "UserApproved",
+    "inputs": [
+      {
+        "name": "userID",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      },
+      {
+        "name": "metadataURI",
+        "type": "string",
+        "indexed": false,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "AlreadyApplied",
     "inputs": []
@@ -515,6 +722,11 @@
   {
     "type": "error",
     "name": "NotApproved",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "UserNotFound",
     "inputs": []
   }
 ]

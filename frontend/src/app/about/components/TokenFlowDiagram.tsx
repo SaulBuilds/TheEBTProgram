@@ -17,7 +17,7 @@ const flowSteps = [
       'ETH goes to fundraising pool',
       'NFT minted to user wallet',
       'Token-bound account created',
-      '200K-20M $FOOD based on contribution',
+      '200K-20M $EBTC based on contribution',
     ],
     from: 'User',
     to: 'EBTProgram',
@@ -46,22 +46,22 @@ const flowSteps = [
   },
   {
     id: 'initial-distribution',
-    title: 'Initial $FOOD',
+    title: 'Initial $EBTC',
     icon: (
       <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8V7m0 8v1" />
       </svg>
     ),
-    description: '$FOOD tokens minted directly to the token-bound account based on your contribution',
+    description: '$EBTC tokens minted directly to the token-bound account based on your contribution',
     details: [
-      '200K-20M $FOOD initial allocation',
+      '200K-20M $EBTC initial allocation',
       'Scales with your mint price',
       'User controls via NFT ownership',
       'No claim required',
     ],
     from: 'FoodStamps',
     to: 'TBA',
-    asset: '200K-20M $FOOD',
+    asset: '200K-20M $EBTC',
     color: '#2E7D32',
   },
   {
@@ -72,16 +72,16 @@ const flowSteps = [
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
       </svg>
     ),
-    description: 'NFT holders receive monthly $FOOD stipends based on activity',
+    description: 'NFT holders receive monthly $EBTC stipends based on activity',
     details: [
-      '20K-20M $FOOD per month',
+      '20K-20M $EBTC per month',
       'Based on onchain & social activity',
       'Reapply every 3 months',
       'Must own NFT to receive',
     ],
     from: 'Protocol',
     to: 'TBA',
-    asset: '20K-20M $FOOD',
+    asset: '20K-20M $EBTC',
     color: '#C2185B',
   },
   {
@@ -132,7 +132,7 @@ export function TokenFlowDiagram() {
           TOKEN FLOW VISUALIZATION
         </h2>
         <p className="text-gray-400 max-w-2xl mx-auto mb-6">
-          Watch how ETH, NFTs, and $FOOD tokens flow through the system.
+          Watch how ETH, NFTs, and $EBTC tokens flow through the system.
           Click play to see the complete journey.
         </p>
         <button
@@ -264,7 +264,7 @@ export function TokenFlowDiagram() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg text-center">
           <div className="text-3xl font-heading text-ebt-gold mb-1 tracking-wide">20B</div>
-          <div className="text-sm text-gray-500">Max $FOOD Supply</div>
+          <div className="text-sm text-gray-500">Max $EBTC Supply</div>
         </div>
         <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg text-center">
           <div className="text-3xl font-heading text-[#2E7D32] mb-1 tracking-wide">1B</div>

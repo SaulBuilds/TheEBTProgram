@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: MIT
 
-pragma solidity ^0.8.24;
+pragma solidity ^0.8.30;
 
 import {Create2} from "@openzeppelin/contracts/utils/Create2.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
@@ -64,7 +64,7 @@ contract ERC6551Registry is IERC6551Registry, ReentrancyGuard, Ownable {
             return newAccount;
         }
 
-        bytes memory bytecode = _creationCode(impl, chainId, tokenContract, tokenId);
+        bytes memory bytecode = _creationCode(impl, seed, chainId, tokenContract, tokenId);
 
         newAccount = Create2.deploy(0, accountSalt, bytecode);
         _accounts[accountSalt] = newAccount;
@@ -108,16 +108,28 @@ contract ERC6551Registry is IERC6551Registry, ReentrancyGuard, Ownable {
 
     function _creationCode(
         address implementation_,
+        bytes32 salt_,
         uint256 chainId_,
         address tokenContract_,
         uint256 tokenId_
     ) internal pure returns (bytes memory) {
+        // Per ERC-6551 spec, runtime bytecode is 173 bytes:
+        // - 10 bytes proxy prefix
+        // - 20 bytes implementation address
+        // - 15 bytes proxy suffix
+        // - 32 bytes salt
+        // - 32 bytes chainId
+        // - 32 bytes tokenContract
+        // - 32 bytes tokenId
+        // Total: 10 + 20 + 15 + 32 + 32 + 32 + 32 = 173 bytes
+        //
+        // The init code (first 10 bytes) returns 0xAD (173) bytes of runtime code
         return
             abi.encodePacked(
                 hex"3d60ad80600a3d3981f3363d3d373d3d3d363d73",
                 implementation_,
                 hex"5af43d82803e903d91602b57fd5bf3",
-                abi.encode(tokenId_, chainId_, tokenContract_)
+                abi.encode(salt_, chainId_, tokenContract_, tokenId_)
             );
     }
 }

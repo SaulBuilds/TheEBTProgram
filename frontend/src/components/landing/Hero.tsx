@@ -128,7 +128,7 @@ export function Hero() {
             <div className="w-px h-4 bg-gray-700" />
             <div>
               <span className="text-ebt-gold font-heading text-lg">1.2M</span>
-              <span className="text-gray-500 ml-2">$FOOD</span>
+              <span className="text-gray-500 ml-2">$EBTC</span>
             </div>
           </div>
         </div>
