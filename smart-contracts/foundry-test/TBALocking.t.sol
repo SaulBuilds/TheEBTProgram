@@ -89,7 +89,8 @@ contract TBALockingTest is Test {
 
     function testApproveLocksTBA() public {
         // Mint NFT
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -110,7 +111,8 @@ contract TBALockingTest is Test {
 
     function testApproveToZeroDoesNotLock() public {
         // Mint and approve marketplace
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -130,7 +132,8 @@ contract TBALockingTest is Test {
 
     function testRequestUnlockWhenNoApproval() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -152,7 +155,8 @@ contract TBALockingTest is Test {
 
     function testCannotRequestUnlockWithActiveApproval() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -168,7 +172,8 @@ contract TBALockingTest is Test {
 
     function testOnlyOwnerCanRequestUnlock() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -193,7 +198,8 @@ contract TBALockingTest is Test {
 
     function testCannotUnlockAlreadyUnlockedTBA() public {
         // Mint but don't approve (TBA is unlocked)
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -209,7 +215,8 @@ contract TBALockingTest is Test {
 
     function testTransferUnlocksTBA() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -228,7 +235,8 @@ contract TBALockingTest is Test {
 
     function testSafeTransferUnlocksTBA() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -248,7 +256,8 @@ contract TBALockingTest is Test {
 
     function testLockedTBABlocksTransfers() public {
         // Mint and send some tokens to TBA
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -268,7 +277,8 @@ contract TBALockingTest is Test {
 
     function testLockedTBABlocksExecuteCall() public {
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -287,7 +297,8 @@ contract TBALockingTest is Test {
 
     function testUnlockedTBAAllowsTransfers() public {
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -313,7 +324,8 @@ contract TBALockingTest is Test {
 
     function testMultipleApprovalsKeepLocked() public {
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -344,7 +356,8 @@ contract TBALockingTest is Test {
 
     function testLockIdempotent() public {
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -360,7 +373,8 @@ contract TBALockingTest is Test {
 
     function testTBAStateAcrossOwnershipTransfers() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -393,7 +407,8 @@ contract TBALockingTest is Test {
         assertFalse(program.isTBALocked(999), "Nonexistent token should return false");
 
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -410,7 +425,8 @@ contract TBALockingTest is Test {
 
     function testOnlyNFTContractCanLockTBA() public {
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -430,7 +446,8 @@ contract TBALockingTest is Test {
 
     function testOnlyNFTContractCanUnlockTBA() public {
         // Mint and lock via approval
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -455,7 +472,8 @@ contract TBALockingTest is Test {
 
     function testTBALockedEvent() public {
         // Mint
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -471,7 +489,8 @@ contract TBALockingTest is Test {
 
     function testTBAUnlockedEventOnRequestUnlock() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -494,7 +513,8 @@ contract TBALockingTest is Test {
 
     function testTBAUnlockedEventOnTransfer() public {
         // Mint and lock
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: MINT_PRICE}("user1");
 
@@ -577,7 +597,8 @@ contract TBALockingFuzzTest is Test {
         ids[0] = userId;
         app.approveUsers(ids);
 
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user);
         program.mint{value: 0.02 ether}(userId);
 
@@ -602,7 +623,8 @@ contract TBALockingFuzzTest is Test {
         ids[0] = "fuzz2";
         app.approveUsers(ids);
 
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user);
         program.mint{value: 0.02 ether}("fuzz2");
 
@@ -675,7 +697,8 @@ contract TBALockingPenetrationTest is Test {
     /// @notice Test: Attacker cannot unlock someone else's TBA
     function testAttackerCannotUnlockOthersTBA() public {
         // User mints and locks
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -695,7 +718,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Attacker cannot directly call lockAssets on TBA
     function testAttackerCannotDirectlyLockTBA() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -709,7 +733,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Attacker cannot directly call unlockAssets on TBA
     function testAttackerCannotDirectlyUnlockTBA() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -726,7 +751,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Seller cannot drain TBA between listing and sale
     function testSellerCannotDrainTBAWhileListed() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -749,7 +775,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Seller cannot use executeCall to drain TBA while listed
     function testSellerCannotUseExecuteCallWhileListed() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -773,7 +800,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Race condition - approve and drain in same block
     function testCannotApproveAndDrainInSameBlock() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -793,7 +821,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Buyer receives TBA with assets intact
     function testBuyerReceivesTBAWithAssetsIntact() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 
@@ -825,7 +854,8 @@ contract TBALockingPenetrationTest is Test {
 
     /// @notice Test: Attacker cannot spoof NFT contract address
     function testCannotSpoofNFTContract() public {
-        vm.roll(5);
+        // Advance time past rate limit cooldown (30 seconds)
+        vm.warp(1000);
         vm.prank(user1);
         program.mint{value: 0.02 ether}("user1");
 

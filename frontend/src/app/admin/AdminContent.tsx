@@ -7,7 +7,7 @@ import { formatEther, parseEther, isAddress } from 'viem';
 import { Navbar } from '@/components/layout/Navbar';
 import {
   useContractOwner,
-  useTotalFundsRaised,
+  useTotalRaised,
   useSoftCap,
   useHardCap,
   useFundraisingClosed,
@@ -19,6 +19,7 @@ import {
   useUnpauseFoodStamps,
   useCloseFundraising,
   useIsBlacklisted,
+  useApproveUserWithMetadata,
 } from '@/lib/hooks';
 
 interface Application {
@@ -45,6 +46,13 @@ interface Application {
 
 type TabType = 'applications' | 'contracts' | 'blacklist';
 
+interface PendingOnChainApproval {
+  userId: string;
+  metadataUri: string;
+  applicationId: number;
+  score: number;
+}
+
 export default function AdminContent() {
   const [adminToken, setAdminToken] = useState('');
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -53,6 +61,9 @@ export default function AdminContent() {
   const [error, setError] = useState<string | null>(null);
   const [processingId, setProcessingId] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<TabType>('applications');
+
+  // On-chain approval modal state
+  const [pendingOnChainApproval, setPendingOnChainApproval] = useState<PendingOnChainApproval | null>(null);
 
   // Contract state inputs
   const [blacklistAddress, setBlacklistAddress] = useState('');
@@ -63,7 +74,7 @@ export default function AdminContent() {
   // Wagmi hooks
   const { address: connectedAddress } = useAccount();
   const { data: contractOwner } = useContractOwner();
-  const { data: totalFundsRaised } = useTotalFundsRaised();
+  const { data: totalRaised } = useTotalRaised();
   const { data: softCap } = useSoftCap();
   const { data: hardCap } = useHardCap();
   const { data: fundraisingClosed } = useFundraisingClosed();
@@ -108,13 +119,24 @@ export default function AdminContent() {
     isSuccess: isCloseFundraisingSuccess,
   } = useCloseFundraising();
 
+  // On-chain approval hook
+  const {
+    approveUser: approveUserOnChain,
+    hash: onChainApprovalHash,
+    isPending: isOnChainApprovalPending,
+    isConfirming: isOnChainApprovalConfirming,
+    isSuccess: isOnChainApprovalSuccess,
+    error: onChainApprovalError,
+    reset: resetOnChainApproval,
+  } = useApproveUserWithMetadata();
+
   const isOwner: boolean = !!(connectedAddress && contractOwner && connectedAddress.toLowerCase() === (contractOwner as string).toLowerCase());
   const isFundraisingClosed: boolean = fundraisingClosed === true;
   const isFoodPaused: boolean = foodStampsPaused === true;
 
   // Type-safe contract data
   const tokensMinted: number = currentTokenId ? Number(currentTokenId as bigint) - 1 : 0;
-  const fundsRaisedEth: string = totalFundsRaised ? formatEther(totalFundsRaised as bigint) : '0';
+  const fundsRaisedEth: string = totalRaised ? formatEther(totalRaised as bigint) : '0';
   const softCapEth: string = softCap ? formatEther(softCap as bigint) : '0';
   const hardCapEth: string = hardCap ? formatEther(hardCap as bigint) : '0';
   const isAddressBlacklisted: boolean = isBlacklistedResult === true;
@@ -177,16 +199,29 @@ export default function AdminContent() {
     }
   }, [isCapsSuccess, resetCaps]);
 
+  // Handle on-chain approval success
+  useEffect(() => {
+    if (isOnChainApprovalSuccess && pendingOnChainApproval) {
+      alert(`On-chain approval complete!\n\nUser: ${pendingOnChainApproval.userId}\nScore: ${pendingOnChainApproval.score}\nTx: ${onChainApprovalHash}`);
+      setPendingOnChainApproval(null);
+      resetOnChainApproval();
+    }
+  }, [isOnChainApprovalSuccess, pendingOnChainApproval, onChainApprovalHash, resetOnChainApproval]);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     await fetchApplications();
   };
 
   const handleApprove = async (applicationId: number) => {
+    const app = applications.find(a => a.id === applicationId);
+    if (!app) return;
+
     setProcessingId(applicationId);
     setError(null);
 
     try {
+      // Step 1: Database approval (calculates score, generates metadata URI)
       const response = await fetch(
         `/api/admin/applications/approve`,
         {
@@ -205,14 +240,35 @@ export default function AdminContent() {
       }
 
       const result = await response.json();
-      alert(`Application approved!\n\nScore: ${result.score}\nMetadata URI: ${result.metadataUri}`);
 
+      // Refresh the list immediately - this removes the approved user from pending list
       fetchApplications();
+
+      // Step 2: Set up on-chain approval
+      setPendingOnChainApproval({
+        userId: app.userId,
+        metadataUri: result.metadataUri,
+        applicationId,
+        score: result.score,
+      });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to approve application');
     } finally {
       setProcessingId(null);
     }
+  };
+
+  const handleOnChainApproval = () => {
+    if (!pendingOnChainApproval) return;
+    approveUserOnChain(pendingOnChainApproval.userId, pendingOnChainApproval.metadataUri);
+  };
+
+  const handleSkipOnChainApproval = () => {
+    if (pendingOnChainApproval) {
+      alert(`Database approval complete.\n\nScore: ${pendingOnChainApproval.score}\nMetadata URI: ${pendingOnChainApproval.metadataUri}\n\nNote: On-chain approval skipped. User cannot mint until on-chain approval is complete.`);
+    }
+    setPendingOnChainApproval(null);
+    resetOnChainApproval();
   };
 
   const handleReject = async (applicationId: number) => {
@@ -399,6 +455,93 @@ export default function AdminContent() {
           <div className="mb-6 p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg">
             <p className="text-welfare-red font-mono">{error}</p>
           </div>
+        )}
+
+        {/* On-Chain Approval Modal */}
+        {pendingOnChainApproval && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.95 }}
+              animate={{ scale: 1 }}
+              className="bg-gray-900 border border-gray-800 rounded-lg p-6 max-w-md w-full"
+            >
+              <h3 className="text-xl font-mono font-bold text-ebt-gold mb-4">
+                On-Chain Approval Required
+              </h3>
+              <p className="text-gray-400 font-mono text-sm mb-6">
+                Database approval complete. Now approve this user on the blockchain so they can mint.
+              </p>
+
+              <div className="p-4 bg-gray-800 rounded-lg mb-6 text-sm font-mono">
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-500">User ID:</span>
+                  <span className="text-white">{pendingOnChainApproval.userId}</span>
+                </div>
+                <div className="flex justify-between mb-2">
+                  <span className="text-gray-500">Score:</span>
+                  <span className="text-ebt-gold font-bold">{pendingOnChainApproval.score}</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-gray-500">Metadata URI:</span>
+                  <span className="text-white text-xs truncate max-w-[200px]">{pendingOnChainApproval.metadataUri}</span>
+                </div>
+              </div>
+
+              {/* Transaction status */}
+              {isOnChainApprovalPending && (
+                <div className="p-4 bg-ebt-gold/10 border border-ebt-gold/30 rounded-lg mb-4 text-center">
+                  <div className="w-6 h-6 mx-auto mb-2 border-2 border-ebt-gold border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-ebt-gold font-mono text-sm">Confirm in wallet...</p>
+                </div>
+              )}
+
+              {isOnChainApprovalConfirming && (
+                <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg mb-4 text-center">
+                  <div className="w-6 h-6 mx-auto mb-2 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                  <p className="text-blue-400 font-mono text-sm">Transaction confirming...</p>
+                  {onChainApprovalHash && (
+                    <a
+                      href={`https://sepolia.etherscan.io/tx/${onChainApprovalHash}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs text-blue-400 underline"
+                    >
+                      View on Etherscan
+                    </a>
+                  )}
+                </div>
+              )}
+
+              {onChainApprovalError && (
+                <div className="p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg mb-4">
+                  <p className="text-welfare-red font-mono text-sm">
+                    Error: {onChainApprovalError.message}
+                  </p>
+                </div>
+              )}
+
+              <div className="flex gap-3">
+                <button
+                  onClick={handleOnChainApproval}
+                  disabled={isOnChainApprovalPending || isOnChainApprovalConfirming}
+                  className="flex-1 py-3 bg-ebt-gold text-black font-mono font-bold rounded-lg hover:bg-ebt-gold/90 disabled:opacity-50"
+                >
+                  {isOnChainApprovalPending || isOnChainApprovalConfirming ? 'Processing...' : 'Approve On-Chain'}
+                </button>
+                <button
+                  onClick={handleSkipOnChainApproval}
+                  disabled={isOnChainApprovalPending || isOnChainApprovalConfirming}
+                  className="px-4 py-3 bg-gray-800 text-gray-400 font-mono rounded-lg hover:bg-gray-700 disabled:opacity-50"
+                >
+                  Skip
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
         )}
 
         {/* Applications Tab */}

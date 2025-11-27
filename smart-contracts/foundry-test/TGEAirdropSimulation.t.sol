@@ -108,9 +108,9 @@ contract TGEAirdropSimulation is Test {
     }
 
     function _mintNFTsForAirdrop() internal {
-        // Use explicit block counter to avoid Foundry vm.roll quirk
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Use time-based rate limiting (30 second cooldown)
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
         for (uint256 i = 0; i < NUM_RECIPIENTS; i++) {
             address user = address(uint160(uint256(keccak256(abi.encodePacked("airdropuser", i)))));
@@ -132,9 +132,9 @@ contract TGEAirdropSimulation is Test {
             ids[0] = userId;
             application.approveUsers(ids);
 
-            // Mint - use explicit block counter
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            // Mint - use time-based rate limiting
+            currentTime += 31;
+            vm.warp(currentTime);
             vm.prank(user);
             program.mint{value: 0.05 ether}(userId);
 
@@ -159,10 +159,11 @@ contract TGEAirdropSimulation is Test {
     }
 
     function _generateMerkleTree() internal {
-        // Build leaves
+        // Build leaves - H-1 fix: Include chainId for cross-chain replay protection
         bytes32[] memory leaves = new bytes32[](NUM_RECIPIENTS);
         for (uint256 i = 0; i < NUM_RECIPIENTS; i++) {
             leaves[i] = keccak256(abi.encodePacked(
+                block.chainid,
                 recipients[i].tokenId,
                 recipients[i].tba,
                 recipients[i].airdropAmount
@@ -407,11 +408,12 @@ contract TGEAirdropSimulation is Test {
     function testMerkleProofVerification() public view {
         console.log("\n=== TEST: MERKLE PROOF VERIFICATION ===");
 
-        // Verify each proof is valid
+        // Verify each proof is valid - H-1 fix: Include chainId in leaf
         for (uint256 i = 0; i < 10; i++) {
             AirdropRecipient storage recipient = recipients[i];
 
             bytes32 leaf = keccak256(abi.encodePacked(
+                block.chainid,
                 recipient.tokenId,
                 recipient.tba,
                 recipient.airdropAmount

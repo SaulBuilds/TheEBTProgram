@@ -60,6 +60,9 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     error NoContributionToRefund();
     error AlreadyRefunded();
     error SoftCapReached();
+    error TGEAirdropExpired();
+    error RateLimitExceeded();
+    error ReapplicationUserNotApproved();
 
     // ============ Enums ============
     enum ReapplicationStatus { NONE, PENDING, APPROVED, REJECTED }
@@ -125,6 +128,7 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
 
     // TGE Airdrop
     bytes32 public tgeMerkleRoot;
+    uint256 public tgeAirdropDeadline; // Deadline for TGE claims
 
     // Mappings
     mapping(uint256 => TokenData) public tokenData;
@@ -135,7 +139,9 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     mapping(address => uint256) public contributions;
     mapping(address => bool) public hasRefunded;
 
-    uint256 public lastMintBlock;
+    uint256 public lastMintBlock; // Deprecated - kept for storage layout
+    uint256 public lastMintTimestamp; // Time-based rate limiting
+    uint256 public constant MINT_COOLDOWN = 30 seconds; // 30 second cooldown between mints
 
     // ============ Events ============
     event ContributionReceived(address indexed contributor, uint256 amount, uint256 tokenId);
@@ -197,8 +203,8 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
         _;
     }
 
-    modifier threeBlocksAfterLastMint() {
-        require(block.number > lastMintBlock + 3, "Wait 3 blocks");
+    modifier rateLimited() {
+        if (block.timestamp < lastMintTimestamp + MINT_COOLDOWN) revert RateLimitExceeded();
         _;
     }
 
@@ -271,7 +277,7 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
         whenInitialized
         whenNotPaused
         duringFundraising
-        threeBlocksAfterLastMint
+        rateLimited
         nonReentrant
     {
         // Validations
@@ -291,7 +297,7 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
 
         uint256 newTokenId = _currentTokenId++;
         hasMinted[msg.sender] = true;
-        lastMintBlock = block.number;
+        lastMintTimestamp = block.timestamp;
 
         // Store token data
         tokenData[newTokenId] = TokenData({
@@ -396,10 +402,16 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     }
 
     /// @notice Request reapplication after completing 3 claims
+    /// @dev H-8 fix: Re-verifies user is still approved before allowing reapplication
     /// @param tokenId The NFT token ID
     function reapply(uint256 tokenId) external {
         require(_exists(tokenId), "Token does not exist");
         require(ownerOf(tokenId) == msg.sender, "Not token owner");
+
+        // H-8 fix: Re-verify user is still approved in EBTApplication
+        // This prevents users from reapplying if their status changed (e.g., fraud detected)
+        string memory userID = tokenIdToUserID[tokenId];
+        if (!_ebtApplication.isUserApproved(userID)) revert ReapplicationUserNotApproved();
 
         TokenData storage data = tokenData[tokenId];
         if (data.claimCount < MAX_CLAIMS) revert MustCompleteAllClaims();
@@ -411,6 +423,7 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
 
     /// @notice Claim TGE airdrop tokens using merkle proof
     /// @dev TGE tokens are distributed from EBTProgram's 2B allocation (not from vault)
+    /// @dev Merkle leaf includes chainId to prevent cross-chain replay attacks
     /// @param tokenId The NFT token ID
     /// @param amount The airdrop amount
     /// @param merkleProof The merkle proof
@@ -422,12 +435,17 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
         require(_exists(tokenId), "Token does not exist");
         require(ownerOf(tokenId) == msg.sender, "Not token owner");
 
+        // Check deadline (H-1 fix: prevent indefinite claim window)
+        if (tgeAirdropDeadline > 0 && block.timestamp > tgeAirdropDeadline) {
+            revert TGEAirdropExpired();
+        }
+
         TokenData storage data = tokenData[tokenId];
         if (data.tgeClaimed) revert AlreadyClaimedTGE();
 
-        // Verify merkle proof
+        // Verify merkle proof (H-1 fix: include chainId to prevent cross-chain replay)
         address tba = getTBA(tokenId);
-        bytes32 leaf = keccak256(abi.encodePacked(tokenId, tba, amount));
+        bytes32 leaf = keccak256(abi.encodePacked(block.chainid, tokenId, tba, amount));
         if (!MerkleProof.verify(merkleProof, tgeMerkleRoot, leaf)) {
             revert InvalidMerkleProof();
         }
@@ -582,6 +600,12 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
         tgeMerkleRoot = _merkleRoot;
     }
 
+    /// @notice Set TGE airdrop deadline
+    /// @param _deadline Unix timestamp after which TGE claims are no longer accepted
+    function setTGEAirdropDeadline(uint256 _deadline) external onlyOwner {
+        tgeAirdropDeadline = _deadline;
+    }
+
     /// @notice Set the account implementation for TBAs
     /// @dev Can only be set before first mint (implementation locks after first mint)
     function setAccountImplementation(address accountImpl) external onlyOwner {
@@ -615,7 +639,9 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     }
 
     /// @notice Set blacklist status for addresses
+    /// @dev M-7 fix: Added batch size limit (100 max)
     function setBlacklistStatus(address[] calldata accounts, bool status) external onlyOwner {
+        require(accounts.length <= 100, "Batch too large");
         for (uint256 i = 0; i < accounts.length; ++i) {
             _blacklist[accounts[i]] = status;
         }

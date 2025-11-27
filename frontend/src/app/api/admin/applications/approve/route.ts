@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/lib/auth';
+import { verifyAdmin, logAdminAction } from '@/lib/auth';
 import { z } from 'zod';
 
 const approveSchema = z.object({
@@ -9,12 +9,18 @@ const approveSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    if (!verifyAdmin(request)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const authResult = verifyAdmin(request);
+    if (!authResult.valid) {
+      return NextResponse.json(
+        { error: authResult.error || 'Forbidden' },
+        { status: authResult.error === 'Rate limit exceeded. Try again later.' ? 429 : 403 }
+      );
     }
 
     const body = await request.json();
     const { applicationId } = approveSchema.parse(body);
+
+    logAdminAction(request, 'APPROVE_APPLICATION', { applicationId });
 
     const application = await prisma.application.findUnique({
       where: { id: applicationId },

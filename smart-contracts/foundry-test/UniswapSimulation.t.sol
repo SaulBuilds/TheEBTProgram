@@ -478,14 +478,14 @@ contract UniswapSimulation is Test {
     // ============ Helper Functions ============
 
     function _mintMultipleNFTs(uint256 count) internal {
-        // Start at block 5 to ensure we're past initial block 0
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Use time-based rate limiting (30 second cooldown)
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
         for (uint256 i = 0; i < count && i < mintTestUsers.length; i++) {
-            // Move forward 4 blocks for each mint (threeBlocksAfterLastMint modifier)
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            // Warp forward 31 seconds for each mint (30 second cooldown)
+            currentTime += 31;
+            vm.warp(currentTime);
 
             string memory userId = string(abi.encodePacked("USER_", vm.toString(i)));
             vm.prank(mintTestUsers[i]);

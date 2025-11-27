@@ -17,6 +17,8 @@ contract TeamVesting is Ownable, ReentrancyGuard {
     error NothingToClaim();
     error TGENotStarted();
     error TeamWalletNotSet();
+    error VestingAlreadyTerminated();
+    error AlreadyTerminated();
 
     // ============ Constants ============
     uint256 public constant TOTAL_ALLOCATION = 1_000_000_000 * 1e18; // 1B tokens (5% of 20B)
@@ -30,11 +32,13 @@ contract TeamVesting is Ownable, ReentrancyGuard {
     uint256 public tgeTimestamp;
     uint256 public totalClaimed;
     bool public tgeStarted;
+    bool public terminated;  // M-2 fix: Emergency termination flag
 
     // ============ Events ============
     event TGEStarted(uint256 timestamp);
     event TokensClaimed(address indexed to, uint256 amount, uint256 monthsClaimed);
     event TeamWalletUpdated(address indexed oldWallet, address indexed newWallet);
+    event VestingTerminated(uint256 returnedAmount);  // M-2 fix
 
     // ============ Constructor ============
     constructor(address _foodToken) {
@@ -55,7 +59,9 @@ contract TeamVesting is Ownable, ReentrancyGuard {
 
     /// @notice Claim available vested tokens
     /// @dev Calculates how many months have passed and releases accordingly
+    /// @dev M-2 fix: Added termination check
     function claim() external nonReentrant {
+        if (terminated) revert VestingAlreadyTerminated();
         if (!tgeStarted) revert TGENotStarted();
         if (teamWallet == address(0)) revert TeamWalletNotSet();
 
@@ -84,6 +90,24 @@ contract TeamVesting is Ownable, ReentrancyGuard {
         if (to == address(0)) revert InvalidAddress();
         uint256 balance = foodToken.balanceOf(address(this));
         foodToken.safeTransfer(to, balance);
+    }
+
+    /// @notice Terminate vesting - return unvested tokens and prevent further claims
+    /// @dev M-2 fix: Emergency termination capability for fraud or contract issues
+    /// @param returnTo Address to return unvested tokens to
+    function terminateVesting(address returnTo) external onlyOwner {
+        if (terminated) revert AlreadyTerminated();
+        if (returnTo == address(0)) revert InvalidAddress();
+
+        terminated = true;
+
+        // Return all remaining tokens (both vested unclaimed + unvested)
+        uint256 balance = foodToken.balanceOf(address(this));
+        if (balance > 0) {
+            foodToken.safeTransfer(returnTo, balance);
+        }
+
+        emit VestingTerminated(balance);
     }
 
     // ============ View Functions ============

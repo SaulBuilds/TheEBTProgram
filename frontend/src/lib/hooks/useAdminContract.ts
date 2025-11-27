@@ -4,9 +4,13 @@ import { useReadContract, useWriteContract, useWaitForTransactionReceipt } from 
 import { ebtProgramConfig, foodStampsConfig } from '../contracts/config';
 import { parseEther } from 'viem';
 
-// ==================== READ HOOKS ====================
+// ============================================================================
+// READ HOOKS - Contract State
+// ============================================================================
 
-// Check if an address is blacklisted
+/**
+ * Check if an address is blacklisted
+ */
 export function useIsBlacklisted(address: `0x${string}` | undefined) {
   return useReadContract({
     ...ebtProgramConfig,
@@ -18,7 +22,9 @@ export function useIsBlacklisted(address: `0x${string}` | undefined) {
   });
 }
 
-// Get contract owner
+/**
+ * Get contract owner
+ */
 export function useContractOwner() {
   return useReadContract({
     ...ebtProgramConfig,
@@ -26,7 +32,9 @@ export function useContractOwner() {
   });
 }
 
-// Check if fundraising is closed
+/**
+ * Check if fundraising is closed
+ */
 export function useFundraisingClosed() {
   return useReadContract({
     ...ebtProgramConfig,
@@ -34,23 +42,59 @@ export function useFundraisingClosed() {
   });
 }
 
-// Get withdrawal period
-export function useWithdrawalPeriod() {
+/**
+ * Get the fundraising start timestamp
+ */
+export function useFundraisingStartTime() {
   return useReadContract({
     ...ebtProgramConfig,
-    functionName: 'WITHDRAWAL_PERIOD',
+    functionName: 'fundraisingStartTime',
   });
 }
 
-// Get fundraising deadline
-export function useFundraisingDeadline() {
+/**
+ * Check if ETH has been distributed
+ */
+export function useEthDistributed() {
   return useReadContract({
     ...ebtProgramConfig,
-    functionName: 'fundraisingDeadline',
+    functionName: 'ethDistributed',
   });
 }
 
-// Check if FoodStamps is paused
+/**
+ * Get total ETH raised
+ */
+export function useTotalRaised() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'totalRaised',
+  });
+}
+
+/**
+ * Get soft cap value
+ */
+export function useSoftCap() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'softCap',
+  });
+}
+
+/**
+ * Get hard cap value
+ */
+export function useHardCap() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'hardCap',
+  });
+}
+
+/**
+ * Check if FoodStamps is paused
+ */
 export function useFoodStampsPaused() {
   return useReadContract({
     ...foodStampsConfig,
@@ -58,9 +102,105 @@ export function useFoodStampsPaused() {
   });
 }
 
-// ==================== WRITE HOOKS ====================
+/**
+ * Check if EBTProgram is paused
+ */
+export function useProgramPaused() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'paused',
+  });
+}
 
-// Set blacklist status for addresses
+/**
+ * Check if contract is initialized
+ */
+export function useInitialized() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'initialized',
+  });
+}
+
+/**
+ * Get the protocol caller address
+ */
+export function useProtocolCaller() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'protocolCaller',
+  });
+}
+
+/**
+ * Get the liquidity vault address
+ */
+export function useLiquidityVault() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'liquidityVault',
+  });
+}
+
+/**
+ * Get the treasury wallet address
+ */
+export function useTreasuryWallet() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'treasuryWallet',
+  });
+}
+
+/**
+ * Get the marketing wallet address
+ */
+export function useMarketingWallet() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'marketingWallet',
+  });
+}
+
+/**
+ * Get the team wallet address
+ */
+export function useTeamWallet() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'teamWallet',
+  });
+}
+
+/**
+ * Get the TGE merkle root
+ */
+export function useTGEMerkleRoot() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'tgeMerkleRoot',
+  });
+}
+
+/**
+ * Get the TGE airdrop deadline
+ */
+export function useTGEAirdropDeadline() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'tgeAirdropDeadline',
+  });
+}
+
+// ============================================================================
+// WRITE HOOKS - Blacklist Management
+// ============================================================================
+
+/**
+ * Set blacklist status for addresses
+ * @param accounts - Array of addresses to update
+ * @param status - true to blacklist, false to remove from blacklist
+ */
 export function useSetBlacklistStatus() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
@@ -87,7 +227,15 @@ export function useSetBlacklistStatus() {
   };
 }
 
-// Set soft and hard caps
+// ============================================================================
+// WRITE HOOKS - Configuration (Pre-Initialize)
+// ============================================================================
+
+/**
+ * Set soft and hard caps (must be called BEFORE initialize)
+ * @param softCapEth - Soft cap in ETH as string (e.g., "20")
+ * @param hardCapEth - Hard cap in ETH as string (e.g., "2000")
+ */
 export function useSetCaps() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
@@ -114,7 +262,44 @@ export function useSetCaps() {
   };
 }
 
-// Set base token URI
+/**
+ * Set fundraising period (must be called BEFORE initialize)
+ * @param periodSeconds - Period in seconds
+ */
+export function useSetFundraisingPeriod() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const setFundraisingPeriod = (periodSeconds: bigint) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'setFundraisingPeriod',
+      args: [periodSeconds],
+    });
+  };
+
+  return {
+    setFundraisingPeriod,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+// ============================================================================
+// WRITE HOOKS - Token URI
+// ============================================================================
+
+/**
+ * Set base token URI for NFT metadata
+ * @param newBaseURI - Base URI for token metadata (e.g., "https://api.example.com/metadata/")
+ */
 export function useSetBaseTokenURI() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
@@ -141,7 +326,14 @@ export function useSetBaseTokenURI() {
   };
 }
 
-// Close fundraising period
+// ============================================================================
+// WRITE HOOKS - Fundraising Management
+// ============================================================================
+
+/**
+ * Close fundraising period
+ * NOTE: Contract function is 'closeFundraising' not 'closeFundraisingPeriod'
+ */
 export function useCloseFundraising() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
@@ -152,7 +344,7 @@ export function useCloseFundraising() {
   const closeFundraising = () => {
     writeContract({
       ...ebtProgramConfig,
-      functionName: 'closeFundraisingPeriod',
+      functionName: 'closeFundraising',
     });
   };
 
@@ -167,24 +359,25 @@ export function useCloseFundraising() {
   };
 }
 
-// Set withdrawal period
-export function useSetWithdrawalPeriod() {
+/**
+ * Distribute ETH to wallets after fundraising closes (if soft cap met)
+ */
+export function useDistributeETH() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const setWithdrawalPeriod = (periodSeconds: bigint) => {
+  const distributeETH = () => {
     writeContract({
       ...ebtProgramConfig,
-      functionName: 'setWithdrawalPeriod',
-      args: [periodSeconds],
+      functionName: 'distributeETH',
     });
   };
 
   return {
-    setWithdrawalPeriod,
+    distributeETH,
     hash,
     isPending,
     isConfirming,
@@ -194,24 +387,31 @@ export function useSetWithdrawalPeriod() {
   };
 }
 
-// Set payout addresses
-export function useSetPayoutAddresses() {
+// ============================================================================
+// WRITE HOOKS - Protocol Configuration
+// ============================================================================
+
+/**
+ * Set the protocol caller address
+ * @param protocolCaller - Address that can call protocol-only functions
+ */
+export function useSetProtocolCaller() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
   const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
     hash,
   });
 
-  const setPayoutAddresses = (multisigAddress: `0x${string}`, deployerAddress: `0x${string}`) => {
+  const setProtocolCaller = (protocolCaller: `0x${string}`) => {
     writeContract({
       ...ebtProgramConfig,
-      functionName: 'setPayoutAddresses',
-      args: [multisigAddress, deployerAddress],
+      functionName: 'setProtocolCaller',
+      args: [protocolCaller],
     });
   };
 
   return {
-    setPayoutAddresses,
+    setProtocolCaller,
     hash,
     isPending,
     isConfirming,
@@ -221,7 +421,264 @@ export function useSetPayoutAddresses() {
   };
 }
 
-// Pause FoodStamps minting
+/**
+ * Set the liquidity vault address
+ * @param liquidityVault - Address of the LiquidityVault contract
+ */
+export function useSetLiquidityVault() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const setLiquidityVault = (liquidityVault: `0x${string}`) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'setLiquidityVault',
+      args: [liquidityVault],
+    });
+  };
+
+  return {
+    setLiquidityVault,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Set distribution wallet addresses
+ * @param treasury - Treasury wallet address
+ * @param marketing - Marketing wallet address
+ * @param team - Team wallet address
+ */
+export function useSetDistributionWallets() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const setDistributionWallets = (
+    treasury: `0x${string}`,
+    marketing: `0x${string}`,
+    team: `0x${string}`
+  ) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'setDistributionWallets',
+      args: [treasury, marketing, team],
+    });
+  };
+
+  return {
+    setDistributionWallets,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+// ============================================================================
+// WRITE HOOKS - TGE Airdrop Configuration
+// ============================================================================
+
+/**
+ * Set the TGE merkle root for airdrop claims
+ * @param merkleRoot - The root hash of the merkle tree
+ */
+export function useSetTGEMerkleRoot() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const setTGEMerkleRoot = (merkleRoot: `0x${string}`) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'setTGEMerkleRoot',
+      args: [merkleRoot],
+    });
+  };
+
+  return {
+    setTGEMerkleRoot,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Set the TGE airdrop deadline
+ * @param deadline - Unix timestamp after which claims are rejected
+ */
+export function useSetTGEAirdropDeadline() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const setTGEAirdropDeadline = (deadline: bigint) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'setTGEAirdropDeadline',
+      args: [deadline],
+    });
+  };
+
+  return {
+    setTGEAirdropDeadline,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+// ============================================================================
+// WRITE HOOKS - Reapplication Management
+// ============================================================================
+
+/**
+ * Approve a reapplication with a new base amount
+ * @param tokenId - The token ID requesting reapplication
+ * @param newBaseAmount - New base token amount for claims
+ */
+export function useApproveReapplication() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const approveReapplication = (tokenId: bigint, newBaseAmount: bigint) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'approveReapplication',
+      args: [tokenId, newBaseAmount],
+    });
+  };
+
+  return {
+    approveReapplication,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Reject a reapplication
+ * @param tokenId - The token ID requesting reapplication
+ */
+export function useRejectReapplication() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const rejectReapplication = (tokenId: bigint) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'rejectReapplication',
+      args: [tokenId],
+    });
+  };
+
+  return {
+    rejectReapplication,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+// ============================================================================
+// WRITE HOOKS - Pause Controls
+// ============================================================================
+
+/**
+ * Pause the EBTProgram contract
+ */
+export function usePauseProgram() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const pause = () => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'pause',
+    });
+  };
+
+  return {
+    pause,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Unpause the EBTProgram contract
+ */
+export function useUnpauseProgram() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const unpause = () => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'unpause',
+    });
+  };
+
+  return {
+    unpause,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Pause FoodStamps token transfers
+ */
 export function usePauseFoodStamps() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
@@ -247,7 +704,9 @@ export function usePauseFoodStamps() {
   };
 }
 
-// Unpause FoodStamps minting
+/**
+ * Unpause FoodStamps token transfers
+ */
 export function useUnpauseFoodStamps() {
   const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
 
@@ -272,3 +731,80 @@ export function useUnpauseFoodStamps() {
     reset,
   };
 }
+
+// ============================================================================
+// WRITE HOOKS - Emergency Functions
+// ============================================================================
+
+/**
+ * Emergency withdraw ETH from the contract
+ * @param to - Recipient address
+ * @param amount - Amount in wei
+ */
+export function useEmergencyWithdrawETH() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const emergencyWithdrawETH = (to: `0x${string}`, amount: bigint) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'emergencyWithdrawETH',
+      args: [to, amount],
+    });
+  };
+
+  return {
+    emergencyWithdrawETH,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Emergency withdraw tokens from the contract
+ * @param token - Token contract address
+ * @param to - Recipient address
+ * @param amount - Amount in token wei
+ */
+export function useEmergencyWithdrawTokens() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const emergencyWithdrawTokens = (token: `0x${string}`, to: `0x${string}`, amount: bigint) => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'emergencyWithdrawTokens',
+      args: [token, to, amount],
+    });
+  };
+
+  return {
+    emergencyWithdrawTokens,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+// ============================================================================
+// DEPRECATED - These hooks called non-existent functions
+// Kept as comments for reference on what was removed
+// ============================================================================
+
+// REMOVED: useWithdrawalPeriod() - Constant doesn't exist on contract
+// REMOVED: useFundraisingDeadline() - Use fundraisingStartTime + period instead
+// REMOVED: useSetWithdrawalPeriod() - Function doesn't exist on contract
+// REMOVED: useSetPayoutAddresses() - Use useSetDistributionWallets() instead

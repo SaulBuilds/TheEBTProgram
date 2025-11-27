@@ -6,7 +6,8 @@ import { CLAIM_INTERVAL, MAX_CLAIMS } from '@/lib/contracts/addresses';
 
 interface InstallmentTimelineProps {
   installmentCount: number;
-  mintedTimestamp: number;
+  /** Unix timestamp of last claim (0 if never claimed) */
+  lastClaimTime: number;
   onClaim?: () => void;
   canClaim: boolean;
   isPending?: boolean;
@@ -22,7 +23,7 @@ interface TimeLeft {
 
 export function InstallmentTimeline({
   installmentCount,
-  mintedTimestamp,
+  lastClaimTime,
   onClaim,
   canClaim,
   isPending,
@@ -32,15 +33,24 @@ export function InstallmentTimeline({
   const [nextClaimDate, setNextClaimDate] = useState<Date | null>(null);
 
   // Calculate next claim time and countdown
+  // If lastClaimTime is 0 (never claimed), user can claim immediately
+  // Otherwise, next claim = lastClaimTime + CLAIM_INTERVAL
   useEffect(() => {
-    if (!mintedTimestamp || installmentCount >= MAX_CLAIMS) {
+    if (installmentCount >= MAX_CLAIMS) {
       setTimeLeft(null);
       setNextClaimDate(null);
       return;
     }
 
-    const mintedAt = new Date(mintedTimestamp * 1000);
-    const nextClaim = new Date(mintedAt.getTime() + CLAIM_INTERVAL * 1000 * (installmentCount + 1));
+    // If never claimed (lastClaimTime is 0), next claim is now
+    if (lastClaimTime === 0) {
+      setTimeLeft(null);
+      setNextClaimDate(null);
+      return;
+    }
+
+    // Calculate next claim time from lastClaimTime
+    const nextClaim = new Date((lastClaimTime + CLAIM_INTERVAL) * 1000);
     setNextClaimDate(nextClaim);
 
     const updateCountdown = () => {
@@ -63,7 +73,7 @@ export function InstallmentTimeline({
     updateCountdown();
     const interval = setInterval(updateCountdown, 1000);
     return () => clearInterval(interval);
-  }, [mintedTimestamp, installmentCount]);
+  }, [lastClaimTime, installmentCount]);
 
   const installments = Array.from({ length: MAX_CLAIMS }, (_, i) => ({
     number: i + 1,

@@ -8,10 +8,11 @@ import { formatEther } from 'viem';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { Navbar } from '@/components/layout/Navbar';
-import { useMint, useHasMinted } from '@/lib/hooks';
-import { MINT_PRICE } from '@/lib/contracts/addresses';
+import { useMint, useHasMinted, useIsUserApproved, useDoesUserIdExist } from '@/lib/hooks';
+import { MIN_MINT_PRICE } from '@/lib/contracts/addresses';
 import { MintChecklist } from '@/components/mint/MintChecklist';
 import { MintSuccess } from '@/components/mint/MintSuccess';
+import { PriceSelector, calculateTokensForPrice } from '@/components/mint/PriceSelector';
 
 interface GeneratedCard {
   imageCid: string;
@@ -41,6 +42,10 @@ export default function MintContent() {
   const { data: hasMintedData } = useHasMinted(address);
   const hasMinted = hasMintedData as boolean | undefined;
 
+  // On-chain approval checks
+  const { data: isApprovedOnChain, isLoading: isLoadingApproval } = useIsUserApproved(userId);
+  const { data: userExistsOnChain, isLoading: isLoadingUserExists } = useDoesUserIdExist(userId);
+
   const { mint, hash, isPending, isConfirming, isSuccess, error: mintError } = useMint();
 
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -48,6 +53,7 @@ export default function MintContent() {
   const [error, setError] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [selectedPrice, setSelectedPrice] = useState<bigint>(MIN_MINT_PRICE);
 
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -105,11 +111,11 @@ export default function MintContent() {
 
   const handleMint = () => {
     if (!userId) return;
-    mint(userId);
+    mint(userId, selectedPrice);
   };
 
-  const mintPriceEth = formatEther(MINT_PRICE);
-  const hasEnoughBalance = balanceData && balanceData.value >= MINT_PRICE;
+  const mintPriceEth = formatEther(selectedPrice);
+  const hasEnoughBalance = balanceData && balanceData.value >= selectedPrice;
 
   // Build checklist items
   type ChecklistStatus = 'pending' | 'success' | 'error' | 'loading';
@@ -123,11 +129,24 @@ export default function MintContent() {
     if (profile) return 'error';
     return 'pending';
   };
+  const getOnChainRegisteredStatus = (): ChecklistStatus => {
+    if (isLoadingUserExists) return 'loading';
+    if (userExistsOnChain === true) return 'success';
+    return 'error';
+  };
+  const getOnChainApprovalStatus = (): ChecklistStatus => {
+    if (isLoadingApproval) return 'loading';
+    if (isApprovedOnChain === true) return 'success';
+    return 'error';
+  };
   const getMintedStatus = (): ChecklistStatus => {
     if (hasMinted === false) return 'success';
     if (hasMinted === true) return 'error';
     return 'pending';
   };
+
+  // Determine if ready to mint
+  const isOnChainReady = userExistsOnChain === true && isApprovedOnChain === true;
 
   const checklistItems = [
     {
@@ -144,9 +163,21 @@ export default function MintContent() {
     },
     {
       id: 'approved',
-      label: 'Application Approved',
+      label: 'Application Approved (Database)',
       status: getApprovalStatus(),
       description: profile?.status === 'approved' ? 'Ready to mint' : undefined,
+    },
+    {
+      id: 'onChainRegistered',
+      label: 'Registered On-Chain',
+      status: getOnChainRegisteredStatus(),
+      description: userExistsOnChain ? 'Your userId exists on the blockchain' : 'Complete on-chain registration during application',
+    },
+    {
+      id: 'onChainApproved',
+      label: 'Approved On-Chain',
+      status: getOnChainApprovalStatus(),
+      description: isApprovedOnChain ? 'Admin approved you on-chain' : 'Waiting for admin on-chain approval',
     },
     {
       id: 'notMinted',
@@ -296,35 +327,38 @@ export default function MintContent() {
           </motion.div>
         )}
 
-        {/* Mint Details */}
+        {/* User Info */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="p-6 bg-gray-900 border border-gray-800 rounded-lg mb-6"
+          className="p-4 bg-gray-900 border border-gray-800 rounded-lg mb-6"
         >
-          <div className="space-y-3">
-            <div className="flex justify-between">
-              <span className="text-gray-400">Username</span>
-              <span className="text-white">{profile.username}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Welfare Score</span>
-              <span className="text-ebt-gold font-heading">{profile.score}</span>
-            </div>
-            <div className="border-t border-gray-800 my-3" />
-            <div className="flex justify-between">
-              <span className="text-gray-400">Mint Price</span>
-              <span className="text-white">{mintPriceEth} ETH</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-gray-400">Network</span>
-              <span className="text-white">Sepolia Testnet</span>
-            </div>
+          <div className="flex justify-between">
+            <span className="text-gray-400">Username</span>
+            <span className="text-white">{profile.username}</span>
+          </div>
+          <div className="flex justify-between mt-2">
+            <span className="text-gray-400">Welfare Score</span>
+            <span className="text-ebt-gold font-heading">{profile.score}</span>
           </div>
         </motion.div>
 
-        {/* What You Get */}
+        {/* Dynamic Price Selector */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.35 }}
+          className="p-6 bg-gray-900 border border-gray-800 rounded-lg mb-6"
+        >
+          <PriceSelector
+            value={selectedPrice}
+            onChange={setSelectedPrice}
+            disabled={isPending || isConfirming || isSuccess || hasMinted === true}
+          />
+        </motion.div>
+
+        {/* What You Get - with dynamic token calculation */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -335,7 +369,9 @@ export default function MintContent() {
           <ul className="text-sm text-gray-300 space-y-1">
             <li>1 Unique EBT Card NFT (pre-generated just for you)</li>
             <li>Token-bound account (ERC-6551 wallet)</li>
-            <li>10,000 $EBTC tokens on mint</li>
+            <li className="text-ebt-gold font-medium">
+              {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $EBTC tokens on mint
+            </li>
             <li>Monthly $EBTC distributions (3 installments)</li>
           </ul>
         </motion.div>
@@ -384,7 +420,7 @@ export default function MintContent() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
           onClick={handleMint}
-          disabled={isPending || isConfirming || isSuccess || hasMinted || !hasEnoughBalance}
+          disabled={isPending || isConfirming || isSuccess || hasMinted || !hasEnoughBalance || !isOnChainReady}
           className="w-full py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isPending
@@ -395,6 +431,8 @@ export default function MintContent() {
             ? 'MINTED!'
             : hasMinted
             ? 'ALREADY MINTED'
+            : !isOnChainReady
+            ? 'WAITING FOR ON-CHAIN APPROVAL'
             : `MINT FOR ${mintPriceEth} ETH`}
         </motion.button>
       </div>

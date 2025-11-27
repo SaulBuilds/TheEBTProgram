@@ -105,7 +105,7 @@ contract ETHConservationTest is Test {
 
     function testETHConservationOnRefund() public {
         // Fundraising period already set in setUp()
-        vm.roll(5);
+        vm.warp(1000);
         vm.prank(user);
         program.mint{value: MINT_PRICE}(userId);
 
@@ -163,7 +163,7 @@ contract ETHConservationTest is Test {
         newApp.approveUsers(_single(userId));
         newApp.setUserScore(userId, 500);
 
-        vm.roll(5);
+        vm.warp(1000);
         vm.prank(user);
         newProgram.mint{value: MINT_PRICE}(userId);
 
@@ -178,7 +178,7 @@ contract ETHConservationTest is Test {
     }
 
     function testClaimReentrancyBlocked() public {
-        vm.roll(5);
+        vm.warp(1000);
         vm.prank(user);
         program.mint{value: MINT_PRICE}(userId);
 
@@ -193,7 +193,7 @@ contract ETHConservationTest is Test {
     }
 
     function testClaimOnlyByProtocol() public {
-        vm.roll(5);
+        vm.warp(1000);
         vm.prank(user);
         program.mint{value: MINT_PRICE}(userId);
 

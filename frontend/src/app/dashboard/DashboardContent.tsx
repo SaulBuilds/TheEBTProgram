@@ -10,21 +10,21 @@ import { Navbar } from '@/components/layout/Navbar';
 import {
   useHasMinted,
   useFoodBalance,
-  useInstallmentCount,
-  useMintedTimestamp,
-  useClaimInstallment,
-  useWalletApplication,
+  useTokenData,
+  useMyApplication,
 } from '@/lib/hooks';
-import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID } from '@/lib/contracts/addresses';
+import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID, CLAIM_INTERVAL } from '@/lib/contracts/addresses';
 import { TBAWallet } from '@/components/tba/TBAWallet';
 import { InstallmentTimeline } from '@/components/dashboard/InstallmentTimeline';
+import { DashboardLeaderboard } from '@/components/dashboard/DashboardLeaderboard';
 
 export default function DashboardContent() {
   const { authenticated, login } = usePrivy();
   const { address, isConnected } = useAccount();
   const { data: ethBalance } = useBalance({ address });
   const { data: hasMinted } = useHasMinted(address);
-  const { data: applicationData, isLoading: isLoadingApplication } = useWalletApplication(address);
+  // Use authenticated endpoint to find application by userId (works even if wallet changed)
+  const { data: applicationData, isLoading: isLoadingApplication } = useMyApplication();
 
   // Get tokenId from mint data if available, otherwise default to 0
   const tokenId = applicationData?.mint?.tokenId !== undefined
@@ -32,22 +32,40 @@ export default function DashboardContent() {
     : BigInt(0);
   const { data: foodBalanceData } = useFoodBalance(address);
   const foodBalance = foodBalanceData as bigint | undefined;
-  const { data: installmentCount } = useInstallmentCount(tokenId);
-  const { data: mintedTimestamp } = useMintedTimestamp(tokenId);
 
-  const { claim, isPending, isConfirming, error } = useClaimInstallment();
+  // Get token data from contract - includes claimCount, lastClaimTime, etc.
+  const { data: tokenDataResult } = useTokenData(tokenId);
+  const tokenData = tokenDataResult as {
+    mintPrice: bigint;
+    claimCount: bigint;
+    lastClaimTime: bigint;
+    reapplicationBaseAmount: bigint;
+    reapplicationStatus: number;
+    tgeClaimed: boolean;
+  } | undefined;
 
+  const claimCount = tokenData?.claimCount ?? BigInt(0);
+  const lastClaimTime = tokenData?.lastClaimTime ?? BigInt(0);
+
+  // NOTE: claim() is protocol-only - users cannot call it directly
+  // The protocol backend calls claim() on behalf of users
+  // This UI shows claim status but the actual claim button triggers a backend API call
   const [canClaim, setCanClaim] = useState(false);
+  const [isPending, setIsPending] = useState(false);
+  const [isConfirming, setIsConfirming] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
-  // Calculate if user can claim
+  // Calculate if user can claim based on time and count
   useEffect(() => {
-    if (mintedTimestamp && installmentCount !== undefined) {
-      const mintedAt = new Date(Number(mintedTimestamp) * 1000);
-      const nextClaimTime = new Date(mintedAt);
-      nextClaimTime.setDate(nextClaimTime.getDate() + 30 * (Number(installmentCount) + 1));
-      setCanClaim(new Date() >= nextClaimTime && Number(installmentCount) < 3);
+    if (claimCount !== undefined && lastClaimTime !== undefined) {
+      const now = Math.floor(Date.now() / 1000);
+      const nextClaimTime = Number(lastClaimTime) + CLAIM_INTERVAL;
+      const hasClaimsRemaining = Number(claimCount) < 3;
+      // Can claim if: has claims remaining AND (never claimed OR enough time has passed)
+      const timeElapsed = lastClaimTime === BigInt(0) || now >= nextClaimTime;
+      setCanClaim(hasClaimsRemaining && timeElapsed);
     }
-  }, [mintedTimestamp, installmentCount]);
+  }, [lastClaimTime, claimCount]);
 
   // Not connected
   if (!authenticated || !isConnected) {
@@ -149,7 +167,7 @@ export default function DashboardContent() {
                     Your application has been approved! You can now mint your EBT Card.
                   </p>
                   <Link
-                    href="/apply?step=mint"
+                    href={`/mint/${application.userId}`}
                     className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
                   >
                     MINT YOUR EBT CARD
@@ -243,9 +261,35 @@ export default function DashboardContent() {
     );
   }
 
-  const handleClaim = () => {
-    if (canClaim) {
-      claim(tokenId);
+  // Handle claim request - calls backend API which triggers protocol claim
+  const handleClaim = async () => {
+    if (!canClaim) return;
+
+    setIsPending(true);
+    setError(null);
+
+    try {
+      // Call backend API to initiate claim
+      // The backend (protocol caller) will call the contract's claim() function
+      const response = await fetch('/api/claims/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tokenId: tokenId.toString() }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Claim request failed');
+      }
+
+      setIsConfirming(true);
+      // The actual claim is processed by the backend
+      // User will see balance update after backend processes it
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('Unknown error'));
+    } finally {
+      setIsPending(false);
+      setIsConfirming(false);
     }
   };
 
@@ -292,7 +336,7 @@ export default function DashboardContent() {
             <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
               <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">STIPENDS CLAIMED</div>
               <div className="text-2xl font-heading text-white tracking-wide">
-                {installmentCount?.toString() ?? '0'} / 3
+                {claimCount.toString()} / 3
               </div>
               <div className="text-xs text-gray-600 mt-1">Monthly distributions</div>
             </div>
@@ -348,8 +392,8 @@ export default function DashboardContent() {
           {/* Installment Timeline */}
           <div className="mb-8">
             <InstallmentTimeline
-              installmentCount={Number(installmentCount ?? 0)}
-              mintedTimestamp={Number(mintedTimestamp ?? 0)}
+              installmentCount={Number(claimCount)}
+              lastClaimTime={Number(lastClaimTime)}
               onClaim={handleClaim}
               canClaim={canClaim}
               isPending={isPending}
@@ -357,10 +401,17 @@ export default function DashboardContent() {
             />
             {error && (
               <p className="mt-2 text-sm text-welfare-red">
-                Error: {error instanceof Error ? error.message : 'Transaction failed'}
+                Error: {error.message}
               </p>
             )}
           </div>
+
+          {/* Leaderboard */}
+          {applicationData?.application?.userId && (
+            <div className="mb-8">
+              <DashboardLeaderboard userId={applicationData.application.userId} />
+            </div>
+          )}
 
           {/* Quick Actions */}
           <div className="grid grid-cols-2 gap-4">

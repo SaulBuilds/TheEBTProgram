@@ -68,3 +68,63 @@ export function useApply4EBT() {
     error,
   };
 }
+
+/**
+ * Approve a user with metadata URI (admin only)
+ * This writes the approval to the blockchain
+ */
+export function useApproveUserWithMetadata() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const approveUser = (userId: string, metadataURI: string) => {
+    writeContract({
+      ...ebtApplicationConfig,
+      functionName: 'approveUserWithMetadata',
+      args: [userId, metadataURI],
+    });
+  };
+
+  return {
+    approveUser,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Batch approve users (admin only)
+ * This writes approvals to the blockchain
+ */
+export function useApproveUsers() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const approveUsers = (userIds: string[]) => {
+    writeContract({
+      ...ebtApplicationConfig,
+      functionName: 'approveUsers',
+      args: [userIds],
+    });
+  };
+
+  return {
+    approveUsers,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}

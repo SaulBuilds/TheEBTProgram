@@ -225,6 +225,9 @@ contract DeploymentScenarios is Test {
 
         uint256 gasStart = gasleft();
 
+        // Reset timestamp before deploying to ensure clean state for fundraising period
+        vm.warp(1000);
+
         _deployFreshContracts();
         _configureContracts(20 ether, 2000 ether);
 
@@ -239,13 +242,13 @@ contract DeploymentScenarios is Test {
         console.log("--- Minting Phase ---");
         uint256 totalContributed = 0;
 
-        // Use explicit block counter to avoid Foundry vm.roll quirk
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Use time-based rate limiting (30 second cooldown)
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
         for (uint256 i = 0; i < users.length; i++) {
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            currentTime += 31;
+            vm.warp(currentTime);
             uint256 contribution = 0.5 ether + (uint256(keccak256(abi.encodePacked(i))) % 0.5 ether);
             contribution = (contribution / 0.001 ether) * 0.001 ether;
             if (contribution < 0.02 ether) contribution = 0.02 ether;
@@ -317,6 +320,9 @@ contract DeploymentScenarios is Test {
         console.log("  Target: Raise 20-30 ETH, just above soft cap");
         console.log("================================================================================");
 
+        // Reset timestamp before deploying to ensure clean state for fundraising period
+        vm.warp(1000);
+
         _deployFreshContracts();
         _configureContracts(20 ether, 2000 ether);
 
@@ -386,13 +392,13 @@ contract DeploymentScenarios is Test {
     }
 
     function _executeLowLiquidityMints(address[] memory users, string[] memory userIds) internal returns (uint256 totalContributed, uint256 minterCount) {
-        // Use explicit block counter to avoid Foundry vm.roll quirk
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Use time-based rate limiting (30 second cooldown)
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
         for (uint256 i = 0; i < users.length && totalContributed < 30 ether; i++) {
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            currentTime += 31;
+            vm.warp(currentTime);
 
             uint256 contribution = 0.5 ether + (uint256(keccak256(abi.encodePacked(i, "low"))) % 1 ether);
             contribution = (contribution / 0.001 ether) * 0.001 ether;
@@ -459,6 +465,9 @@ contract DeploymentScenarios is Test {
         console.log("  SCENARIO 3: BLOWOUT / OVERSUBSCRIBED SALE");
         console.log("  Target: Raise ~500 ETH (approaching hard cap)");
         console.log("================================================================================");
+
+        // Reset timestamp before deploying to ensure clean state for fundraising period
+        vm.warp(1000);
 
         _deployFreshContracts();
         _configureContracts(20 ether, 1000 ether);
@@ -535,13 +544,13 @@ contract DeploymentScenarios is Test {
     }
 
     function _executeBlowoutMints(address[] memory users, string[] memory userIds) internal returns (uint256 totalContributed, uint256 minterCount, uint256 rejectedCount) {
-        // Use explicit block counter to avoid Foundry vm.roll quirk
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Use time-based rate limiting (30 second cooldown)
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
         for (uint256 i = 0; i < users.length; i++) {
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            currentTime += 31;
+            vm.warp(currentTime);
 
             uint256 contribution;
             uint256 rand = uint256(keccak256(abi.encodePacked(i, "blowout"))) % 100;
@@ -846,6 +855,9 @@ contract DeploymentScenarios is Test {
         console.log("  Target: Verify fundraising auto-closes when hard cap is exactly reached");
         console.log("================================================================================");
 
+        // Reset timestamp before deploying to ensure clean state for fundraising period
+        vm.warp(1000);
+
         _deployFreshContracts();
         // Use a low hard cap to make it easier to hit
         _configureContracts(5 ether, 10 ether);
@@ -864,13 +876,13 @@ contract DeploymentScenarios is Test {
         uint256 totalContributed = 0;
         uint256 minterCount = 0;
 
-        // Use explicit block counter to avoid Foundry vm.roll quirk
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Use time-based rate limiting (30 second cooldown)
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
         for (uint256 i = 0; i < users.length; i++) {
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            currentTime += 31;
+            vm.warp(currentTime);
 
             uint256 contribution = 1 ether;
 

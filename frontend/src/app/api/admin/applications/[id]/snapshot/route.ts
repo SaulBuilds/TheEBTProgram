@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { verifyAdmin } from '@/lib/auth';
+import { verifyAdmin, logAdminAction } from '@/lib/auth';
 import { createPublicClient, http } from 'viem';
 import { sepolia } from 'viem/chains';
 
@@ -14,12 +14,18 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    if (!verifyAdmin(request)) {
-      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const authResult = verifyAdmin(request);
+    if (!authResult.valid) {
+      return NextResponse.json(
+        { error: authResult.error || 'Forbidden' },
+        { status: authResult.error === 'Rate limit exceeded. Try again later.' ? 429 : 403 }
+      );
     }
 
     const { id } = await params;
     const applicationId = parseInt(id, 10);
+
+    logAdminAction(request, 'TAKE_WALLET_SNAPSHOT', { applicationId });
 
     if (isNaN(applicationId)) {
       return NextResponse.json({ error: 'Invalid application ID' }, { status: 400 });

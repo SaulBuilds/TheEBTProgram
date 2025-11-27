@@ -11,15 +11,17 @@ export interface FeatureFlags {
   chatbot: boolean;
   tokenomicsPage: boolean;
   adminPanel: boolean;
+  refundPage: boolean;
 }
 
 // Default feature flags - override with NEXT_PUBLIC_FEATURE_* env vars
 const defaultFlags: FeatureFlags = {
-  leaderboard: false,      // Set to true when ready to launch
+  leaderboard: true,       // Leaderboard enabled
   memeEngine: false,       // Planned feature
   chatbot: false,          // Planned feature
   tokenomicsPage: true,    // Dedicated tokenomics page
   adminPanel: true,        // Admin functionality
+  refundPage: false,       // Refund page - enabled via GitHub Action if soft cap not met
 };
 
 function getEnvBoolean(key: string, defaultValue: boolean): boolean {
@@ -42,6 +44,7 @@ export const featureFlags: FeatureFlags = {
   chatbot: getEnvBoolean('NEXT_PUBLIC_FEATURE_CHATBOT', defaultFlags.chatbot),
   tokenomicsPage: getEnvBoolean('NEXT_PUBLIC_FEATURE_TOKENOMICS_PAGE', defaultFlags.tokenomicsPage),
   adminPanel: getEnvBoolean('NEXT_PUBLIC_FEATURE_ADMIN_PANEL', defaultFlags.adminPanel),
+  refundPage: getEnvBoolean('NEXT_PUBLIC_FEATURE_REFUND_PAGE', defaultFlags.refundPage),
 };
 
 /**

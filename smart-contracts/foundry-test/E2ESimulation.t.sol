@@ -317,11 +317,11 @@ contract E2ESimulation is Test {
         uint256 minPrice = type(uint256).max;
         uint256 maxPrice = 0;
 
-        // Start at block 5 to ensure we're past initial block 0
-        uint256 currentBlock = 5;
-        vm.roll(currentBlock);
+        // Start at timestamp 1000 to ensure we're past initial block
+        uint256 currentTime = 1000;
+        vm.warp(currentTime);
 
-        // Mint for each user (with 3-block gap between mints)
+        // Mint for each user (with 31 second gap for time-based rate limiting)
         for (uint256 i = 0; i < NUM_USERS; i++) {
             SimUser storage user = users[i];
 
@@ -331,9 +331,9 @@ contract E2ESimulation is Test {
                 break;
             }
 
-            // Roll forward 4 blocks to satisfy threeBlocksAfterLastMint
-            currentBlock += 4;
-            vm.roll(currentBlock);
+            // Warp forward 31 seconds to satisfy rate limiting (30 second cooldown)
+            currentTime += 31;
+            vm.warp(currentTime);
 
             // Calculate expected tokens
             uint256 expectedTokens = (user.mintPrice * 20_000 * 1e18) / MIN_PRICE;

@@ -21,11 +21,13 @@ contract MarketingVesting is ReentrancyGuard {
     error ZeroAddress();
     error ZeroAmount();
     error InvalidDuration();
+    error AlreadyInitialized();  // M-3 fix
 
     // ============ State Variables ============
     IERC20 public immutable token;
     address public immutable factory;
     address public beneficiary;
+    bool private _initialized;  // M-3 fix: Prevent re-initialization
 
     uint256 public totalAllocation;
     uint256 public claimed;
@@ -89,6 +91,7 @@ contract MarketingVesting is ReentrancyGuard {
     // ============ Initialization ============
 
     /// @notice Initialize the vesting contract (called by factory)
+    /// @dev M-3 fix: Added initialization check to prevent race conditions
     /// @param _beneficiary Address receiving the vested tokens
     /// @param _totalAllocation Total tokens to vest
     /// @param _vestingDuration Duration of vesting in seconds
@@ -103,6 +106,10 @@ contract MarketingVesting is ReentrancyGuard {
         string calldata _partnerName,
         string calldata _partnershipType
     ) external onlyFactory {
+        // M-3 fix: Prevent re-initialization
+        if (_initialized) revert AlreadyInitialized();
+        _initialized = true;
+
         if (_beneficiary == address(0)) revert ZeroAddress();
         if (_totalAllocation == 0) revert ZeroAmount();
         if (_vestingDuration == 0) revert InvalidDuration();

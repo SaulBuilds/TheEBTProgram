@@ -40,7 +40,10 @@ interface IERC6551Registry {
 contract ERC6551Registry is IERC6551Registry, ReentrancyGuard, Ownable {
     error InitializationFailed();
     error ImplementationNotSet();
+    error ImplementationLocked();  // M-4 fix
+
     address private _implementation;
+    bool public implementationLocked;  // M-4 fix: Lock after first account creation
 
     mapping(bytes32 => address) private _accounts;
 
@@ -68,6 +71,11 @@ contract ERC6551Registry is IERC6551Registry, ReentrancyGuard, Ownable {
 
         newAccount = Create2.deploy(0, accountSalt, bytecode);
         _accounts[accountSalt] = newAccount;
+
+        // M-4 fix: Lock implementation after first account creation
+        if (!implementationLocked) {
+            implementationLocked = true;
+        }
 
         if (initData.length != 0) {
             (bool success, ) = newAccount.call(initData);
@@ -97,7 +105,10 @@ contract ERC6551Registry is IERC6551Registry, ReentrancyGuard, Ownable {
         return _accounts[accountSalt];
     }
 
+    /// @notice Set the TBA implementation address
+    /// @dev M-4 fix: Cannot change after first account is created
     function setImplementation(address implementation) external onlyOwner {
+        if (implementationLocked) revert ImplementationLocked();
         require(implementation != address(0), "implementation zero");
         _implementation = implementation;
     }

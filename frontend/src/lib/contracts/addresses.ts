@@ -1,17 +1,17 @@
 // Contract addresses for Sepolia testnet
-// Deployed: 2025-11-26, Block: 9714446
+// Deployed: 2025-11-27, Block: 9717087
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 
 export const CONTRACT_ADDRESSES = {
   [SEPOLIA_CHAIN_ID]: {
-    EBTProgram: '0x9A7809EB76D30A754b730Dcfff1286bBff0775aa' as `0x${string}`,
-    FoodStamps: '0xd89406651698c85423e94D932bac95fA5Ab729Ec' as `0x${string}`,
-    ERC6551Registry: '0xb22F642c3303bDe27131f58b46E7d75Aa194df0c' as `0x${string}`,
-    ERC6551Account: '0xb812Dd421F2AB112fc7c33c75369148D115bEB4E' as `0x${string}`,
-    EBTApplication: '0x2E84f1fFF8E37A55Cc90B2f268C0d233d5aE5045' as `0x${string}`,
-    LiquidityVault: '0x6d15041ce06E367776CdcE1aFf1A2fAD31f44131' as `0x${string}`,
-    TeamVesting: '0xa1400a541c0fE2364fd502003C5273AEFaA0D244' as `0x${string}`,
+    EBTProgram: '0x883d3b109f118D8Cc91aE7e01f2548FCEE845329' as `0x${string}`,
+    FoodStamps: '0x725ba3d8a4D169729ADB5Ee4e17B12ce3A2c44BA' as `0x${string}`,
+    ERC6551Registry: '0x5525008a307C930267f10D82104d9229Aa9b8179' as `0x${string}`,
+    ERC6551Account: '0xE48334f3f80E6CbFD30D27142ecf003E177bAaD6' as `0x${string}`,
+    EBTApplication: '0xeCBfd2CCD412e899beeFB87DB253A460757e9207' as `0x${string}`,
+    LiquidityVault: '0xA0b5eeF473b9c333540D13F19452f12582EBd9eF' as `0x${string}`,
+    TeamVesting: '0x093AA07DD0f9aAAC6968639c68e3f2C7F9Fd0c1C' as `0x${string}`,
   },
 } as const;
 
@@ -29,15 +29,20 @@ export function getContractAddress(
 // Deployment info
 export const DEPLOYMENT_INFO = {
   chainId: SEPOLIA_CHAIN_ID,
-  blockNumber: 9714446,
-  timestamp: '2025-11-26',
+  blockNumber: 9717087,
+  timestamp: '2025-11-27',
   deployer: '0x1Dc2040919412AC58A999B981Bff5Ea19181ccb9',
 };
 
 // Contract constants (matching deployed configuration)
-export const MINT_PRICE = BigInt('20000000000000000'); // 0.02 ETH in wei
-export const MAX_MINT_PRICE = BigInt('2000000000000000000'); // 2 ETH in wei
-export const BASE_TOKENS_PER_MIN_PRICE = BigInt('20000000000000000000000'); // 20,000 tokens
+// Dynamic pricing range: 0.02 ETH to 2 ETH
+export const MIN_MINT_PRICE = BigInt('20000000000000000'); // 0.02 ETH in wei (minimum)
+export const MAX_MINT_PRICE = BigInt('2000000000000000000'); // 2 ETH in wei (maximum)
+export const PRICE_PRECISION = BigInt('1000000000000000'); // 0.001 ETH - price must be multiple of this
+export const BASE_TOKENS_PER_MIN_PRICE = BigInt('20000000000000000000000'); // 20,000 tokens per 0.02 ETH
+
+// Legacy alias for backwards compatibility
+export const MINT_PRICE = MIN_MINT_PRICE;
 export const SOFT_CAP = BigInt('20000000000000000000'); // 20 ETH
 export const HARD_CAP = BigInt('2000000000000000000000'); // 2000 ETH
 export const FUNDRAISING_PERIOD = 30 * 24 * 60 * 60; // 30 days in seconds

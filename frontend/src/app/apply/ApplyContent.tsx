@@ -10,6 +10,7 @@ import { StepSocial } from './components/StepSocial';
 import { StepHunger } from './components/StepHunger';
 import { StepOath } from './components/StepOath';
 import { StepSubmit } from './components/StepSubmit';
+import { StepRegisterOnChain } from './components/StepRegisterOnChain';
 import { StepSuccess } from './components/StepSuccess';
 import { Navbar } from '@/components/layout/Navbar';
 
@@ -61,6 +62,7 @@ const steps = [
   { id: 'hunger', title: 'Declare Your Hunger', achievement: 'Breadline Regular' },
   { id: 'oath', title: 'Take the Oath', achievement: 'Welfare Warrior' },
   { id: 'submit', title: 'Submit Application', achievement: 'Applicant' },
+  { id: 'register', title: 'Register On-Chain', achievement: 'Chain Linked' },
   { id: 'success', title: 'Application Submitted', achievement: 'Queue Member' },
 ];
 
@@ -266,6 +268,28 @@ export default function ApplyContent() {
             )}
 
             {currentStep === 5 && (
+              <motion.div
+                key="register"
+                initial={{ opacity: 0, x: 20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+              >
+                <StepRegisterOnChain
+                  data={applicationData}
+                  onNext={() => {
+                    const achievement = steps[currentStep].achievement;
+                    const newAchievements = unlockedAchievements.includes(achievement)
+                      ? unlockedAchievements
+                      : [...unlockedAchievements, achievement];
+                    setUnlockedAchievements(newAchievements);
+                    setCurrentStep(6);
+                  }}
+                  onSkip={() => setCurrentStep(6)}
+                />
+              </motion.div>
+            )}
+
+            {currentStep === 6 && (
               <motion.div
                 key="success"
                 initial={{ opacity: 0, scale: 0.95 }}

@@ -13,9 +13,18 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     const parsed = createApplicationSchema.parse(body);
 
-    // Check if user already applied (by userId or username)
+    // Normalize walletAddress to lowercase for consistent lookups
+    parsed.walletAddress = parsed.walletAddress.toLowerCase();
+
+    // Check if user already applied (by userId, username, or walletAddress)
     const existingByUser = await prisma.application.findFirst({
-      where: { OR: [{ userId: parsed.userId }, { username: parsed.username }] },
+      where: {
+        OR: [
+          { userId: parsed.userId },
+          { username: parsed.username },
+          { walletAddress: { equals: parsed.walletAddress, mode: 'insensitive' } },
+        ],
+      },
     });
 
     if (existingByUser) {
@@ -25,6 +34,7 @@ export async function POST(request: NextRequest) {
           id: existingByUser.id,
           status: existingByUser.status,
           username: existingByUser.username,
+          walletAddress: existingByUser.walletAddress,
         },
       }, { status: 409 });
     }

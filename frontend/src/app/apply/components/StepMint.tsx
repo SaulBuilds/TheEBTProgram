@@ -5,7 +5,8 @@ import { motion } from 'framer-motion';
 import { useAccount, useBalance } from 'wagmi';
 import { formatEther } from 'viem';
 import { useMint, useHasMinted } from '@/lib/hooks';
-import { MINT_PRICE } from '@/lib/contracts/addresses';
+import { MIN_MINT_PRICE } from '@/lib/contracts/addresses';
+import { PriceSelector, calculateTokensForPrice } from '@/components/mint/PriceSelector';
 
 // This component is used on the mint page for approved users
 interface MintData {
@@ -28,9 +29,10 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
 
   const { mint, hash, isPending, isConfirming, isSuccess, error } = useMint();
   const [mintError, setMintError] = useState<string | null>(null);
+  const [selectedPrice, setSelectedPrice] = useState<bigint>(MIN_MINT_PRICE);
 
-  const mintPriceEth = formatEther(MINT_PRICE);
-  const hasEnoughBalance = balanceData && balanceData.value >= MINT_PRICE;
+  const mintPriceEth = formatEther(selectedPrice);
+  const hasEnoughBalance = balanceData && balanceData.value >= selectedPrice;
 
   // Handle successful mint
   useEffect(() => {
@@ -70,7 +72,7 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
     }
 
     try {
-      mint(data.userId);
+      mint(data.userId, selectedPrice);
     } catch (err) {
       setMintError('Failed to initiate transaction');
     }
@@ -88,6 +90,15 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
       </div>
 
       <div className="space-y-6">
+        {/* Price Selector */}
+        <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
+          <PriceSelector
+            value={selectedPrice}
+            onChange={setSelectedPrice}
+            disabled={isPending || isConfirming || isSuccess || hasMinted === true}
+          />
+        </div>
+
         {/* Mint Details Card */}
         <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
           <h3 className="font-mono font-bold text-white mb-4">Mint Summary</h3>
@@ -110,7 +121,9 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
             <div className="border-t border-gray-800 my-3" />
             <div className="flex justify-between font-mono">
               <span className="text-gray-400">You Receive</span>
-              <span className="text-ebt-gold">1 EBT Card NFT + 10K $EBTC</span>
+              <span className="text-ebt-gold">
+                1 EBT Card NFT + {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $EBTC
+              </span>
             </div>
           </div>
         </div>
@@ -121,7 +134,9 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
           <ul className="text-sm font-mono text-gray-300 space-y-1">
             <li>• 1 EBT Card NFT (your welfare passport)</li>
             <li>• Token-bound account (ERC-6551)</li>
-            <li>• 10,000 $EBTC tokens on mint</li>
+            <li className="text-ebt-gold">
+              • {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $EBTC tokens on mint
+            </li>
             <li>• Monthly $EBTC distributions (3x total)</li>
             <li>• Bragging rights on the breadline</li>
           </ul>

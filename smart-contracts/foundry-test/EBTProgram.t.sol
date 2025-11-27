@@ -79,7 +79,8 @@ contract EBTProgramTest is Test {
     }
 
     function testMintCreatesAccountAndDistributesTokens() public {
-        vm.roll(5);
+        // Advance time past cooldown (30 seconds)
+        vm.warp(block.timestamp + 31 seconds);
 
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
@@ -102,8 +103,8 @@ contract EBTProgramTest is Test {
         prices[2] = 0.5 ether;    // 500,000 tokens
         prices[3] = 2 ether;      // Max - 2,000,000 tokens
 
-        // Use explicit block counter to avoid Foundry vm.roll quirk
-        uint256 currentBlock = 5;
+        // Use time-based cooldown (30 seconds between mints)
+        uint256 currentTime = block.timestamp + 31 seconds;
 
         for (uint256 i = 0; i < prices.length; i++) {
             // Use unique user IDs that won't conflict
@@ -115,8 +116,9 @@ contract EBTProgramTest is Test {
             app.apply4EBT(uid, "pic", "tw", 100, uid);
             app.approveUsers(_single(uid));
 
-            currentBlock += 5;
-            vm.roll(currentBlock);
+            // Advance time past rate limit cooldown
+            vm.warp(currentTime);
+            currentTime += 31 seconds;
             vm.prank(userAddr);
             program.mint{value: prices[i]}(uid);
 
@@ -129,7 +131,8 @@ contract EBTProgramTest is Test {
     function testMintRequiresApproval() public {
         string memory notApproved = "nope";
         vm.deal(user, 1 ether);
-        vm.roll(5);  // Need to be past block 0 for mint
+        // Advance time past cooldown (30 seconds)
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         vm.expectRevert(EBTProgram.NotApproved.selector);
         program.mint{value: MIN_PRICE}(notApproved);
@@ -137,7 +140,8 @@ contract EBTProgramTest is Test {
 
     function testMintEnforcesPriceRange() public {
         vm.deal(user, 10 ether);
-        vm.roll(5);
+        // Advance time past cooldown (30 seconds)
+        vm.warp(block.timestamp + 31 seconds);
 
         // Below minimum
         vm.prank(user);
@@ -145,6 +149,7 @@ contract EBTProgramTest is Test {
         program.mint{value: MIN_PRICE - 1}(userId);
 
         // Above maximum
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         vm.expectRevert(EBTProgram.PriceAboveMaximum.selector);
         program.mint{value: MAX_PRICE + 1}(userId);
@@ -152,7 +157,8 @@ contract EBTProgramTest is Test {
 
     function testMintEnforcesPrecision() public {
         vm.deal(user, 10 ether);
-        vm.roll(5);
+        // Advance time past cooldown (30 seconds)
+        vm.warp(block.timestamp + 31 seconds);
 
         // Invalid precision (not multiple of 0.001 ETH)
         vm.prank(user);
@@ -161,11 +167,14 @@ contract EBTProgramTest is Test {
     }
 
     function testSecondMintSameAddressFails() public {
-        vm.roll(5);
+        // Set a base timestamp
+        uint256 baseTime = 1000;
+        vm.warp(baseTime);
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 
-        vm.roll(block.number + 5);
+        // Even with cooldown passed, same original user cannot mint twice
+        vm.warp(baseTime + 31 seconds);
         vm.prank(user);
         vm.expectRevert(EBTProgram.AlreadyMinted.selector);
         program.mint{value: MIN_PRICE}(userId);
@@ -179,14 +188,17 @@ contract EBTProgramTest is Test {
         app.approveUsers(_single("bad"));
         program.setBlacklistStatus(_addrArray(badUser), true);
 
-        vm.roll(5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(badUser);
         vm.expectRevert(EBTProgram.Blacklisted.selector);
         program.mint{value: MIN_PRICE}("bad");
     }
 
-    function testHonorsThreeBlockGapBetweenMints() public {
-        vm.roll(5);
+    function testHonorsTimeCooldownBetweenMints() public {
+        // Set a base timestamp and advance past initial cooldown
+        uint256 baseTime = 1000;
+        vm.warp(baseTime);
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 
@@ -197,19 +209,23 @@ contract EBTProgramTest is Test {
         app.apply4EBT("user2", "pic", "tw", 100, userId2);
         app.approveUsers(_single(userId2));
 
-        vm.roll(program.lastMintBlock() + 1);
+        // Try to mint immediately (should fail - within 30 second cooldown)
+        // Warp to 10 seconds after first mint (still within cooldown)
+        vm.warp(baseTime + 10 seconds);
         vm.prank(user2);
-        vm.expectRevert(bytes("Wait 3 blocks"));
+        vm.expectRevert(EBTProgram.RateLimitExceeded.selector);
         program.mint{value: MIN_PRICE}(userId2);
 
-        vm.roll(program.lastMintBlock() + 4);
+        // Advance time past cooldown (31 seconds from first mint)
+        vm.warp(baseTime + 31 seconds);
         vm.prank(user2);
         program.mint{value: MIN_PRICE}(userId2);
         assertEq(program.ownerOf(2), user2);
     }
 
     function testProtocolOnlyClaimWithScoreMultiplier() public {
-        vm.roll(5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 
@@ -238,7 +254,8 @@ contract EBTProgramTest is Test {
     }
 
     function testMaxThreeClaims() public {
-        vm.roll(5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 
@@ -256,7 +273,8 @@ contract EBTProgramTest is Test {
     }
 
     function testReapplicationFlow() public {
-        vm.roll(5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 
@@ -338,7 +356,8 @@ contract EBTProgramTest is Test {
         newApp.apply4EBT("user1", "pic", "tw", 100, userId1);
         newApp.approveUsers(_single(userId1));
 
-        vm.roll(5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user1);
         newProgram.mint{value: MIN_PRICE}(userId1);
 
@@ -352,7 +371,8 @@ contract EBTProgramTest is Test {
         newApp.apply4EBT("user2", "pic", "tw", 100, userId2);
         newApp.approveUsers(_single(userId2));
 
-        vm.roll(block.number + 5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user2);
         // After hard cap is hit, fundraising is closed so mints fail with "Fundraising closed"
         vm.expectRevert("Fundraising closed");
@@ -404,7 +424,8 @@ contract EBTProgramTest is Test {
         newApp.approveUsers(_single(userId));
 
         // Mint to reach soft cap
-        vm.roll(5);
+        // Advance time past cooldown
+        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         newProgram.mint{value: MIN_PRICE}(userId);
 
