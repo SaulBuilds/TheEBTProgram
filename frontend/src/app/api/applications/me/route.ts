@@ -9,9 +9,10 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Look up application by userId (from Privy token)
+    // Look up application by privyUserId (the Privy authentication ID)
+    // auth.userId is the Privy ID (e.g., did:privy:xxx), not the username-derived userId
     const application = await prisma.application.findFirst({
-      where: { userId: auth.userId },
+      where: { privyUserId: auth.userId },
       include: {
         walletSnapshot: true,
         generatedCard: true,
