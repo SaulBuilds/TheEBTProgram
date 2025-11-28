@@ -331,6 +331,55 @@ export function useSetBaseTokenURI() {
 // ============================================================================
 
 /**
+ * Start fundraising immediately (sets fundraisingStartTime to now)
+ * Only callable by owner, after initialization, and before any mints
+ */
+export function useStartFundraising() {
+  const { data: hash, writeContract, isPending, error, reset } = useWriteContract();
+
+  const { isLoading: isConfirming, isSuccess } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  const startFundraising = () => {
+    writeContract({
+      ...ebtProgramConfig,
+      functionName: 'startFundraising',
+    });
+  };
+
+  return {
+    startFundraising,
+    hash,
+    isPending,
+    isConfirming,
+    isSuccess,
+    error,
+    reset,
+  };
+}
+
+/**
+ * Get the fundraising end time (start + period)
+ */
+export function useFundraisingEndTime() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'getFundraisingEndTime',
+  });
+}
+
+/**
+ * Get the fundraising period duration in seconds
+ */
+export function useFundraisingPeriod() {
+  return useReadContract({
+    ...ebtProgramConfig,
+    functionName: 'getFundraisingPeriod',
+  });
+}
+
+/**
  * Close fundraising period
  * NOTE: Contract function is 'closeFundraising' not 'closeFundraisingPeriod'
  */

@@ -164,6 +164,7 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     event TBALocked(uint256 indexed tokenId, address indexed tba, address indexed approvedTo);
     event TBAUnlocked(uint256 indexed tokenId, address indexed tba);
     event RefundClaimed(address indexed contributor, uint256 amount);
+    event FundraisingStarted(uint256 startTime, uint256 endTime);
 
     // ============ Constructor ============
     constructor(
@@ -586,9 +587,9 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     }
 
     /// @notice Set fundraising caps
-    /// @dev Can only be changed before fundraising starts (before initialize)
+    /// @dev Can only be changed before any mints have occurred
     function setCaps(uint256 _softCap, uint256 _hardCap) external onlyOwner {
-        require(fundraisingStartTime == 0, "Cannot change after fundraising started");
+        require(_currentTokenId == 1, "Cannot change after minting started");
         require(_softCap > 0 && _hardCap >= _softCap, "Invalid caps");
         softCap = _softCap;
         hardCap = _hardCap;
@@ -632,10 +633,50 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     }
 
     /// @notice Set fundraising period duration
-    /// @dev Can only be changed before fundraising starts (before initialize)
+    /// @dev Can only be changed before any mints have occurred
     function setFundraisingPeriod(uint256 period) external onlyOwner {
-        require(fundraisingStartTime == 0, "Cannot change after fundraising started");
+        require(_currentTokenId == 1, "Cannot change after minting started");
+        require(period > 0, "Period must be positive");
         _fundraisingPeriod = period;
+    }
+
+    /// @notice Start fundraising immediately
+    /// @dev Sets fundraisingStartTime to current block timestamp
+    /// @dev Can only be called after initialization and before any mints
+    function startFundraising() external onlyOwner whenInitialized {
+        require(_currentTokenId == 1, "Cannot restart after minting started");
+        require(!fundraisingClosed, "Fundraising already closed");
+
+        fundraisingStartTime = block.timestamp;
+
+        emit FundraisingStarted(block.timestamp, block.timestamp + _fundraisingPeriod);
+    }
+
+    /// @notice Set a specific fundraising start time
+    /// @dev Allows scheduling fundraising to start at a future time
+    /// @dev Can only be called after initialization and before any mints
+    /// @param startTime Unix timestamp for when fundraising should start
+    function setFundraisingStartTime(uint256 startTime) external onlyOwner whenInitialized {
+        require(_currentTokenId == 1, "Cannot change after minting started");
+        require(!fundraisingClosed, "Fundraising already closed");
+        require(startTime > 0, "Invalid start time");
+
+        fundraisingStartTime = startTime;
+
+        emit FundraisingStarted(startTime, startTime + _fundraisingPeriod);
+    }
+
+    /// @notice Get fundraising end time
+    /// @return The timestamp when fundraising ends (0 if not started)
+    function getFundraisingEndTime() external view returns (uint256) {
+        if (fundraisingStartTime == 0) return 0;
+        return fundraisingStartTime + _fundraisingPeriod;
+    }
+
+    /// @notice Get fundraising period duration
+    /// @return The duration of the fundraising period in seconds
+    function getFundraisingPeriod() external view returns (uint256) {
+        return _fundraisingPeriod;
     }
 
     /// @notice Set blacklist status for addresses

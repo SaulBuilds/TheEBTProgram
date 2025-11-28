@@ -19,6 +19,9 @@ import {
   usePauseFoodStamps,
   useUnpauseFoodStamps,
   useCloseFundraising,
+  useStartFundraising,
+  useFundraisingEndTime,
+  useFundraisingStartTime,
   useIsBlacklisted,
   useApproveUserWithMetadata,
 } from '@/lib/hooks';
@@ -120,6 +123,19 @@ export default function AdminContent() {
     isSuccess: isCloseFundraisingSuccess,
   } = useCloseFundraising();
 
+  const {
+    startFundraising,
+    hash: startFundraisingHash,
+    isPending: isStartingFundraising,
+    isConfirming: isStartFundraisingConfirming,
+    isSuccess: isStartFundraisingSuccess,
+    error: startFundraisingError,
+    reset: resetStartFundraising,
+  } = useStartFundraising();
+
+  const { data: fundraisingStartTime } = useFundraisingStartTime();
+  const { data: fundraisingEndTime } = useFundraisingEndTime();
+
   // On-chain approval hook
   const {
     approveUser: approveUserOnChain,
@@ -137,11 +153,19 @@ export default function AdminContent() {
 
   // Type-safe contract data
   const tokensMinted: number = currentTokenId ? Number(currentTokenId as bigint) - 1 : 0;
+  const hasMintingStarted: boolean = tokensMinted > 0;
   const fundsRaisedEth: string = totalRaised ? formatEther(totalRaised as bigint) : '0';
   const softCapEth: string = softCap ? formatEther(softCap as bigint) : '0';
   const hardCapEth: string = hardCap ? formatEther(hardCap as bigint) : '0';
   const isAddressBlacklisted: boolean = isBlacklistedResult === true;
   const ownerAddress: string | undefined = contractOwner as string | undefined;
+
+  // Fundraising time data
+  const startTimestamp: number = fundraisingStartTime ? Number(fundraisingStartTime as bigint) : 0;
+  const endTimestamp: number = fundraisingEndTime ? Number(fundraisingEndTime as bigint) : 0;
+  const now = Math.floor(Date.now() / 1000);
+  const isFundraisingActive: boolean = startTimestamp > 0 && now >= startTimestamp && now < endTimestamp && !isFundraisingClosed;
+  const canStartFundraising: boolean = !hasMintingStarted && !isFundraisingClosed;
 
   const fetchApplications = useCallback(async () => {
     if (!adminToken) return;
@@ -199,6 +223,12 @@ export default function AdminContent() {
       setTimeout(() => resetCaps(), 3000);
     }
   }, [isCapsSuccess, resetCaps]);
+
+  useEffect(() => {
+    if (isStartFundraisingSuccess) {
+      setTimeout(() => resetStartFundraising(), 5000);
+    }
+  }, [isStartFundraisingSuccess, resetStartFundraising]);
 
   // Handle on-chain approval success
   useEffect(() => {
@@ -761,14 +791,99 @@ export default function AdminContent() {
                 {/* Fundraising Controls */}
                 <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
                   <h3 className="text-lg font-mono font-bold text-white mb-4">Fundraising Controls</h3>
-                  <button
-                    onClick={() => closeFundraising()}
-                    disabled={isClosingFundraising || isFundraisingClosed}
-                    className="px-6 py-3 bg-welfare-red text-white font-mono font-bold rounded-lg hover:bg-red-600 disabled:opacity-50"
-                  >
-                    {isClosingFundraising ? 'Closing...' : isFundraisingClosed ? 'Already Closed' : 'Close Fundraising'}
-                  </button>
-                  {isCloseFundraisingSuccess && <p className="text-green-400 font-mono text-sm mt-2">Fundraising closed!</p>}
+
+                  {/* Fundraising Time Info */}
+                  <div className="mb-6 p-4 bg-gray-800 rounded-lg">
+                    <div className="grid md:grid-cols-2 gap-4 text-sm font-mono">
+                      <div>
+                        <p className="text-gray-500">Start Time</p>
+                        <p className="text-white">
+                          {startTimestamp > 0
+                            ? new Date(startTimestamp * 1000).toLocaleString()
+                            : 'Not set'}
+                        </p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">End Time</p>
+                        <p className="text-white">
+                          {endTimestamp > 0
+                            ? new Date(endTimestamp * 1000).toLocaleString()
+                            : 'Not set'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-gray-500 text-sm">Status</p>
+                      <p className={`text-sm font-bold ${
+                        isFundraisingClosed ? 'text-welfare-red' :
+                        isFundraisingActive ? 'text-green-400' :
+                        now < startTimestamp ? 'text-yellow-400' : 'text-gray-400'
+                      }`}>
+                        {isFundraisingClosed ? 'CLOSED' :
+                         isFundraisingActive ? 'ACTIVE - Minting enabled' :
+                         startTimestamp > 0 && now < startTimestamp ? 'SCHEDULED - Waiting to start' :
+                         'NOT STARTED'}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Start Fundraising Section */}
+                  <div className="mb-6">
+                    <h4 className="text-sm font-mono font-bold text-gray-400 mb-3">Start Fundraising Now</h4>
+                    <p className="text-xs text-gray-500 font-mono mb-3">
+                      Sets fundraising start time to NOW and enables minting for 30 days.
+                      Only available before any mints have occurred.
+                    </p>
+                    <button
+                      onClick={() => startFundraising()}
+                      disabled={isStartingFundraising || isStartFundraisingConfirming || !canStartFundraising}
+                      className="px-6 py-3 bg-green-600 text-white font-mono font-bold rounded-lg hover:bg-green-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {isStartingFundraising ? 'Confirm in wallet...' :
+                       isStartFundraisingConfirming ? 'Confirming...' :
+                       hasMintingStarted ? 'Cannot restart after minting' :
+                       isFundraisingClosed ? 'Fundraising closed' :
+                       'Start Fundraising Now'}
+                    </button>
+
+                    {/* Transaction Status */}
+                    {isStartFundraisingConfirming && startFundraisingHash && (
+                      <div className="mt-3 p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                        <p className="text-blue-400 font-mono text-sm">Transaction confirming...</p>
+                        <a
+                          href={`https://sepolia.etherscan.io/tx/${startFundraisingHash}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-blue-400 underline"
+                        >
+                          View on Etherscan
+                        </a>
+                      </div>
+                    )}
+                    {isStartFundraisingSuccess && (
+                      <p className="text-green-400 font-mono text-sm mt-2">
+                        Fundraising started successfully! Minting is now enabled.
+                      </p>
+                    )}
+                    {startFundraisingError && (
+                      <p className="text-welfare-red font-mono text-sm mt-2">
+                        Error: {startFundraisingError.message}
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Close Fundraising Section */}
+                  <div className="pt-4 border-t border-gray-700">
+                    <h4 className="text-sm font-mono font-bold text-gray-400 mb-3">Close Fundraising</h4>
+                    <button
+                      onClick={() => closeFundraising()}
+                      disabled={isClosingFundraising || isFundraisingClosed}
+                      className="px-6 py-3 bg-welfare-red text-white font-mono font-bold rounded-lg hover:bg-red-600 disabled:opacity-50"
+                    >
+                      {isClosingFundraising ? 'Closing...' : isFundraisingClosed ? 'Already Closed' : 'Close Fundraising'}
+                    </button>
+                    {isCloseFundraisingSuccess && <p className="text-green-400 font-mono text-sm mt-2">Fundraising closed!</p>}
+                  </div>
                 </div>
 
                 {/* Token Controls */}
