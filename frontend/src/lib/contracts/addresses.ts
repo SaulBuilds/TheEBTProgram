@@ -1,17 +1,17 @@
 // Contract addresses for Sepolia testnet
-// Deployed: 2025-11-27, Block: 9717087
+// Deployed: 2025-11-27 (latest with fundraising control functions)
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 
 export const CONTRACT_ADDRESSES = {
   [SEPOLIA_CHAIN_ID]: {
-    EBTProgram: '0x883d3b109f118D8Cc91aE7e01f2548FCEE845329' as `0x${string}`,
-    FoodStamps: '0x725ba3d8a4D169729ADB5Ee4e17B12ce3A2c44BA' as `0x${string}`,
-    ERC6551Registry: '0x5525008a307C930267f10D82104d9229Aa9b8179' as `0x${string}`,
-    ERC6551Account: '0xE48334f3f80E6CbFD30D27142ecf003E177bAaD6' as `0x${string}`,
-    EBTApplication: '0xeCBfd2CCD412e899beeFB87DB253A460757e9207' as `0x${string}`,
-    LiquidityVault: '0xA0b5eeF473b9c333540D13F19452f12582EBd9eF' as `0x${string}`,
-    TeamVesting: '0x093AA07DD0f9aAAC6968639c68e3f2C7F9Fd0c1C' as `0x${string}`,
+    EBTProgram: '0xa00a2AbC42cf88735bbBDFcb1B2c1cD00d4CAAf4' as `0x${string}`,
+    FoodStamps: '0x345e91EBa4815252048c240020c96143380858F1' as `0x${string}`,
+    ERC6551Registry: '0x4208B13926D2Fd2D6669f4224b1f22cF8a993B5c' as `0x${string}`,
+    ERC6551Account: '0x6DF10b933c9851e977e13396d46f3488a91D3D70' as `0x${string}`,
+    EBTApplication: '0xaDE37C7787E8903Bfa5bd4B1402b1C708c7DFa44' as `0x${string}`,
+    LiquidityVault: '0x53649868A0F3dE60b4658bDdce0367CF6f2d53D5' as `0x${string}`,
+    TeamVesting: '0x593a85a4986cD2214438dEE7f074846bD5200E47' as `0x${string}`,
   },
 } as const;
 
