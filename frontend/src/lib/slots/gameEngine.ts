@@ -136,149 +136,136 @@ export function isSpecialSymbol(symbolId: number): boolean {
          symbolId === FREESPIN_SYMBOL_ID;
 }
 
-function symbolsMatch(a: GridCell | null, b: GridCell | null): boolean {
-  if (!a || !b) return false;
+// ============ WAYS TO WIN MATCH DETECTION ============
+// Matches are found left-to-right across columns
+// Symbol can be in ANY row within each column
+// Need same symbol (or wild) in at least 3 consecutive columns starting from column 0
 
-  const symbolA = SYMBOL_BY_ID.get(a.symbolId);
-  const symbolB = SYMBOL_BY_ID.get(b.symbolId);
+/**
+ * Get all symbols of a specific type (or wilds) in a column
+ */
+function getMatchingPositionsInColumn(
+  grid: GridCell[],
+  col: number,
+  targetSymbolId: number
+): Position[] {
+  const positions: Position[] = [];
 
-  if (!symbolA || !symbolB) return false;
-
-  // Special symbols (scatter, bonus, freespin) don't match with regular symbols
-  if (symbolA.special === 'scatter' || symbolA.special === 'bonus' || symbolA.special === 'freespin') return false;
-  if (symbolB.special === 'scatter' || symbolB.special === 'bonus' || symbolB.special === 'freespin') return false;
-
-  // Wilds match everything (except specials which are already handled)
-  if (isWildSymbol(a.symbolId)) return true;
-  if (isWildSymbol(b.symbolId)) return true;
-
-  return a.symbolId === b.symbolId;
-}
-
-// ============ MATCH DETECTION ============
-
-export function findMatches(grid: GridCell[]): Match[] {
-  const matches: Match[] = [];
-  const matchedPositions = new Set<string>();
-
-  // Find horizontal matches
   for (let row = 0; row < GRID_SIZE; row++) {
-    let col = 0;
-    while (col < GRID_SIZE) {
-      const startCell = getCell(grid, row, col);
-      const startSymbol = startCell ? SYMBOL_BY_ID.get(startCell.symbolId) : null;
+    const cell = getCell(grid, row, col);
+    if (!cell) continue;
 
-      // Skip special symbols as match starters (except wild)
-      if (!startCell || (startSymbol?.special && startSymbol.special !== 'wild')) {
-        col++;
-        continue;
-      }
-
-      const matchPositions: Position[] = [{ row, col }];
-      let nextCol = col + 1;
-
-      while (nextCol < GRID_SIZE) {
-        const nextCell = getCell(grid, row, nextCol);
-        if (symbolsMatch(startCell, nextCell)) {
-          matchPositions.push({ row, col: nextCol });
-          nextCol++;
-        } else {
-          break;
-        }
-      }
-
-      if (matchPositions.length >= MIN_MATCH) {
-        const match = createMatch(grid, matchPositions, startCell);
-        matches.push(match);
-        matchPositions.forEach(p => matchedPositions.add(posToKey(p.row, p.col)));
-      }
-
-      col = nextCol;
+    // Match if it's the target symbol OR a wild
+    if (cell.symbolId === targetSymbolId || isWildSymbol(cell.symbolId)) {
+      positions.push({ row, col });
     }
   }
 
-  // Find vertical matches
-  for (let col = 0; col < GRID_SIZE; col++) {
-    let row = 0;
-    while (row < GRID_SIZE) {
-      const startCell = getCell(grid, row, col);
-      const startSymbol = startCell ? SYMBOL_BY_ID.get(startCell.symbolId) : null;
+  return positions;
+}
 
-      if (!startCell || (startSymbol?.special && startSymbol.special !== 'wild')) {
-        row++;
-        continue;
+/**
+ * Get unique non-special symbols in the first column (potential match starters)
+ */
+function getStartingSymbols(grid: GridCell[]): number[] {
+  const symbols = new Set<number>();
+
+  for (let row = 0; row < GRID_SIZE; row++) {
+    const cell = getCell(grid, row, 0);
+    if (!cell) continue;
+
+    const symbol = SYMBOL_BY_ID.get(cell.symbolId);
+    // Only regular symbols can start a match (not scatter, bonus, freespin)
+    // Wilds CAN start a match
+    if (symbol && (!symbol.special || symbol.special === 'wild')) {
+      // For wilds, we don't add them as starters - they'll match with other symbols
+      if (!isWildSymbol(cell.symbolId)) {
+        symbols.add(cell.symbolId);
+      }
+    }
+  }
+
+  return Array.from(symbols);
+}
+
+export function findMatches(grid: GridCell[]): Match[] {
+  const matches: Match[] = [];
+  const processedSymbols = new Set<number>();
+
+  // Get unique symbols that can start matches from column 0
+  const startingSymbols = getStartingSymbols(grid);
+
+  for (const symbolId of startingSymbols) {
+    if (processedSymbols.has(symbolId)) continue;
+    processedSymbols.add(symbolId);
+
+    // Find how many consecutive columns have this symbol (or wild)
+    const columnMatches: Position[][] = [];
+
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const positionsInCol = getMatchingPositionsInColumn(grid, col, symbolId);
+
+      if (positionsInCol.length === 0) {
+        // No match in this column, stop here
+        break;
       }
 
-      const matchPositions: Position[] = [{ row, col }];
-      let nextRow = row + 1;
+      columnMatches.push(positionsInCol);
+    }
 
-      while (nextRow < GRID_SIZE) {
-        const nextCell = getCell(grid, nextRow, col);
-        if (symbolsMatch(startCell, nextCell)) {
-          matchPositions.push({ row: nextRow, col });
-          nextRow++;
-        } else {
-          break;
-        }
+    // Need at least 3 columns to make a match
+    if (columnMatches.length >= MIN_MATCH) {
+      // Calculate "ways" - multiply count of symbols in each matched column
+      let ways = 1;
+      const allPositions: Position[] = [];
+
+      for (const colPositions of columnMatches) {
+        ways *= colPositions.length;
+        allPositions.push(...colPositions);
       }
 
-      if (matchPositions.length >= MIN_MATCH) {
-        const hasOverlap = matchPositions.some(p => matchedPositions.has(posToKey(p.row, p.col)));
-        const match = createMatch(grid, matchPositions, startCell, hasOverlap ? 0.5 : 1);
-        matches.push(match);
-      }
-
-      row = nextRow;
+      // Create the match with ways multiplier
+      const match = createWaysMatch(grid, allPositions, symbolId, columnMatches.length, ways);
+      matches.push(match);
     }
   }
 
   return matches;
 }
 
-function createMatch(
+function createWaysMatch(
   grid: GridCell[],
   positions: Position[],
-  baseCell: GridCell,
-  overlapFactor = 1
+  symbolId: number,
+  columnsMatched: number,
+  ways: number
 ): Match {
   let hasWild = false;
   let wildMultiplier = 1;
-  let payingSymbolId = baseCell.symbolId;
   const wildPositions: Position[] = [];
 
+  // Check for wilds and collect their multipliers
   for (const pos of positions) {
     const cell = getCell(grid, pos.row, pos.col);
     if (cell && isWildSymbol(cell.symbolId)) {
       hasWild = true;
       wildPositions.push(pos);
-      // Use the wild's current multiplier
       if (cell.wildMultiplier) {
         wildMultiplier *= cell.wildMultiplier;
       }
-    } else if (cell && !isWildSymbol(payingSymbolId)) {
-      payingSymbolId = cell.symbolId;
     }
   }
 
-  // If all wilds, find a non-wild symbol
-  if (isWildSymbol(payingSymbolId)) {
-    for (const pos of positions) {
-      const cell = getCell(grid, pos.row, pos.col);
-      if (cell && !isWildSymbol(cell.symbolId)) {
-        payingSymbolId = cell.symbolId;
-        break;
-      }
-    }
-  }
-
-  const basePayout = calculatePayout(payingSymbolId, positions.length);
-  const payout = Math.floor(basePayout * wildMultiplier * overlapFactor);
+  // Base payout is based on columns matched (like "length" in traditional)
+  const basePayout = calculatePayout(symbolId, columnsMatched);
+  // Total payout = base × ways × wild multiplier
+  const payout = Math.floor(basePayout * ways * wildMultiplier);
 
   return {
     positions,
-    symbolId: payingSymbolId,
+    symbolId,
     payout,
-    length: positions.length,
+    length: columnsMatched, // Number of columns matched
     hasWild,
     wildMultiplier,
     wildPositions,
