@@ -307,9 +307,8 @@ export function useSlotMachine(address: `0x${string}` | undefined) {
     ...ebtSlotMachineConfig,
     eventName: 'SpinFulfilled',
     onLogs(logs) {
-      const log = logs[0];
-      if (log && log.args) {
-        const args = log.args as {
+      const log = logs[0] as unknown as {
+        args?: {
           requestId: bigint;
           player: `0x${string}`;
           reel1: number;
@@ -319,6 +318,9 @@ export function useSlotMachine(address: `0x${string}` | undefined) {
           isJackpot: boolean;
           isBonus: boolean;
         };
+      };
+      if (log?.args) {
+        const args = log.args;
 
         if (args.player?.toLowerCase() === address?.toLowerCase()) {
           setLatestSpinResult({

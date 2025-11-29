@@ -1,14 +1,14 @@
 'use client';
 
-import { Suspense } from 'react';
-import { SlotsContent } from './SlotsContent';
+import dynamic from 'next/dynamic';
+
+const SlotsContent = dynamic(() => import('./SlotsContent').then(mod => ({ default: mod.SlotsContent })), {
+  ssr: false,
+  loading: () => <SlotsLoading />
+});
 
 export default function SlotsPage() {
-  return (
-    <Suspense fallback={<SlotsLoading />}>
-      <SlotsContent />
-    </Suspense>
-  );
+  return <SlotsContent />;
 }
 
 function SlotsLoading() {

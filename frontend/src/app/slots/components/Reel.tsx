@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { motion, useAnimation } from 'framer-motion';
 import type { SlotSymbol } from '@/lib/slots/config';
 import { Symbol } from './Symbol';
@@ -16,7 +16,6 @@ export function Reel({ symbols, isSpinning, finalSymbol, stopped }: ReelProps) {
   const controls = useAnimation();
   const containerRef = useRef<HTMLDivElement>(null);
   const SYMBOL_HEIGHT = 80;
-  const VISIBLE_SYMBOLS = 3;
 
   useEffect(() => {
     if (isSpinning) {

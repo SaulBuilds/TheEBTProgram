@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useCallback, useEffect, useMemo } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
 import { useAccount } from 'wagmi';
@@ -14,9 +14,9 @@ import {
   type SlotSymbol,
   calculatePayout,
   generateSpinResult,
-  SYMBOLS,
+  ALL_SYMBOLS,
 } from '@/lib/slots/config';
-import { useSlotMachine, formatEBTC, getSymbolName } from '@/lib/hooks/useSlotMachine';
+import { useSlotMachine, getSymbolName } from '@/lib/hooks/useSlotMachine';
 import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID } from '@/lib/contracts/addresses';
 
 // Check if contract is deployed (not zero address)
@@ -34,7 +34,7 @@ interface SpinResult {
 }
 
 export function SlotsContent() {
-  const { authenticated, user } = usePrivy();
+  const { authenticated } = usePrivy();
   const { address } = useAccount();
 
   // Contract hook (only used when not in mock mode)
@@ -47,7 +47,7 @@ export function SlotsContent() {
   const [currentResult, setCurrentResult] = useState<SpinResult | null>(null);
   const [spinHistory, setSpinHistory] = useState<SpinResult[]>([]);
   const [showPayoutTable, setShowPayoutTable] = useState(false);
-  const [jackpotAmountLocal, setJackpotAmountLocal] = useState(GAME_CONFIG.JACKPOT_BASE);
+  const [jackpotAmountLocal] = useState(GAME_CONFIG.JACKPOT_BASE);
 
   // Background state
   const [backgroundScene, setBackgroundScene] = useState(BACKGROUND_SCENES.default);
@@ -78,7 +78,7 @@ export function SlotsContent() {
       // Find symbols by name
       const findSymbol = (id: number): SlotSymbol => {
         const name = getSymbolName(id);
-        return SYMBOLS.find(s => s.name === name) || SYMBOLS[0];
+        return ALL_SYMBOLS.find(s => s.name === name) || ALL_SYMBOLS[0];
       };
 
       const result: SpinResult = {
