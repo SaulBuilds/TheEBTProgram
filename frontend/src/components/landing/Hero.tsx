@@ -128,7 +128,7 @@ export function Hero() {
             <div className="w-px h-4 bg-gray-700" />
             <div>
               <span className="text-ebt-gold font-heading text-lg">$8,000</span>
-              <span className="text-gray-500 ml-2">LINDA'S CONVICTION</span>
+              <span className="text-gray-500 ml-2">LINDA&apos;S CONVICTION</span>
             </div>
           </div>
         </div>
