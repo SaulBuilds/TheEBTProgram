@@ -8,11 +8,11 @@ import { FundraisingMechanics } from './components/FundraisingMechanics';
 import { InstallmentSystem } from './components/InstallmentSystem';
 
 const sections = [
-  { id: 'overview', title: 'Overview' },
-  { id: 'contracts', title: 'Smart Contracts' },
-  { id: 'token-flow', title: 'Token Flow' },
-  { id: 'fundraising', title: 'Fundraising' },
-  { id: 'installments', title: 'Monthly Rewards' },
+  { id: 'overview', title: 'The Manifesto' },
+  { id: 'contracts', title: 'Protocol Architecture' },
+  { id: 'token-flow', title: 'Fund Distribution' },
+  { id: 'fundraising', title: 'Capital Formation' },
+  { id: 'installments', title: 'Benefit Cycles' },
 ];
 
 export function AboutContent() {
@@ -28,11 +28,11 @@ export function AboutContent() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-6xl font-heading text-ebt-gold mb-4 tracking-wide">
-            HOW IT ALL WORKS
+            THE BUREAU MANIFESTO
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            A transparent breakdown of the EBT Program mechanics.
-            No hidden fees, no rug pulls, just food stamps for everyone.
+            A protocol for the cancelled future. Transparent mechanics.
+            The simulation is broken. The token is fixed.
           </p>
         </motion.div>
 
@@ -120,13 +120,12 @@ export function AboutContent() {
           className="mt-16 bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6"
         >
           <h3 className="text-lg font-heading text-welfare-red mb-2 tracking-wide">
-            IMPORTANT DISCLAIMER
+            BUREAU NOTICE: EXPERIMENTAL PROGRAM
           </h3>
           <p className="text-sm text-gray-400">
-            This is a satirical art project about wealth inequality and the social safety net.
-            $EBTC tokens are cryptocurrency with no guaranteed value. This is NOT real government
-            assistance and is not affiliated with any government program. Invest only what you
-            can afford to lose. DYOR.
+            This protocol is a satirical art project exploring wealth inequality and cancelled futures.
+            $EBTC tokens carry no guaranteed value. This is not government assistance.
+            The bureau is not responsible for lost allocations. Participate at your own discretion.
           </p>
         </motion.div>
       </div>
@@ -137,8 +136,8 @@ export function AboutContent() {
 function OverviewSection() {
   const highlights = [
     {
-      title: 'EBT Card NFT',
-      description: 'Your digital food stamps card is an ERC-721 NFT with a unique design generated from your profile.',
+      title: 'Case File NFT',
+      description: 'Your case file is an ERC-721 credential. The bureau generates a unique identifier for each applicant.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -147,7 +146,7 @@ function OverviewSection() {
     },
     {
       title: 'Token-Bound Account',
-      description: 'Each NFT has its own smart wallet (ERC-6551) that holds your $EBTC tokens. Your card IS your wallet.',
+      description: 'Each NFT owns a smart wallet (ERC-6551). Your case file IS your account. The card holds the tokens.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
@@ -155,8 +154,8 @@ function OverviewSection() {
       ),
     },
     {
-      title: '$EBTC Tokens',
-      description: 'ERC-20 tokens distributed to cardholders. 200K-20M $EBTC on mint, plus monthly stipends.',
+      title: '$EBTC Allocation',
+      description: 'ERC-20 tokens distributed to case file holders. Initial allocation on mint, recurring distributions each cycle.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -164,8 +163,8 @@ function OverviewSection() {
       ),
     },
     {
-      title: 'Monthly Rewards',
-      description: 'Claim $EBTC every month based on your activity. Reapply every 3 months with proof of activity.',
+      title: 'Benefit Cycles',
+      description: 'Claim $EBTC each cycle based on activity score. Seasonal reapplication required every 3 months.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -180,22 +179,21 @@ function OverviewSection() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8 space-y-6">
           <h2 className="text-3xl font-heading text-ebt-gold tracking-wide">
-            What is EBT Card?
+            The Cancelled Future
           </h2>
           <p className="text-gray-400 leading-relaxed">
-            EBT Card is a satirical Web3 project that reimagines food stamps for the blockchain era.
-            Instead of government-issued benefits, we issue NFT cards with built-in smart wallets
-            that automatically receive $EBTC token distributions.
+            Your parents bought houses. You got student debt. They promised jetpacks.
+            You got a gig economy. The simulation promised prosperity. It delivered uncertainty.
           </p>
           <p className="text-gray-400 leading-relaxed">
-            The project comments on wealth inequality by giving everyone access to &quot;benefits&quot;
-            regardless of income. Billionaires and broke college students alike can apply for their
-            digital food stamps.
+            The Bureau of Techno-Optimism exists to patch the bug. We don&apos;t discriminate
+            by income because the old metrics are broken. The overqualified and the underemployed
+            file together. Poor is a mindset. Broke is temporary. Illiquid is solvable.
           </p>
           <div className="p-4 bg-ebt-gold/10 border border-ebt-gold/30 rounded-lg">
             <p className="text-sm text-ebt-gold">
-              &quot;Universal Basic Food Stamps&quot; - because everyone deserves to eat,
-              even if they&apos;re eating ramen by choice.
+              &quot;The program they cancelled. Restored.&quot; - What the old economy promised.
+              What this one delivers.
             </p>
           </div>
         </div>
@@ -220,14 +218,14 @@ function OverviewSection() {
       {/* Tokenomics Summary */}
       <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
         <h2 className="text-3xl font-heading text-ebt-gold mb-8 tracking-wide text-center">
-          Tokenomics at a Glance
+          Bureau Allocation Matrix
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Supply', value: '20B $EBTC' },
-            { label: 'Initial Drop', value: '200K-20M' },
-            { label: 'Monthly Stipend', value: '20K-20M' },
-            { label: 'Team Allocation', value: '1B (5%)' },
+            { label: 'Total Reserve', value: '20B $EBTC' },
+            { label: 'Initial Allocation', value: '200K-20M' },
+            { label: 'Cycle Distribution', value: '20K-20M' },
+            { label: 'Operations (5%)', value: '1B $EBTC' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -243,7 +241,7 @@ function OverviewSection() {
       {/* The Journey */}
       <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
         <h2 className="text-3xl font-heading text-ebt-gold mb-8 text-center tracking-wide">
-          Your Journey to Food Stamps
+          Standard Case Processing
         </h2>
         <div className="relative">
           {/* Connection line */}
@@ -251,11 +249,11 @@ function OverviewSection() {
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {[
-              { step: '1', title: 'Apply', desc: 'Fill out the satirical application form' },
-              { step: '2', title: 'Get Approved', desc: 'Applications reviewed (mostly everyone gets in)' },
-              { step: '3', title: 'Mint NFT', desc: 'Pay mint fee to get your EBT Card' },
-              { step: '4', title: 'Receive $EBTC', desc: '200K-20M $EBTC sent to your card wallet' },
-              { step: '5', title: 'Claim Monthly', desc: 'Return to claim additional rewards' },
+              { step: '1', title: 'Open Case', desc: 'Submit application to the bureau' },
+              { step: '2', title: 'Review', desc: 'Zero means testing. Eligibility universal.' },
+              { step: '3', title: 'Mint', desc: 'Processing fee generates your case file NFT' },
+              { step: '4', title: 'Allocate', desc: 'Initial $EBTC deposited to token-bound account' },
+              { step: '5', title: 'Claim', desc: 'Return each cycle for benefit distribution' },
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -278,22 +276,22 @@ function OverviewSection() {
       {/* Reapplication Info */}
       <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
         <h2 className="text-3xl font-heading text-ebt-gold mb-6 tracking-wide">
-          Reapplication Requirements
+          Seasonal Reapplication Protocol
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="font-heading text-white text-lg tracking-wide">Every 3 Months</h3>
+            <h3 className="font-heading text-white text-lg tracking-wide">Quarterly Cycles</h3>
             <p className="text-sm text-gray-400">
-              Users must reapply for food stamps after each 3-month season. This ensures active
-              participation and fair distribution based on current activity levels.
+              Case files expire each 3-month season. Shortage. Shutdown. Stimulus.
+              Reapplication ensures active participation and fair allocation based on current activity scores.
             </p>
           </div>
           <div className="space-y-4">
-            <h3 className="font-heading text-white text-lg tracking-wide">Proof Required</h3>
+            <h3 className="font-heading text-white text-lg tracking-wide">Activity Verification</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>Proof of onchain activity (transactions, holdings)</li>
-              <li>Or proof of employment (real job verification)</li>
-              <li>Social engagement (Twitter, Discord, GitHub)</li>
+              <li>On-chain activity score (transactions, holdings)</li>
+              <li>Employment verification (optional proof of work)</li>
+              <li>Community engagement (protocol participation)</li>
             </ul>
           </div>
         </div>

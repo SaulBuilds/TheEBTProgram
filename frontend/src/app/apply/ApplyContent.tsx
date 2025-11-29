@@ -60,13 +60,13 @@ const initialData: ApplicationData = {
 };
 
 const steps = [
-  { id: 'identity', title: 'Prove You Exist', achievement: 'Digital Citizen' },
-  { id: 'social', title: 'Link Your Socials', achievement: 'Social Butterfly' },
-  { id: 'hunger', title: 'Declare Your Hunger', achievement: 'Breadline Regular' },
-  { id: 'oath', title: 'Take the Oath', achievement: 'Welfare Warrior' },
-  { id: 'submit', title: 'Submit Application', achievement: 'Applicant' },
-  { id: 'register', title: 'Register On-Chain', achievement: 'Chain Linked' },
-  { id: 'success', title: 'Application Submitted', achievement: 'Queue Member' },
+  { id: 'identity', title: 'Verify Identity', achievement: 'Case File Created' },
+  { id: 'social', title: 'Link Credentials', achievement: 'Network Verified' },
+  { id: 'hunger', title: 'Declare Status', achievement: 'Status Documented' },
+  { id: 'oath', title: 'Bureau Oath', achievement: 'Protocol Accepted' },
+  { id: 'submit', title: 'File Application', achievement: 'Case Filed' },
+  { id: 'register', title: 'On-Chain Registration', achievement: 'Chain Registered' },
+  { id: 'success', title: 'Case Pending', achievement: 'Awaiting Processing' },
 ];
 
 export default function ApplyContent() {
@@ -199,11 +199,11 @@ export default function ApplyContent() {
             className="text-center max-w-md"
           >
             <h1 className="text-3xl font-mono font-bold text-ebt-gold mb-4">
-              Connect to Apply
+              Open Your Case
             </h1>
             <p className="text-gray-400 mb-8 font-mono">
-              You need to connect your wallet to apply for your EBT card.
-              Don&apos;t worry, even trust fund kids are welcome.
+              Connect your wallet to file an application with the bureau.
+              Zero means testing. Eligibility universal.
             </p>
             <button
               onClick={login}

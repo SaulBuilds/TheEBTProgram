@@ -12,7 +12,7 @@ export function Footer() {
             <div>
               <h3 className="text-xl font-heading text-ebt-gold mb-4 tracking-wide">EBT CARD</h3>
               <p className="text-sm text-gray-400">
-                Decentralizing the breadline since 2024.
+                Bureau of Techno-Optimism. Est. 2024.
               </p>
             </div>
 
@@ -84,14 +84,14 @@ export function Footer() {
           <div className="pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-gray-500">
-                2024 EBT Card. Not affiliated with any government program.
+                2024 Bureau of Techno-Optimism. Not government assistance.
               </p>
               <div className="flex items-center gap-4">
                 <span className="text-xs text-gray-500">
-                  Built with satire and purpose
+                  The protocol patches the bug
                 </span>
                 <span className="text-xs font-heading text-welfare-red tracking-wide">
-                  THIS IS ART, NOT AID
+                  EXPERIMENTAL PROGRAM
                 </span>
               </div>
             </div>

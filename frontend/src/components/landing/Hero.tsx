@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
 
 const headlines = [
-  "Food Stamps for Everyone",
-  "Even Trust Fund Kids Need to Eat",
-  "Welfare for Web3 Degens",
-  "From Breadlines to Blockchain",
-  "Universal Basic Food Tokens"
+  "The Program They Cancelled. Restored.",
+  "Your Parents Bought Houses. You Get This.",
+  "The Simulation is Broken. The Token is Fixed.",
+  "Not Poor. Temporarily Illiquid.",
+  "Welfare for the Overqualified"
 ];
 
 export function Hero() {
@@ -61,18 +61,18 @@ export function Hero() {
             <div className="w-full aspect-[3/2] bg-gradient-to-br from-ebt-gold to-yellow-600 rounded-xl shadow-2xl p-8 flex flex-col justify-between">
               <div>
                 <h3 className="text-4xl font-heading text-black tracking-wider">EBT CARD</h3>
-                <p className="text-lg font-sans text-gray-800 mt-2">UNIVERSAL BASIC FOOD</p>
+                <p className="text-lg font-sans text-gray-800 mt-2">BUREAU OF TECHNO-OPTIMISM</p>
               </div>
               <div className="flex items-end justify-between">
                 <div>
                   <div className="w-16 h-12 bg-gray-700 rounded mb-4"></div>
                   <p className="font-mono text-black text-xl tracking-wider">XXXX XXXX XXXX 0420</p>
                 </div>
-                <p className="font-heading text-black text-xl tracking-wide">WELFARE WARRIOR</p>
+                <p className="font-heading text-black text-xl tracking-wide">CASE FILE #0001</p>
               </div>
             </div>
             <div className="absolute -top-3 -right-3 bg-welfare-red text-white px-3 py-1 rotate-12 font-heading text-sm tracking-wide">
-              LIMITED EDITION
+              CASE PENDING
             </div>
           </div>
         </div>
@@ -80,10 +80,10 @@ export function Hero() {
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
           <p className="text-xl md:text-2xl mb-2 font-heading text-ebt-green tracking-wide">
-            &quot;Why should the poor have all the fun?&quot;
+            &quot;You&apos;re not poor. You&apos;re temporarily illiquid.&quot;
           </p>
           <p className="text-lg md:text-xl text-gray-400">
-            The first welfare program that appreciates in value
+            The protocol patches the bug. Apply today.
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export function Hero() {
             disabled={!ready}
           >
             <span className="relative z-10 flex items-center gap-2">
-              {!authenticated ? 'CONNECT WALLET' : 'APPLY NOW'}
+              {!authenticated ? 'CONNECT WALLET' : 'FILE APPLICATION'}
               <span className="animate-pulse">→</span>
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-ebt-gold to-welfare-red transform translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
@@ -109,7 +109,7 @@ export function Hero() {
             variant="secondary"
             className="border-2 border-ebt-gold/50 hover:border-ebt-gold font-heading tracking-wide"
           >
-            LEARN MORE
+            READ THE MANIFESTO
           </Button>
         </div>
 
@@ -118,17 +118,17 @@ export function Hero() {
           <div className="flex items-center justify-center gap-8 text-sm">
             <div>
               <span className="text-ebt-gold font-heading text-lg">420</span>
-              <span className="text-gray-500 ml-2">CARDS MINTED</span>
+              <span className="text-gray-500 ml-2">CASES FILED</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
               <span className="text-ebt-gold font-heading text-lg">$69K</span>
-              <span className="text-gray-500 ml-2">RAISED</span>
+              <span className="text-gray-500 ml-2">LIQUIDITY</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
               <span className="text-ebt-gold font-heading text-lg">1.2M</span>
-              <span className="text-gray-500 ml-2">$EBTC</span>
+              <span className="text-gray-500 ml-2">$EBTC ALLOCATED</span>
             </div>
           </div>
         </div>

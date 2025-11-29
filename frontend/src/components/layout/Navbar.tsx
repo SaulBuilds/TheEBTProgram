@@ -54,7 +54,7 @@ export function Navbar() {
               EBT
             </div>
             <div className="text-xs text-gray-500 hidden sm:block tracking-wide">
-              DECENTRALIZED WELFARE
+              BUREAU OF TECHNO-OPTIMISM
             </div>
           </Link>
 
