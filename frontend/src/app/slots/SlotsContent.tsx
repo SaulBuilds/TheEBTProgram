@@ -1,120 +1,32 @@
 'use client';
 
-import React, { useState, useCallback, useEffect } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import { usePrivy } from '@privy-io/react-auth';
+import gsap from 'gsap';
 import {
   SYMBOL_BY_ID,
   RARITY_COLORS,
   generateRandomGrid,
+  getRandomSymbol,
 } from '@/lib/slots/symbols';
 import {
   executeSpin,
   GRID_SIZE,
   COMBO_MULTIPLIERS,
-  type CascadeStep,
 } from '@/lib/slots/cascadeEngine';
-
-// ============ CELL COMPONENT ============
-
-interface CellProps {
-  symbolId: number;
-  isMatched: boolean;
-  isNew: boolean;
-  fallDelay: number;
-}
-
-function Cell({ symbolId, isMatched, isNew, fallDelay }: CellProps) {
-  const symbol = SYMBOL_BY_ID.get(symbolId);
-  if (!symbol) return <div className="w-full h-full bg-gray-800 rounded-lg" />;
-
-  const rarity = RARITY_COLORS[symbol.rarity];
-
-  return (
-    <motion.div
-      className="relative w-full h-full"
-      initial={isNew ? { y: -80, opacity: 0 } : false}
-      animate={{
-        y: 0,
-        opacity: 1,
-        scale: isMatched ? [1, 1.2, 0] : 1,
-      }}
-      transition={{
-        y: { type: 'spring', damping: 12, stiffness: 200, delay: fallDelay },
-        opacity: { duration: 0.2, delay: fallDelay },
-        scale: { duration: 0.4 },
-      }}
-    >
-      <div
-        className={`
-          relative w-full h-full rounded-lg overflow-hidden
-          border-2 bg-gray-900/80
-          ${isMatched ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : ''}
-        `}
-        style={{
-          borderColor: isMatched ? '#FBBF24' : rarity.border,
-          boxShadow: isMatched ? `0 0 20px ${rarity.glow}` : undefined,
-        }}
-      >
-        <Image
-          src={symbol.imagePath}
-          alt={symbol.name}
-          fill
-          className="object-contain p-1"
-          sizes="70px"
-          unoptimized
-        />
-
-        {/* Special badge */}
-        {symbol.special && (
-          <div
-            className={`
-              absolute -top-1 -right-1 w-5 h-5 rounded-full
-              flex items-center justify-center text-[9px] font-bold text-white z-10
-              ${symbol.special === 'wild' ? 'bg-yellow-500' :
-                symbol.special === 'jackpot' ? 'bg-red-500' : 'bg-purple-500'}
-            `}
-          >
-            {symbol.special === 'wild' ? 'W' : symbol.special === 'jackpot' ? '₿' : 'B'}
-          </div>
-        )}
-
-        {/* Rarity bar */}
-        <div
-          className="absolute bottom-0 left-0 right-0 h-1"
-          style={{ backgroundColor: rarity.border }}
-        />
-      </div>
-
-      {/* Match glow effect */}
-      {isMatched && (
-        <motion.div
-          className="absolute inset-0 rounded-lg pointer-events-none"
-          initial={{ opacity: 0.8 }}
-          animate={{ opacity: 0, scale: 1.5 }}
-          transition={{ duration: 0.5 }}
-          style={{
-            background: `radial-gradient(circle, ${rarity.glow} 0%, transparent 70%)`,
-          }}
-        />
-      )}
-    </motion.div>
-  );
-}
 
 // ============ MAIN COMPONENT ============
 
 export function SlotsContent() {
   const { authenticated } = usePrivy();
+  const gridRef = useRef<HTMLDivElement>(null);
+  const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   // Game state
   const [grid, setGrid] = useState<number[]>([]);
+  const [displayGrid, setDisplayGrid] = useState<number[]>([]);
   const [isSpinning, setIsSpinning] = useState(false);
-  const [currentStep, setCurrentStep] = useState(-1);
-  const [cascadeSteps, setCascadeSteps] = useState<CascadeStep[]>([]);
-  const [matchedPositions, setMatchedPositions] = useState<Set<string>>(new Set());
-  const [newPositions, setNewPositions] = useState<Set<string>>(new Set());
 
   // Stats
   const [sessionPoints, setSessionPoints] = useState(0);
@@ -122,100 +34,246 @@ export function SlotsContent() {
   const [isJackpot, setIsJackpot] = useState(false);
   const [isBigWin, setIsBigWin] = useState(false);
   const [spinCount, setSpinCount] = useState(0);
+  const [showWin, setShowWin] = useState(false);
 
   // Initialize grid on mount
   useEffect(() => {
-    setGrid(generateRandomGrid(GRID_SIZE));
+    const initialGrid = generateRandomGrid(GRID_SIZE);
+    setGrid(initialGrid);
+    setDisplayGrid(initialGrid);
   }, []);
 
-  // Process cascade animation
-  useEffect(() => {
-    if (!isSpinning || currentStep < 0 || currentStep >= cascadeSteps.length) return;
-
-    const step = cascadeSteps[currentStep];
-
-    // Show matched positions
-    const matched = new Set<string>();
-    step.matches.forEach(match => {
-      match.positions.forEach(pos => {
-        matched.add(`${pos.row}-${pos.col}`);
-      });
-    });
-    setMatchedPositions(matched);
-
-    // After match animation, apply cascade
-    const cascadeTimer = setTimeout(() => {
-      // Update grid and show new symbols
-      if (currentStep + 1 < cascadeSteps.length) {
-        const nextStep = cascadeSteps[currentStep + 1];
-        setGrid(nextStep.grid);
-
-        const newPos = new Set<string>();
-        step.newSymbols.forEach(ns => {
-          newPos.add(`${ns.position.row}-${ns.position.col}`);
-        });
-        setNewPositions(newPos);
-      }
-
-      setMatchedPositions(new Set());
-
-      // Move to next step
-      setTimeout(() => {
-        setNewPositions(new Set());
-        setCurrentStep(prev => prev + 1);
-      }, 400);
-    }, 600);
-
-    return () => clearTimeout(cascadeTimer);
-  }, [isSpinning, currentStep, cascadeSteps]);
-
-  // End of cascade sequence
-  useEffect(() => {
-    if (isSpinning && currentStep >= cascadeSteps.length && cascadeSteps.length > 0) {
-      setIsSpinning(false);
-      setCurrentStep(-1);
-    }
-  }, [isSpinning, currentStep, cascadeSteps.length]);
-
-  // Handle spin
-  const handleSpin = useCallback(() => {
-    if (isSpinning) return;
+  // Animate spin with GSAP
+  const animateSpin = useCallback(async () => {
+    if (!gridRef.current || isSpinning) return;
 
     setIsSpinning(true);
     setLastWin(null);
+    setShowWin(false);
     setIsJackpot(false);
     setIsBigWin(false);
-    setMatchedPositions(new Set());
-    setNewPositions(new Set());
 
-    // Execute spin
+    const cells = cellRefs.current.filter(Boolean) as HTMLDivElement[];
+
+    // Phase 1: Spin blur effect - columns fall at different speeds
+    const spinTimeline = gsap.timeline();
+
+    // Blur and move cells up rapidly to simulate spinning
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
+      const delay = col * 0.08;
+
+      spinTimeline.to(colCells, {
+        y: -40,
+        opacity: 0.3,
+        filter: 'blur(3px)',
+        duration: 0.15,
+        stagger: 0.02,
+        ease: 'power2.in',
+      }, delay);
+    }
+
+    await spinTimeline.play();
+
+    // Generate spinning frames - rapidly change symbols
+    const spinFrames = 12 + Math.floor(Math.random() * 6);
+
+    for (let frame = 0; frame < spinFrames; frame++) {
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      // Generate random symbols for visual effect
+      const spinGrid: number[] = [];
+      for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+        spinGrid.push(getRandomSymbol().id);
+      }
+      setDisplayGrid(spinGrid);
+
+      // Quick flash animation per column
+      for (let col = 0; col < GRID_SIZE; col++) {
+        const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
+        // Stagger the stopping - later columns spin longer
+        if (frame >= spinFrames - 5 + col) {
+          gsap.to(colCells, {
+            y: 0,
+            opacity: 1,
+            filter: 'blur(0px)',
+            duration: 0.2,
+            ease: 'back.out(1.5)',
+          });
+        }
+      }
+    }
+
+    // Execute the actual game logic
     const result = executeSpin(grid);
 
-    if (result.cascadeSteps.length > 0) {
-      setCascadeSteps(result.cascadeSteps);
-      setCurrentStep(0);
-      setGrid(result.cascadeSteps[0].grid);
+    // Set final grid and animate columns landing
+    setDisplayGrid(result.cascadeSteps.length > 0 ? result.cascadeSteps[0].grid : result.finalGrid);
 
-      // Update stats after animation completes
-      setTimeout(() => {
-        setGrid(result.finalGrid);
-        setSessionPoints(prev => prev + result.totalPoints);
-        setLastWin({
-          points: result.totalPoints,
-          cascades: result.cascadeCount,
-          multiplier: result.comboMultiplier,
-        });
-        setIsJackpot(result.isJackpot);
-        setIsBigWin(result.isBigWin);
-        setSpinCount(prev => prev + 1);
-      }, result.cascadeSteps.length * 1000 + 500);
-    } else {
-      // No matches - just show new grid
-      setGrid(result.finalGrid);
-      setSpinCount(prev => prev + 1);
-      setTimeout(() => setIsSpinning(false), 500);
+    // Phase 2: Land animation - columns land with bounce
+    const landTimeline = gsap.timeline();
+
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
+      landTimeline.to(colCells, {
+        y: 0,
+        opacity: 1,
+        filter: 'blur(0px)',
+        duration: 0.3,
+        ease: 'back.out(2)',
+        stagger: 0.03,
+      }, col * 0.12);
     }
-  }, [isSpinning, grid]);
+
+    await landTimeline.play();
+
+    // Phase 3: Process cascades if any matches
+    if (result.cascadeSteps.length > 0) {
+      for (let stepIdx = 0; stepIdx < result.cascadeSteps.length; stepIdx++) {
+        const step = result.cascadeSteps[stepIdx];
+
+        // Highlight matched cells
+        const matchedIndices: number[] = [];
+        step.matches.forEach(match => {
+          match.positions.forEach(pos => {
+            matchedIndices.push(pos.row * GRID_SIZE + pos.col);
+          });
+        });
+
+        // Pulse and glow matched cells
+        const matchedCells = matchedIndices.map(idx => cells[idx]).filter(Boolean);
+
+        await gsap.to(matchedCells, {
+          scale: 1.15,
+          boxShadow: '0 0 30px rgba(251, 191, 36, 0.8)',
+          duration: 0.2,
+          yoyo: true,
+          repeat: 2,
+          ease: 'power2.inOut',
+        });
+
+        // Explode matched cells
+        await gsap.to(matchedCells, {
+          scale: 0,
+          opacity: 0,
+          rotation: 15,
+          duration: 0.25,
+          ease: 'power2.in',
+        });
+
+        // Wait a moment
+        await new Promise(resolve => setTimeout(resolve, 100));
+
+        // Update grid to show cascaded result
+        const nextGrid = stepIdx + 1 < result.cascadeSteps.length
+          ? result.cascadeSteps[stepIdx + 1].grid
+          : result.finalGrid;
+
+        setDisplayGrid(nextGrid);
+
+        // Animate new symbols falling in
+        const newSymbolIndices = step.newSymbols.map(ns => ns.position.row * GRID_SIZE + ns.position.col);
+        const newCells = newSymbolIndices.map(idx => cells[idx]).filter(Boolean);
+
+        // Reset all cells first
+        gsap.set(cells, { scale: 1, opacity: 1, rotation: 0, y: 0 });
+
+        // Animate new cells falling from top
+        gsap.set(newCells, { y: -80, opacity: 0 });
+        await gsap.to(newCells, {
+          y: 0,
+          opacity: 1,
+          duration: 0.4,
+          stagger: 0.05,
+          ease: 'bounce.out',
+        });
+
+        await new Promise(resolve => setTimeout(resolve, 300));
+      }
+
+      // Update final state
+      setGrid(result.finalGrid);
+      setDisplayGrid(result.finalGrid);
+      setSessionPoints(prev => prev + result.totalPoints);
+      setLastWin({
+        points: result.totalPoints,
+        cascades: result.cascadeCount,
+        multiplier: result.comboMultiplier,
+      });
+      setIsJackpot(result.isJackpot);
+      setIsBigWin(result.isBigWin);
+      setShowWin(true);
+    } else {
+      // No matches - just update grid
+      setGrid(result.finalGrid);
+      setDisplayGrid(result.finalGrid);
+    }
+
+    // Reset all cells to normal state
+    gsap.set(cells, { scale: 1, opacity: 1, rotation: 0, y: 0, filter: 'blur(0px)' });
+
+    setSpinCount(prev => prev + 1);
+    setIsSpinning(false);
+  }, [grid, isSpinning]);
+
+  // Handle spin button click
+  const handleSpin = useCallback(() => {
+    if (isSpinning) return;
+    animateSpin();
+  }, [isSpinning, animateSpin]);
+
+  // Render cell
+  const renderCell = (symbolId: number, index: number) => {
+    const symbol = SYMBOL_BY_ID.get(symbolId);
+    if (!symbol) return <div className="w-full h-full bg-gray-800 rounded-lg" />;
+
+    const rarity = RARITY_COLORS[symbol.rarity];
+
+    return (
+      <div
+        ref={el => { cellRefs.current[index] = el; }}
+        className="relative w-full h-full"
+        style={{ transformOrigin: 'center center' }}
+      >
+        <div
+          className="relative w-full h-full rounded-lg overflow-hidden border-2 bg-gray-900/80"
+          style={{
+            borderColor: rarity.border,
+            boxShadow: `0 0 10px ${rarity.glow}`,
+          }}
+        >
+          <Image
+            src={symbol.imagePath}
+            alt={symbol.name}
+            fill
+            className="object-contain p-1"
+            sizes="70px"
+            unoptimized
+          />
+
+          {/* Special badge */}
+          {symbol.special && (
+            <div
+              className={`
+                absolute -top-1 -right-1 w-5 h-5 rounded-full
+                flex items-center justify-center text-[9px] font-bold text-white z-10
+                ${symbol.special === 'wild' ? 'bg-yellow-500' :
+                  symbol.special === 'jackpot' ? 'bg-red-500' : 'bg-purple-500'}
+              `}
+            >
+              {symbol.special === 'wild' ? 'W' : symbol.special === 'jackpot' ? '₿' : 'B'}
+            </div>
+          )}
+
+          {/* Rarity bar */}
+          <div
+            className="absolute bottom-0 left-0 right-0 h-1"
+            style={{ backgroundColor: rarity.border }}
+          />
+        </div>
+      </div>
+    );
+  };
 
   return (
     <div
@@ -233,14 +291,12 @@ export function SlotsContent() {
       <div className="relative z-10 container mx-auto px-4 py-8">
         {/* Header */}
         <div className="text-center mb-6">
-          <motion.h1
-            initial={{ y: -50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
+          <h1
             className="text-5xl md:text-7xl font-heading text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-2"
             style={{ textShadow: '0 0 40px rgba(251, 191, 36, 0.5)' }}
           >
             THE GROCERY RUN
-          </motion.h1>
+          </h1>
           <p className="text-gray-400 font-mono">
             Match 3+ • Cascade Wins • Chain Multipliers up to 8x!
           </p>
@@ -272,92 +328,77 @@ export function SlotsContent() {
 
               {/* 5x5 Grid */}
               <div
+                ref={gridRef}
                 className="grid gap-1.5"
                 style={{
                   gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
                   aspectRatio: '1',
                 }}
               >
-                {grid.map((symbolId, index) => {
-                  const row = Math.floor(index / GRID_SIZE);
-                  const col = index % GRID_SIZE;
-                  const key = `${row}-${col}`;
-
-                  return (
-                    <Cell
-                      key={`${index}-${symbolId}`}
-                      symbolId={symbolId}
-                      isMatched={matchedPositions.has(key)}
-                      isNew={newPositions.has(key)}
-                      fallDelay={col * 0.05}
-                    />
-                  );
-                })}
+                {displayGrid.map((symbolId, index) => (
+                  <div key={index} className="aspect-square">
+                    {renderCell(symbolId, index)}
+                  </div>
+                ))}
               </div>
+
+              {/* Spinning overlay */}
+              {isSpinning && (
+                <div className="absolute inset-0 pointer-events-none rounded-2xl overflow-hidden">
+                  <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 via-transparent to-yellow-500/10 animate-pulse" />
+                </div>
+              )}
             </div>
 
             {/* Spin Button */}
             <div className="mt-6 flex justify-center">
-              <motion.button
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
+              <button
                 onClick={handleSpin}
                 disabled={isSpinning}
                 className={`
                   px-16 py-5 rounded-xl font-heading text-3xl uppercase tracking-wider
-                  transition-all duration-200 shadow-lg
+                  transition-all duration-200 shadow-lg transform
                   ${isSpinning
                     ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                    : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl'
+                    : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl hover:scale-105 active:scale-95'
                   }
                 `}
               >
                 {isSpinning ? 'SPINNING...' : 'SPIN'}
-              </motion.button>
+              </button>
             </div>
 
             {/* Last Win Display */}
-            <AnimatePresence>
-              {lastWin && lastWin.points > 0 && !isSpinning && (
-                <motion.div
-                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
-                  animate={{ opacity: 1, y: 0, scale: 1 }}
-                  exit={{ opacity: 0, scale: 0.9 }}
-                  className="mt-4"
-                >
-                  <div className={`
-                    p-4 rounded-xl border text-center
-                    ${isJackpot
-                      ? 'bg-yellow-500/20 border-yellow-500'
-                      : isBigWin
-                        ? 'bg-purple-500/20 border-purple-500'
-                        : 'bg-green-500/20 border-green-500/50'
-                    }
-                  `}>
-                    {isJackpot && (
-                      <motion.p
-                        animate={{ scale: [1, 1.1, 1] }}
-                        transition={{ duration: 0.5, repeat: 3 }}
-                        className="text-3xl font-heading text-yellow-400 mb-2"
-                      >
-                        🎰 JACKPOT! 🎰
-                      </motion.p>
-                    )}
-                    {isBigWin && !isJackpot && (
-                      <p className="text-2xl font-heading text-purple-400 mb-2">⭐ BIG WIN! ⭐</p>
-                    )}
-                    <p className="text-3xl font-heading text-green-400">
-                      +{lastWin.points.toLocaleString()} POINTS
+            {showWin && lastWin && lastWin.points > 0 && !isSpinning && (
+              <div className="mt-4">
+                <div className={`
+                  p-4 rounded-xl border text-center animate-pulse
+                  ${isJackpot
+                    ? 'bg-yellow-500/20 border-yellow-500'
+                    : isBigWin
+                      ? 'bg-purple-500/20 border-purple-500'
+                      : 'bg-green-500/20 border-green-500/50'
+                  }
+                `}>
+                  {isJackpot && (
+                    <p className="text-3xl font-heading text-yellow-400 mb-2 animate-bounce">
+                      JACKPOT!
                     </p>
-                    {lastWin.cascades > 0 && (
-                      <p className="text-sm font-mono text-gray-400 mt-2">
-                        {lastWin.cascades} cascade{lastWin.cascades > 1 ? 's' : ''} • {lastWin.multiplier}x multiplier
-                      </p>
-                    )}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
+                  )}
+                  {isBigWin && !isJackpot && (
+                    <p className="text-2xl font-heading text-purple-400 mb-2">BIG WIN!</p>
+                  )}
+                  <p className="text-3xl font-heading text-green-400">
+                    +{lastWin.points.toLocaleString()} POINTS
+                  </p>
+                  {lastWin.cascades > 0 && (
+                    <p className="text-sm font-mono text-gray-400 mt-2">
+                      {lastWin.cascades} cascade{lastWin.cascades > 1 ? 's' : ''} • {lastWin.multiplier}x multiplier
+                    </p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Sidebar */}
