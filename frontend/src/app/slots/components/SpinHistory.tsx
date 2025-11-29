@@ -20,8 +20,8 @@ export function SpinHistory({ history }: SpinHistoryProps) {
     );
   }
 
-  const wins = history.filter(s => s.pointsEarned > 0).length;
-  const totalPoints = history.reduce((sum, s) => sum + s.pointsEarned, 0);
+  const wins = history.filter(s => s.totalPayout > 0).length;
+  const totalPoints = history.reduce((sum, s) => sum + s.totalPayout, 0);
 
   return (
     <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4">
@@ -37,37 +37,29 @@ export function SpinHistory({ history }: SpinHistoryProps) {
               transition={{ delay: index * 0.05 }}
               className={`
                 p-2 rounded-lg border text-xs font-mono
-                ${spin.isJackpot
-                  ? 'bg-ebt-gold/20 border-ebt-gold'
-                  : spin.isBigWin
-                    ? 'bg-purple-500/20 border-purple-500/50'
-                    : spin.pointsEarned > 0
-                      ? 'bg-green-500/10 border-green-500/30'
-                      : 'bg-gray-800/50 border-gray-700'
+                ${spin.bonusTriggered
+                  ? 'bg-purple-500/20 border-purple-500/50'
+                  : spin.totalPayout > 0
+                    ? 'bg-green-500/10 border-green-500/30'
+                    : 'bg-gray-800/50 border-gray-700'
                 }
               `}
             >
               <div className="flex justify-between items-center">
                 <div className="flex items-center gap-2">
-                  {spin.isJackpot && <span>🎰</span>}
-                  {spin.isBigWin && !spin.isJackpot && <span>⭐</span>}
+                  {spin.bonusTriggered && <span>🎰</span>}
                   {spin.cascadeCount > 0 ? (
                     <span className="text-purple-400">{spin.cascadeCount}x chain</span>
-                  ) : spin.pointsEarned === 0 ? (
+                  ) : spin.totalPayout === 0 ? (
                     <span className="text-gray-500">No matches</span>
                   ) : (
                     <span className="text-gray-400">Match!</span>
                   )}
                 </div>
-                <span className={spin.pointsEarned > 0 ? 'text-green-400' : 'text-gray-500'}>
-                  {spin.pointsEarned > 0 ? `+${spin.pointsEarned.toLocaleString()}` : '0'}
+                <span className={spin.totalPayout > 0 ? 'text-green-400' : 'text-gray-500'}>
+                  {spin.totalPayout > 0 ? `+${spin.totalPayout.toLocaleString()}` : '0'}
                 </span>
               </div>
-              {spin.comboMultiplier > 1 && (
-                <div className="text-[10px] text-gray-500 mt-1">
-                  {spin.comboMultiplier}x multiplier applied
-                </div>
-              )}
             </motion.div>
           ))}
         </AnimatePresence>

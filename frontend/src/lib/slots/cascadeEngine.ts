@@ -5,7 +5,7 @@
  * Runs entirely client-side for instant feedback.
  */
 
-import { SYMBOLS, SYMBOL_BY_ID, getRandomSymbol, type Symbol } from './symbols';
+import { SYMBOL_BY_ID, getRandomSymbol, type Symbol } from './symbols';
 
 // ============ CONSTANTS ============
 
