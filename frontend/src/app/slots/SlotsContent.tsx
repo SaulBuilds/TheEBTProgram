@@ -8,14 +8,20 @@ import {
   GRID_SIZE,
   SYMBOL_BY_ID,
   WILD_SYMBOL_ID,
-  MULTIPLIER_SYMBOL_ID,
+  SCATTER_SYMBOL_ID,
   BONUS_SYMBOL_ID,
+  FREESPIN_SYMBOL_ID,
+  HOLD_SPIN_CONFIG,
   generateCleanGrid,
   executeSpin,
-  initializeBonus,
-  executeBonusSpin,
+  initializeFreeSpins,
+  executeFreeSpinSpin,
+  initializeHoldSpin,
+  executeHoldSpinSpin,
+  posToKey,
   type GridCell,
-  type BonusState,
+  type FreeSpinsState,
+  type HoldSpinState,
   type SpinResult,
 } from '@/lib/slots/gameEngine';
 import { getRandomSymbol, CASCADE_MULTIPLIERS } from '@/lib/slots/gameConfig';
@@ -32,10 +38,13 @@ export function SlotsContent() {
   const [displayGrid, setDisplayGrid] = useState<GridCell[]>([]);
   const [isSpinning, setIsSpinning] = useState(false);
 
-  // Bonus state
-  const [bonusState, setBonusState] = useState<BonusState | null>(null);
-  const [showBonusIntro, setShowBonusIntro] = useState(false);
-  const [showBonusComplete, setShowBonusComplete] = useState(false);
+  // Bonus states
+  const [freeSpinsState, setFreeSpinsState] = useState<FreeSpinsState | null>(null);
+  const [holdSpinState, setHoldSpinState] = useState<HoldSpinState | null>(null);
+  const [showFreeSpinsIntro, setShowFreeSpinsIntro] = useState(false);
+  const [showFreeSpinsComplete, setShowFreeSpinsComplete] = useState(false);
+  const [showHoldSpinIntro, setShowHoldSpinIntro] = useState(false);
+  const [showHoldSpinComplete, setShowHoldSpinComplete] = useState(false);
 
   // Stats
   const [sessionPoints, setSessionPoints] = useState(0);
@@ -46,7 +55,7 @@ export function SlotsContent() {
   // Autoplay state
   const [autoplayActive, setAutoplayActive] = useState(false);
   const [autoplaySpinsRemaining, setAutoplaySpinsRemaining] = useState(0);
-  const autoplayRef = useRef(false); // Ref for immediate access in callbacks
+  const autoplayRef = useRef(false);
 
   // Initialize grid on mount
   useEffect(() => {
@@ -55,20 +64,20 @@ export function SlotsContent() {
     setDisplayGrid(initialGrid);
   }, []);
 
-  // Convert grid for display during spinning
-  const createSpinningGrid = (): GridCell[] => {
+  // Create spinning grid for animation
+  const createSpinningGrid = useCallback((): GridCell[] => {
     const spinGrid: GridCell[] = [];
     for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
       spinGrid.push({
-        symbolId: getRandomSymbol().id,
+        symbolId: getRandomSymbol(true).id,
         isNew: false,
       });
     }
     return spinGrid;
-  };
+  }, []);
 
-  // Animate spin with GSAP
-  const animateSpin = useCallback(async (isBonus = false) => {
+  // ============ SMOOTH REEL SPIN ANIMATION ============
+  const animateSpin = useCallback(async (isFreeSpins = false, isHoldSpin = false) => {
     if (!gridRef.current || isSpinning) return;
 
     setIsSpinning(true);
@@ -77,78 +86,78 @@ export function SlotsContent() {
 
     const cells = cellRefs.current.filter(Boolean) as HTMLDivElement[];
 
-    // Phase 1: Spin blur effect
+    // Phase 1: All symbols move UP slightly, then blur and fall down
     const spinTimeline = gsap.timeline();
 
+    // Lift all cells up first (anticipation)
+    spinTimeline.to(cells, {
+      y: -20,
+      duration: 0.15,
+      ease: 'power2.out',
+    });
+
+    // Then blur and drop
     for (let col = 0; col < GRID_SIZE; col++) {
       const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
       spinTimeline.to(colCells, {
-        y: -30,
-        opacity: 0.4,
-        filter: 'blur(2px)',
-        duration: 0.12,
-        stagger: 0.02,
+        y: 40,
+        opacity: 0.3,
+        filter: 'blur(4px)',
+        duration: 0.2,
         ease: 'power2.in',
-      }, col * 0.06);
+      }, 0.15 + col * 0.04);
     }
 
     await spinTimeline.play();
 
-    // Spinning frames
-    const spinFrames = 10 + Math.floor(Math.random() * 5);
+    // Phase 2: Rapid symbol changes (spinning effect)
+    const spinFrames = 12 + Math.floor(Math.random() * 6);
     for (let frame = 0; frame < spinFrames; frame++) {
-      await new Promise(resolve => setTimeout(resolve, 40));
+      await new Promise(resolve => setTimeout(resolve, 50));
       setDisplayGrid(createSpinningGrid());
-
-      for (let col = 0; col < GRID_SIZE; col++) {
-        const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
-        if (frame >= spinFrames - 4 + col) {
-          gsap.to(colCells, {
-            y: 0,
-            opacity: 1,
-            filter: 'blur(0px)',
-            duration: 0.15,
-            ease: 'back.out(1.2)',
-          });
-        }
-      }
     }
 
-    // Execute game logic
+    // Phase 3: Execute game logic
     let result: SpinResult;
-    let updatedBonus: BonusState | null = null;
+    let updatedFreeSpins: FreeSpinsState | null = null;
 
-    if (isBonus && bonusState) {
-      const bonusResult = executeBonusSpin(bonusState);
-      result = bonusResult.result;
-      updatedBonus = bonusResult.updatedState;
+    if (isFreeSpins && freeSpinsState) {
+      const freeSpinResult = executeFreeSpinSpin(freeSpinsState);
+      result = freeSpinResult.result;
+      updatedFreeSpins = freeSpinResult.updatedState;
     } else {
       result = executeSpin(grid);
     }
 
-    // Set final grid
+    // Phase 4: Land symbols column by column with bounce
     setDisplayGrid(result.cascadeSteps.length > 0 ? result.cascadeSteps[0].grid : result.finalGrid);
 
-    // Land animation
     const landTimeline = gsap.timeline();
+
+    // First reset all cells to above position
+    gsap.set(cells, { y: -50, opacity: 0.3, filter: 'blur(4px)' });
+
+    // Land each column with delay
     for (let col = 0; col < GRID_SIZE; col++) {
       const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
       landTimeline.to(colCells, {
         y: 0,
         opacity: 1,
         filter: 'blur(0px)',
-        duration: 0.25,
-        ease: 'back.out(1.5)',
-        stagger: 0.02,
-      }, col * 0.1);
+        duration: 0.35,
+        ease: 'back.out(1.4)',
+        stagger: 0.03,
+      }, col * 0.08);
     }
+
     await landTimeline.play();
 
-    // Process cascades
+    // Phase 5: Process cascades with animations
     if (result.cascadeSteps.length > 0) {
       for (let stepIdx = 0; stepIdx < result.cascadeSteps.length; stepIdx++) {
         const step = result.cascadeSteps[stepIdx];
 
+        // Highlight matched symbols
         const matchedIndices: number[] = [];
         step.matches.forEach(match => {
           match.positions.forEach(pos => {
@@ -158,56 +167,59 @@ export function SlotsContent() {
 
         const matchedCells = matchedIndices.map(idx => cells[idx]).filter(Boolean);
 
-        // Pulse matched
+        // Pulse and glow effect
         await gsap.to(matchedCells, {
-          scale: 1.1,
-          duration: 0.15,
+          scale: 1.15,
+          boxShadow: '0 0 20px rgba(255, 215, 0, 0.8)',
+          duration: 0.2,
           yoyo: true,
-          repeat: 2,
+          repeat: 1,
           ease: 'power2.inOut',
         });
 
-        // Explode
+        // Explode matched symbols
         await gsap.to(matchedCells, {
           scale: 0,
           opacity: 0,
-          duration: 0.2,
+          rotation: 15,
+          duration: 0.25,
           ease: 'power2.in',
         });
 
-        await new Promise(resolve => setTimeout(resolve, 80));
+        await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Next grid
+        // Update grid with next step
         const nextGrid = stepIdx + 1 < result.cascadeSteps.length
           ? result.cascadeSteps[stepIdx + 1].grid
           : result.finalGrid;
 
         setDisplayGrid(nextGrid);
 
-        // New symbols fall
+        // Animate new symbols falling in
         const newSymbolIndices = step.newSymbols.map(ns => ns.row * GRID_SIZE + ns.col);
         const newCells = newSymbolIndices.map(idx => cells[idx]).filter(Boolean);
 
-        gsap.set(cells, { scale: 1, opacity: 1, rotation: 0, y: 0 });
-        gsap.set(newCells, { y: -60, opacity: 0 });
+        gsap.set(cells, { scale: 1, opacity: 1, rotation: 0, y: 0, boxShadow: 'none' });
+        gsap.set(newCells, { y: -80, opacity: 0 });
 
         await gsap.to(newCells, {
           y: 0,
           opacity: 1,
-          duration: 0.35,
-          stagger: 0.04,
+          duration: 0.4,
+          stagger: 0.05,
           ease: 'bounce.out',
         });
 
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 250));
       }
     }
 
-    // Update state
+    // Update final state
     setGrid(result.finalGrid);
     setDisplayGrid(result.finalGrid);
-    gsap.set(cells, { scale: 1, opacity: 1, rotation: 0, y: 0, filter: 'blur(0px)' });
+    gsap.set(cells, { scale: 1, opacity: 1, rotation: 0, y: 0, filter: 'blur(0px)', boxShadow: 'none' });
 
+    // Handle wins
     if (result.totalPayout > 0) {
       setSessionPoints(prev => prev + result.totalPayout);
       setLastWin({
@@ -218,41 +230,136 @@ export function SlotsContent() {
       setShowWin(true);
     }
 
-    // Handle bonus trigger
-    if (result.bonusTriggered && !isBonus) {
-      const newBonusState = initializeBonus(result.bonusSymbolCount);
-      setBonusState(newBonusState);
-      setShowBonusIntro(true);
+    // Handle Free Spins trigger (scatter)
+    if (result.scatterTriggered && !isFreeSpins) {
+      const newFreeSpinsState = initializeFreeSpins(result.scatterCount);
+      setFreeSpinsState(newFreeSpinsState);
+      setShowFreeSpinsIntro(true);
       setIsSpinning(false);
       return;
     }
 
-    // Update bonus state
-    if (isBonus && updatedBonus) {
-      setBonusState(updatedBonus);
+    // Handle Hold & Spin trigger (bonus)
+    if (result.bonusTriggered && !isFreeSpins) {
+      const newHoldSpinState = initializeHoldSpin(result.bonusPositions);
+      setHoldSpinState(newHoldSpinState);
+      setShowHoldSpinIntro(true);
+      setIsSpinning(false);
+      return;
+    }
 
-      if (!updatedBonus.active) {
-        setShowBonusComplete(true);
-        setBonusState(null);
+    // Update free spins state
+    if (isFreeSpins && updatedFreeSpins) {
+      setFreeSpinsState(updatedFreeSpins);
+
+      if (!updatedFreeSpins.active) {
+        setShowFreeSpinsComplete(true);
+        setFreeSpinsState(null);
       }
     }
 
     setSpinCount(prev => prev + 1);
     setIsSpinning(false);
-  }, [grid, isSpinning, bonusState]);
+  }, [grid, isSpinning, freeSpinsState, createSpinningGrid]);
 
+  // ============ HOLD & SPIN ANIMATION ============
+  const animateHoldSpin = useCallback(async () => {
+    if (!holdSpinState || isSpinning) return;
+
+    setIsSpinning(true);
+
+    const cells = cellRefs.current.filter(Boolean) as HTMLDivElement[];
+
+    // Only animate unlocked cells
+    const unlockedIndices: number[] = [];
+    for (let row = 0; row < GRID_SIZE; row++) {
+      for (let col = 0; col < GRID_SIZE; col++) {
+        const key = posToKey(row, col);
+        if (!holdSpinState.lockedCoins.has(key)) {
+          unlockedIndices.push(row * GRID_SIZE + col);
+        }
+      }
+    }
+
+    const unlockedCells = unlockedIndices.map(idx => cells[idx]).filter(Boolean);
+
+    // Spin unlocked cells
+    await gsap.to(unlockedCells, {
+      y: -20,
+      opacity: 0.3,
+      filter: 'blur(4px)',
+      duration: 0.3,
+      ease: 'power2.in',
+    });
+
+    // Execute hold spin logic
+    const { newCoins, updatedState } = executeHoldSpinSpin(holdSpinState);
+
+    // Land animation
+    gsap.set(unlockedCells, { y: -40 });
+    await gsap.to(unlockedCells, {
+      y: 0,
+      opacity: 1,
+      filter: 'blur(0px)',
+      duration: 0.4,
+      ease: 'back.out(1.3)',
+    });
+
+    // Flash new coins
+    if (newCoins.length > 0) {
+      const newCoinIndices = newCoins.map(pos => pos.row * GRID_SIZE + pos.col);
+      const newCoinCells = newCoinIndices.map(idx => cells[idx]).filter(Boolean);
+
+      await gsap.to(newCoinCells, {
+        scale: 1.2,
+        boxShadow: '0 0 30px rgba(255, 215, 0, 1)',
+        duration: 0.3,
+        yoyo: true,
+        repeat: 2,
+        ease: 'power2.inOut',
+      });
+
+      gsap.set(newCoinCells, { scale: 1, boxShadow: 'none' });
+    }
+
+    setHoldSpinState(updatedState);
+
+    if (!updatedState.active) {
+      setShowHoldSpinComplete(true);
+      setSessionPoints(prev => prev + updatedState.totalValue * 10); // Base bet multiplier
+    }
+
+    setIsSpinning(false);
+  }, [holdSpinState, isSpinning]);
+
+  // ============ HANDLERS ============
   const handleSpin = useCallback(() => {
     if (isSpinning) return;
-    animateSpin(bonusState?.active || false);
-  }, [isSpinning, animateSpin, bonusState]);
 
-  const startBonus = useCallback(() => {
-    setShowBonusIntro(false);
+    if (holdSpinState?.active) {
+      animateHoldSpin();
+    } else {
+      animateSpin(freeSpinsState?.active || false);
+    }
+  }, [isSpinning, animateSpin, animateHoldSpin, freeSpinsState, holdSpinState]);
+
+  const startFreeSpins = useCallback(() => {
+    setShowFreeSpinsIntro(false);
     animateSpin(true);
   }, [animateSpin]);
 
-  const closeBonusComplete = useCallback(() => {
-    setShowBonusComplete(false);
+  const startHoldSpin = useCallback(() => {
+    setShowHoldSpinIntro(false);
+    animateHoldSpin();
+  }, [animateHoldSpin]);
+
+  const closeFreeSpinsComplete = useCallback(() => {
+    setShowFreeSpinsComplete(false);
+  }, []);
+
+  const closeHoldSpinComplete = useCallback(() => {
+    setShowHoldSpinComplete(false);
+    setHoldSpinState(null);
   }, []);
 
   // Autoplay functions
@@ -268,10 +375,10 @@ export function SlotsContent() {
     autoplayRef.current = false;
   }, []);
 
-  // Autoplay effect - trigger next spin when current spin finishes
+  // Autoplay effect
   useEffect(() => {
     if (!autoplayActive || isSpinning || autoplaySpinsRemaining <= 0) return;
-    if (showBonusIntro || showBonusComplete) return; // Don't autoplay during modals
+    if (showFreeSpinsIntro || showFreeSpinsComplete || showHoldSpinIntro || showHoldSpinComplete) return;
 
     const timeout = setTimeout(() => {
       if (autoplayRef.current && autoplaySpinsRemaining > 0) {
@@ -279,22 +386,54 @@ export function SlotsContent() {
         if (autoplaySpinsRemaining === 1) {
           stopAutoplay();
         }
-        animateSpin(bonusState?.active || false);
+        handleSpin();
       }
-    }, 800); // Small delay between spins
+    }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [autoplayActive, isSpinning, autoplaySpinsRemaining, showBonusIntro, showBonusComplete, animateSpin, bonusState, stopAutoplay]);
+  }, [autoplayActive, isSpinning, autoplaySpinsRemaining, showFreeSpinsIntro, showFreeSpinsComplete, showHoldSpinIntro, showHoldSpinComplete, handleSpin, stopAutoplay]);
 
-  // Render cell - FULL BLEED, no borders
+  // ============ RENDER CELL ============
   const renderCell = (cell: GridCell, index: number) => {
     const symbol = SYMBOL_BY_ID.get(cell.symbolId);
     if (!symbol) return <div className="w-full h-full bg-black/50" />;
 
     const isWild = cell.symbolId === WILD_SYMBOL_ID;
-    const isMultiplier = cell.symbolId === MULTIPLIER_SYMBOL_ID;
-    const isBonusSymbol = cell.symbolId === BONUS_SYMBOL_ID;
+    const isScatter = cell.symbolId === SCATTER_SYMBOL_ID;
+    const isBonus = cell.symbolId === BONUS_SYMBOL_ID;
+    const isFreeSpin = cell.symbolId === FREESPIN_SYMBOL_ID;
     const isSticky = cell.isSticky;
+
+    // If in hold spin mode, show coins for locked positions
+    if (holdSpinState?.active) {
+      const row = Math.floor(index / GRID_SIZE);
+      const col = index % GRID_SIZE;
+      const key = posToKey(row, col);
+      const coinValue = holdSpinState.lockedCoins.get(key);
+
+      if (coinValue) {
+        const colors = HOLD_SPIN_CONFIG.coinColors[coinValue.type];
+        return (
+          <div
+            ref={el => { cellRefs.current[index] = el; }}
+            className="relative w-full h-full flex items-center justify-center"
+            style={{
+              background: `linear-gradient(135deg, ${colors.bg}, ${colors.border})`,
+              transformOrigin: 'center center',
+            }}
+          >
+            <div className="text-center">
+              <div className="text-2xl font-heading" style={{ color: colors.text }}>
+                {coinValue.multiplier}x
+              </div>
+              <div className="text-xs uppercase font-mono" style={{ color: colors.text, opacity: 0.8 }}>
+                {coinValue.type}
+              </div>
+            </div>
+          </div>
+        );
+      }
+    }
 
     return (
       <div
@@ -302,13 +441,13 @@ export function SlotsContent() {
         className="relative w-full h-full overflow-hidden"
         style={{ transformOrigin: 'center center' }}
       >
-        {/* Full-bleed image */}
+        {/* Full-bleed image - object-contain to show full image */}
         <Image
           src={symbol.imagePath}
           alt={symbol.name}
           fill
-          className="object-cover"
-          sizes="(max-width: 640px) 18vw, 70px"
+          className="object-contain p-1"
+          sizes="(max-width: 640px) 18vw, 100px"
           unoptimized
           priority={index < 10}
         />
@@ -316,39 +455,47 @@ export function SlotsContent() {
         {/* Sticky wild glow */}
         {isSticky && (
           <div
-            className="absolute inset-0 pointer-events-none"
+            className="absolute inset-0 pointer-events-none animate-pulse"
             style={{
-              boxShadow: 'inset 0 0 20px rgba(251, 191, 36, 0.6)',
-              border: '2px solid rgba(251, 191, 36, 0.8)',
+              boxShadow: 'inset 0 0 25px rgba(251, 191, 36, 0.7)',
+              border: '3px solid rgba(251, 191, 36, 0.9)',
             }}
           />
         )}
 
-        {/* Multiplier badge */}
-        {isMultiplier && cell.multiplier && (
-          <div className="absolute top-0 right-0 bg-red-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-bl-lg">
-            {cell.multiplier}x
+        {/* Wild badge with multiplier */}
+        {isWild && (
+          <div className="absolute top-0 right-0 bg-gradient-to-br from-yellow-400 to-yellow-600 text-black text-xs font-bold px-2 py-1 rounded-bl-lg shadow-lg">
+            {cell.wildMultiplier && cell.wildMultiplier > 1 ? `${cell.wildMultiplier}x` : 'W'}
           </div>
         )}
 
-        {/* Wild badge */}
-        {isWild && !isMultiplier && (
-          <div className="absolute top-0 right-0 bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded-bl-lg">
-            W
+        {/* Scatter badge */}
+        {isScatter && (
+          <div className="absolute top-0 right-0 bg-gradient-to-br from-purple-500 to-purple-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-pulse shadow-lg">
+            FS
           </div>
         )}
 
         {/* Bonus badge */}
-        {isBonusSymbol && (
-          <div className="absolute top-0 right-0 bg-purple-600 text-white text-xs font-bold px-1.5 py-0.5 rounded-bl-lg animate-pulse">
-            B
+        {isBonus && (
+          <div className="absolute top-0 right-0 bg-gradient-to-br from-green-500 to-green-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-pulse shadow-lg">
+            $
+          </div>
+        )}
+
+        {/* Free Spin retrigger badge */}
+        {isFreeSpin && (
+          <div className="absolute top-0 right-0 bg-gradient-to-br from-pink-500 to-pink-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-pulse shadow-lg">
+            +
           </div>
         )}
       </div>
     );
   };
 
-  const isInBonus = bonusState?.active || false;
+  const isInFreeSpins = freeSpinsState?.active || false;
+  const isInHoldSpin = holdSpinState?.active || false;
 
   return (
     <div
@@ -359,12 +506,16 @@ export function SlotsContent() {
         backgroundPosition: 'center',
       }}
     >
-      {/* Dark overlay - lighter during bonus */}
-      <div className={`absolute inset-0 transition-colors duration-500 ${isInBonus ? 'bg-purple-900/60' : 'bg-black/70'}`} />
+      {/* Dark overlay */}
+      <div className={`absolute inset-0 transition-colors duration-500 ${
+        isInFreeSpins ? 'bg-purple-900/60' :
+        isInHoldSpin ? 'bg-green-900/60' :
+        'bg-black/70'
+      }`} />
 
-      {/* Content - Mobile optimized */}
+      {/* Content */}
       <div className="relative z-10 flex flex-col h-screen max-h-screen p-2 sm:p-4">
-        {/* Header - Compact on mobile */}
+        {/* Header */}
         <div className="text-center mb-2 sm:mb-4 flex-shrink-0">
           <h1
             className="text-2xl sm:text-4xl md:text-5xl font-heading text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600"
@@ -372,22 +523,33 @@ export function SlotsContent() {
           >
             THE GROCERY RUN
           </h1>
-          {isInBonus && bonusState && (
+          {isInFreeSpins && freeSpinsState && (
             <div className="mt-1 sm:mt-2 flex items-center justify-center gap-2 sm:gap-4 text-purple-300">
               <span className="text-sm sm:text-lg font-mono">FREE SPINS</span>
               <span className="text-xl sm:text-3xl font-heading text-yellow-400">
-                {bonusState.spinsRemaining}/{bonusState.totalSpins}
+                {freeSpinsState.spinsRemaining}/{freeSpinsState.totalSpins}
               </span>
-              {bonusState.accumulatedMultiplier > 1 && (
-                <span className="text-sm sm:text-lg font-mono text-red-400">
-                  {bonusState.accumulatedMultiplier}x MULT
+              {freeSpinsState.stickyWilds.size > 0 && (
+                <span className="text-sm sm:text-lg font-mono text-yellow-400">
+                  {freeSpinsState.stickyWilds.size} WILDS
                 </span>
               )}
             </div>
           )}
+          {isInHoldSpin && holdSpinState && (
+            <div className="mt-1 sm:mt-2 flex items-center justify-center gap-2 sm:gap-4 text-green-300">
+              <span className="text-sm sm:text-lg font-mono">HOLD & SPIN</span>
+              <span className="text-xl sm:text-3xl font-heading text-yellow-400">
+                {holdSpinState.spinsRemaining} SPINS
+              </span>
+              <span className="text-sm sm:text-lg font-mono text-green-400">
+                {holdSpinState.lockedCoins.size}/25 COINS
+              </span>
+            </div>
+          )}
         </div>
 
-        {/* Stats Bar - Compact on mobile */}
+        {/* Stats Bar */}
         <div className="flex justify-center gap-2 sm:gap-4 mb-2 sm:mb-4 flex-shrink-0">
           <div className="bg-black/70 backdrop-blur border border-yellow-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
             <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Points</p>
@@ -397,63 +559,93 @@ export function SlotsContent() {
             <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Spins</p>
             <p className="text-lg sm:text-2xl font-heading text-green-400">{spinCount}</p>
           </div>
-          {isInBonus && bonusState && (
-            <div className="bg-black/70 backdrop-blur border border-purple-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
-              <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Wilds</p>
-              <p className="text-lg sm:text-2xl font-heading text-purple-400">{bonusState.stickyWilds.size}</p>
+          {isInHoldSpin && holdSpinState && (
+            <div className="bg-black/70 backdrop-blur border border-yellow-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
+              <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Total</p>
+              <p className="text-lg sm:text-2xl font-heading text-yellow-400">{holdSpinState.totalValue}x</p>
             </div>
           )}
         </div>
 
-        {/* Main Game Area - Flex grow to fill space */}
+        {/* Main Game Area */}
         <div className="flex-1 flex flex-col items-center justify-center min-h-0">
-          {/* Grid Container - Full width on mobile, constrained on desktop */}
-          <div className="relative w-full max-w-[min(100vw-1rem,400px)] aspect-square mx-auto">
-            {/* Grid background */}
-            <div className={`absolute inset-0 rounded-xl sm:rounded-2xl ${isInBonus ? 'bg-purple-900/40' : 'bg-black/60'} backdrop-blur`} />
-
-            {/* 5x5 Grid - No gaps for full bleed */}
+          {/* Slot Machine Frame - WIDER with thick black border */}
+          <div className="relative w-full max-w-[min(95vw,550px)] mx-auto">
+            {/* Outer black border frame */}
             <div
-              ref={gridRef}
-              className="relative w-full h-full grid rounded-xl sm:rounded-2xl overflow-hidden"
+              className="absolute -inset-3 sm:-inset-4 rounded-2xl sm:rounded-3xl"
               style={{
-                gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
-                gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)`,
+                background: 'linear-gradient(180deg, #1a1a1a 0%, #000000 50%, #1a1a1a 100%)',
+                boxShadow: '0 0 30px rgba(0,0,0,0.8), inset 0 2px 0 rgba(255,255,255,0.1)',
               }}
-            >
-              {displayGrid.map((cell, index) => (
-                <div key={index} className="relative">
-                  {renderCell(cell, index)}
-                </div>
-              ))}
-            </div>
+            />
 
-            {/* Spinning overlay */}
-            {isSpinning && (
-              <div className="absolute inset-0 pointer-events-none rounded-xl sm:rounded-2xl overflow-hidden">
-                <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/10 via-transparent to-yellow-500/10 animate-pulse" />
+            {/* Inner gold trim */}
+            <div
+              className="absolute -inset-1 sm:-inset-2 rounded-xl sm:rounded-2xl"
+              style={{
+                background: 'linear-gradient(180deg, #b8860b 0%, #daa520 50%, #b8860b 100%)',
+                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
+              }}
+            />
+
+            {/* Grid background */}
+            <div
+              className={`relative rounded-lg sm:rounded-xl overflow-hidden ${
+                isInFreeSpins ? 'bg-purple-900/40' :
+                isInHoldSpin ? 'bg-green-900/40' :
+                'bg-gray-900/80'
+              }`}
+              style={{ aspectRatio: '5/5' }}
+            >
+              {/* 5x5 Grid */}
+              <div
+                ref={gridRef}
+                className="w-full h-full grid"
+                style={{
+                  gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
+                  gridTemplateRows: `repeat(${GRID_SIZE}, 1fr)`,
+                  gap: '2px',
+                  padding: '4px',
+                }}
+              >
+                {displayGrid.map((cell, index) => (
+                  <div
+                    key={index}
+                    className="relative bg-black/30 rounded-sm overflow-hidden"
+                    style={{ aspectRatio: '1/1' }}
+                  >
+                    {renderCell(cell, index)}
+                  </div>
+                ))}
               </div>
-            )}
+
+              {/* Spinning overlay effect */}
+              {isSpinning && (
+                <div className="absolute inset-0 pointer-events-none">
+                  <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 via-transparent to-yellow-500/5 animate-pulse" />
+                </div>
+              )}
+            </div>
           </div>
 
           {/* Win Display */}
           {showWin && lastWin && lastWin.points > 0 && !isSpinning && (
-            <div className="mt-2 sm:mt-4 px-4 sm:px-8 py-2 sm:py-3 bg-green-500/20 border border-green-500/50 rounded-xl text-center animate-pulse">
-              <p className="text-xl sm:text-3xl font-heading text-green-400">
+            <div className="mt-3 sm:mt-4 px-6 sm:px-10 py-2 sm:py-3 bg-gradient-to-r from-green-600/30 to-green-500/30 border-2 border-green-400/60 rounded-xl text-center animate-pulse">
+              <p className="text-2xl sm:text-4xl font-heading text-green-400">
                 +{lastWin.points.toLocaleString()}
               </p>
               {lastWin.cascades > 0 && (
-                <p className="text-xs sm:text-sm font-mono text-gray-400">
-                  {lastWin.cascades} cascade{lastWin.cascades > 1 ? 's' : ''} • {lastWin.multiplier}x
+                <p className="text-xs sm:text-sm font-mono text-green-300">
+                  {lastWin.cascades} cascade{lastWin.cascades > 1 ? 's' : ''} • {lastWin.multiplier}x multiplier
                 </p>
               )}
             </div>
           )}
         </div>
 
-        {/* Spin Button & Autoplay - Fixed at bottom */}
+        {/* Spin Button & Autoplay */}
         <div className="mt-2 sm:mt-4 flex flex-col items-center gap-2 flex-shrink-0 pb-safe">
-          {/* Main spin button */}
           <div className="flex items-center gap-2 w-full max-w-md justify-center">
             <button
               onClick={handleSpin}
@@ -463,9 +655,11 @@ export function SlotsContent() {
                 transition-all duration-200 shadow-lg transform
                 ${isSpinning || autoplayActive
                   ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                  : isInBonus
+                  : isInFreeSpins
                     ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:shadow-purple-500/50 hover:shadow-xl active:scale-95'
-                    : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl active:scale-95'
+                    : isInHoldSpin
+                      ? 'bg-gradient-to-r from-green-500 to-green-600 text-white hover:shadow-green-500/50 hover:shadow-xl active:scale-95'
+                      : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl active:scale-95'
                 }
               `}
             >
@@ -473,12 +667,13 @@ export function SlotsContent() {
                 ? `AUTO (${autoplaySpinsRemaining})`
                 : isSpinning
                   ? 'SPINNING...'
-                  : isInBonus
+                  : isInFreeSpins
                     ? 'FREE SPIN'
-                    : 'SPIN'}
+                    : isInHoldSpin
+                      ? 'SPIN'
+                      : 'SPIN'}
             </button>
 
-            {/* Stop autoplay button */}
             {autoplayActive && (
               <button
                 onClick={stopAutoplay}
@@ -489,8 +684,7 @@ export function SlotsContent() {
             )}
           </div>
 
-          {/* Autoplay options - only show when not spinning and not in autoplay */}
-          {!autoplayActive && !isSpinning && !isInBonus && (
+          {!autoplayActive && !isSpinning && !isInFreeSpins && !isInHoldSpin && (
             <div className="flex items-center gap-2">
               <span className="text-xs font-mono text-gray-500">AUTO:</span>
               {[10, 25, 50, 100].map(count => (
@@ -507,42 +701,42 @@ export function SlotsContent() {
         </div>
 
         {/* Auth Notice */}
-        {!authenticated && !isInBonus && (
+        {!authenticated && !isInFreeSpins && !isInHoldSpin && (
           <p className="text-center text-xs text-gray-500 mt-2 flex-shrink-0">
             Connect wallet to save progress
           </p>
         )}
       </div>
 
-      {/* Bonus Intro Modal */}
-      {showBonusIntro && bonusState && (
+      {/* Free Spins Intro Modal */}
+      {showFreeSpinsIntro && freeSpinsState && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-gradient-to-b from-purple-900 to-purple-950 border-2 border-purple-500 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center">
+          <div className="bg-gradient-to-b from-purple-900 to-purple-950 border-2 border-purple-400 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center">
             <h2 className="text-3xl sm:text-4xl font-heading text-yellow-400 mb-4 animate-pulse">
               FREE SPINS!
             </h2>
-            <p className="text-xl sm:text-2xl font-heading text-white mb-2">
-              {bonusState.totalSpins} SPINS
+            <p className="text-2xl sm:text-3xl font-heading text-white mb-2">
+              {freeSpinsState.totalSpins} SPINS
             </p>
             <p className="text-sm font-mono text-purple-300 mb-6">
-              Wilds stick and multipliers accumulate!
+              Wilds STICK and DOUBLE on every win!
             </p>
             <button
-              onClick={startBonus}
-              className="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
+              onClick={startFreeSpins}
+              className="w-full py-4 bg-gradient-to-r from-purple-500 to-purple-600 text-white font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
             >
-              START BONUS
+              START FREE SPINS
             </button>
           </div>
         </div>
       )}
 
-      {/* Bonus Complete Modal */}
-      {showBonusComplete && (
+      {/* Free Spins Complete Modal */}
+      {showFreeSpinsComplete && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-          <div className="bg-gradient-to-b from-green-900 to-green-950 border-2 border-green-500 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center">
+          <div className="bg-gradient-to-b from-green-900 to-green-950 border-2 border-green-400 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center">
             <h2 className="text-3xl sm:text-4xl font-heading text-yellow-400 mb-4">
-              BONUS COMPLETE!
+              FREE SPINS COMPLETE!
             </h2>
             <p className="text-2xl sm:text-3xl font-heading text-green-400 mb-2">
               +{sessionPoints.toLocaleString()}
@@ -551,8 +745,65 @@ export function SlotsContent() {
               Total bonus win
             </p>
             <button
-              onClick={closeBonusComplete}
+              onClick={closeFreeSpinsComplete}
               className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
+            >
+              CONTINUE
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hold & Spin Intro Modal */}
+      {showHoldSpinIntro && holdSpinState && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className="bg-gradient-to-b from-green-900 to-green-950 border-2 border-green-400 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center">
+            <h2 className="text-3xl sm:text-4xl font-heading text-yellow-400 mb-4 animate-pulse">
+              HOLD & SPIN!
+            </h2>
+            <p className="text-xl font-heading text-white mb-2">
+              {holdSpinState.lockedCoins.size} COINS LOCKED
+            </p>
+            <p className="text-sm font-mono text-green-300 mb-4">
+              Land coins to reset spins!<br/>
+              Fill all 25 for GRAND PRIZE!
+            </p>
+            <div className="flex justify-center gap-2 mb-6 flex-wrap">
+              <span className="px-2 py-1 bg-amber-900 text-amber-200 text-xs rounded">MINI</span>
+              <span className="px-2 py-1 bg-gray-600 text-gray-200 text-xs rounded">MINOR</span>
+              <span className="px-2 py-1 bg-yellow-600 text-yellow-200 text-xs rounded">MAJOR</span>
+              <span className="px-2 py-1 bg-purple-600 text-purple-200 text-xs rounded">MEGA</span>
+              <span className="px-2 py-1 bg-red-600 text-red-200 text-xs rounded">GRAND</span>
+            </div>
+            <button
+              onClick={startHoldSpin}
+              className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
+            >
+              START HOLD & SPIN
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Hold & Spin Complete Modal */}
+      {showHoldSpinComplete && holdSpinState && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+          <div className={`bg-gradient-to-b ${holdSpinState.isGrandWin ? 'from-red-900 to-red-950 border-red-400' : 'from-yellow-900 to-yellow-950 border-yellow-400'} border-2 rounded-2xl p-6 sm:p-8 max-w-sm w-full text-center`}>
+            <h2 className={`text-3xl sm:text-4xl font-heading mb-4 ${holdSpinState.isGrandWin ? 'text-red-400 animate-pulse' : 'text-yellow-400'}`}>
+              {holdSpinState.isGrandWin ? 'GRAND JACKPOT!' : 'BONUS COMPLETE!'}
+            </h2>
+            <p className="text-2xl sm:text-3xl font-heading text-green-400 mb-2">
+              {holdSpinState.totalValue}x BET
+            </p>
+            <p className="text-lg font-mono text-yellow-300 mb-2">
+              +{(holdSpinState.totalValue * 10).toLocaleString()} POINTS
+            </p>
+            <p className="text-sm font-mono text-gray-400 mb-6">
+              {holdSpinState.lockedCoins.size} coins collected
+            </p>
+            <button
+              onClick={closeHoldSpinComplete}
+              className="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
             >
               CONTINUE
             </button>

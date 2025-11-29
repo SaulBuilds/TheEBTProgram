@@ -3,8 +3,8 @@
  *
  * Complete slot engine with:
  * - 5x5 cascade/cluster mechanics
- * - Sticky Wild Bonus with multipliers
- * - Balanced RTP ~95%
+ * - Free Spins with sticky wilds that grow multipliers
+ * - Hold & Spin bonus with coin values
  */
 
 import {
@@ -12,14 +12,18 @@ import {
   MIN_MATCH,
   SYMBOL_BY_ID,
   WILD_SYMBOL_ID,
-  MULTIPLIER_SYMBOL_ID,
+  SCATTER_SYMBOL_ID,
   BONUS_SYMBOL_ID,
-  BONUS_CONFIG,
+  FREESPIN_SYMBOL_ID,
+  FREE_SPINS_CONFIG,
+  HOLD_SPIN_CONFIG,
   getCascadeMultiplier,
   getRandomSymbol,
   getRandomBonusSymbol,
-  getRandomMultiplier,
+  getRandomCoinValue,
   calculatePayout,
+  GRAND_MULTIPLIER,
+  type CoinValue,
 } from './gameConfig';
 
 // ============ TYPES ============
@@ -31,9 +35,12 @@ export interface Position {
 
 export interface GridCell {
   symbolId: number;
-  multiplier?: number;     // For multiplier wilds
-  isSticky?: boolean;      // For sticky wilds in bonus
+  isSticky?: boolean;      // For sticky wilds in free spins
   isNew?: boolean;         // Just fell in
+  wildMultiplier?: number; // Dynamic multiplier for wilds (grows on line hits)
+  // For Hold & Spin coins
+  coinValue?: CoinValue;
+  isLocked?: boolean;      // Coin is locked in place
 }
 
 export interface Match {
@@ -43,6 +50,7 @@ export interface Match {
   length: number;
   hasWild: boolean;
   wildMultiplier: number;
+  wildPositions: Position[]; // Track which wilds were used
 }
 
 export interface CascadeStep {
@@ -59,19 +67,37 @@ export interface SpinResult {
   finalGrid: GridCell[];
   totalPayout: number;
   cascadeCount: number;
+  // Trigger detection
+  scatterTriggered: boolean;
+  scatterCount: number;
+  scatterPositions: Position[];
   bonusTriggered: boolean;
-  bonusSymbolCount: number;
+  bonusCount: number;
   bonusPositions: Position[];
+  // For free spin retrigger
+  freespinCount: number;
+  freespinPositions: Position[];
 }
 
-export interface BonusState {
+// Free Spins State
+export interface FreeSpinsState {
   active: boolean;
   spinsRemaining: number;
   totalSpins: number;
+  // Sticky wilds with their current multiplier
   stickyWilds: Map<string, { multiplier: number }>;
-  accumulatedMultiplier: number;
   totalWin: number;
   spinResults: SpinResult[];
+}
+
+// Hold & Spin State
+export interface HoldSpinState {
+  active: boolean;
+  spinsRemaining: number;
+  // Grid of locked coins (null = empty, CoinValue = locked coin)
+  lockedCoins: Map<string, CoinValue>;
+  totalValue: number;
+  isGrandWin: boolean;
 }
 
 // ============ GRID HELPERS ============
@@ -96,18 +122,18 @@ export function setCell(grid: GridCell[], row: number, col: number, cell: GridCe
   }
 }
 
-export function gridTo2D(grid: GridCell[]): GridCell[][] {
-  const result: GridCell[][] = [];
-  for (let row = 0; row < GRID_SIZE; row++) {
-    result.push(grid.slice(row * GRID_SIZE, (row + 1) * GRID_SIZE));
-  }
-  return result;
-}
-
 // ============ SYMBOL MATCHING ============
 
 function isWildSymbol(symbolId: number): boolean {
-  return symbolId === WILD_SYMBOL_ID || symbolId === MULTIPLIER_SYMBOL_ID;
+  return symbolId === WILD_SYMBOL_ID;
+}
+
+// Helper to check if a symbol is a special type (not used in matching)
+export function isSpecialSymbol(symbolId: number): boolean {
+  return symbolId === WILD_SYMBOL_ID ||
+         symbolId === SCATTER_SYMBOL_ID ||
+         symbolId === BONUS_SYMBOL_ID ||
+         symbolId === FREESPIN_SYMBOL_ID;
 }
 
 function symbolsMatch(a: GridCell | null, b: GridCell | null): boolean {
@@ -118,11 +144,11 @@ function symbolsMatch(a: GridCell | null, b: GridCell | null): boolean {
 
   if (!symbolA || !symbolB) return false;
 
-  // Bonus symbols don't match with anything
-  if (symbolA.special === 'bonus' || symbolB.special === 'bonus') return false;
+  // Special symbols (scatter, bonus, freespin) don't match with regular symbols
+  if (symbolA.special === 'scatter' || symbolA.special === 'bonus' || symbolA.special === 'freespin') return false;
+  if (symbolB.special === 'scatter' || symbolB.special === 'bonus' || symbolB.special === 'freespin') return false;
 
-  // After the above check, neither is a bonus symbol
-  // Wilds match everything (except bonus which is already handled)
+  // Wilds match everything (except specials which are already handled)
   if (isWildSymbol(a.symbolId)) return true;
   if (isWildSymbol(b.symbolId)) return true;
 
@@ -140,7 +166,10 @@ export function findMatches(grid: GridCell[]): Match[] {
     let col = 0;
     while (col < GRID_SIZE) {
       const startCell = getCell(grid, row, col);
-      if (!startCell || SYMBOL_BY_ID.get(startCell.symbolId)?.special === 'bonus') {
+      const startSymbol = startCell ? SYMBOL_BY_ID.get(startCell.symbolId) : null;
+
+      // Skip special symbols as match starters (except wild)
+      if (!startCell || (startSymbol?.special && startSymbol.special !== 'wild')) {
         col++;
         continue;
       }
@@ -173,7 +202,9 @@ export function findMatches(grid: GridCell[]): Match[] {
     let row = 0;
     while (row < GRID_SIZE) {
       const startCell = getCell(grid, row, col);
-      if (!startCell || SYMBOL_BY_ID.get(startCell.symbolId)?.special === 'bonus') {
+      const startSymbol = startCell ? SYMBOL_BY_ID.get(startCell.symbolId) : null;
+
+      if (!startCell || (startSymbol?.special && startSymbol.special !== 'wild')) {
         row++;
         continue;
       }
@@ -213,19 +244,23 @@ function createMatch(
   let hasWild = false;
   let wildMultiplier = 1;
   let payingSymbolId = baseCell.symbolId;
+  const wildPositions: Position[] = [];
 
   for (const pos of positions) {
     const cell = getCell(grid, pos.row, pos.col);
     if (cell && isWildSymbol(cell.symbolId)) {
       hasWild = true;
-      if (cell.multiplier) {
-        wildMultiplier *= cell.multiplier;
+      wildPositions.push(pos);
+      // Use the wild's current multiplier
+      if (cell.wildMultiplier) {
+        wildMultiplier *= cell.wildMultiplier;
       }
     } else if (cell && !isWildSymbol(payingSymbolId)) {
       payingSymbolId = cell.symbolId;
     }
   }
 
+  // If all wilds, find a non-wild symbol
   if (isWildSymbol(payingSymbolId)) {
     for (const pos of positions) {
       const cell = getCell(grid, pos.row, pos.col);
@@ -246,6 +281,7 @@ function createMatch(
     length: positions.length,
     hasWild,
     wildMultiplier,
+    wildPositions,
   };
 }
 
@@ -299,19 +335,15 @@ export function applyCascade(
     for (let i = 0; i < emptyCount; i++) {
       const row = i;
       const newSymbol = isBonus ? getRandomBonusSymbol() : getRandomSymbol();
-      let multiplier: number | undefined;
 
-      if (newSymbol.special === 'multiplier') {
-        multiplier = getRandomMultiplier();
-      }
-
-      const isNewSticky = isBonus && (newSymbol.special === 'wild' || newSymbol.special === 'multiplier');
+      const isNewWild = newSymbol.special === 'wild';
+      const isNewSticky = isBonus && isNewWild;
 
       const newCell: GridCell = {
         symbolId: newSymbol.id,
-        multiplier,
         isNew: true,
         isSticky: isNewSticky,
+        wildMultiplier: isNewWild ? 1 : undefined, // Start at 1x
       };
 
       setCell(newGrid, row, col, newCell);
@@ -319,12 +351,60 @@ export function applyCascade(
 
       // Track new sticky wilds
       if (isNewSticky && stickyWilds) {
-        stickyWilds.set(posToKey(row, col), { multiplier: multiplier || 1 });
+        stickyWilds.set(posToKey(row, col), { multiplier: 1 });
       }
     }
   }
 
   return { newGrid, newSymbols };
+}
+
+// ============ WILD MULTIPLIER GROWTH ============
+
+/**
+ * After a win, increase the multiplier of any wilds that were part of winning lines
+ */
+export function growWildMultipliers(
+  grid: GridCell[],
+  matches: Match[],
+  stickyWilds?: Map<string, { multiplier: number }>
+): GridCell[] {
+  const newGrid = grid.map(c => ({ ...c }));
+
+  // Collect all wild positions that were part of wins
+  const winningWildKeys = new Set<string>();
+  for (const match of matches) {
+    for (const pos of match.wildPositions) {
+      winningWildKeys.add(posToKey(pos.row, pos.col));
+    }
+  }
+
+  // Double the multiplier of each wild that was part of a win
+  for (const key of winningWildKeys) {
+    const pos = keyToPos(key);
+    const idx = pos.row * GRID_SIZE + pos.col;
+    const cell = newGrid[idx];
+
+    if (cell && isWildSymbol(cell.symbolId)) {
+      const currentMult = cell.wildMultiplier || 1;
+      const maxMult = FREE_SPINS_CONFIG.wildMultiplierProgression[
+        FREE_SPINS_CONFIG.wildMultiplierProgression.length - 1
+      ];
+      const newMult = Math.min(currentMult * 2, maxMult);
+
+      newGrid[idx] = {
+        ...cell,
+        wildMultiplier: newMult,
+      };
+
+      // Update sticky wild tracking too
+      if (stickyWilds && stickyWilds.has(key)) {
+        stickyWilds.set(key, { multiplier: newMult });
+      }
+    }
+  }
+
+  return newGrid;
 }
 
 // ============ GRID GENERATION ============
@@ -334,17 +414,12 @@ export function generateGrid(isBonus = false): GridCell[] {
 
   for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
     const symbol = isBonus ? getRandomBonusSymbol() : getRandomSymbol();
-    let multiplier: number | undefined;
-
-    if (symbol.special === 'multiplier') {
-      multiplier = getRandomMultiplier();
-    }
 
     grid.push({
       symbolId: symbol.id,
-      multiplier,
       isSticky: false,
       isNew: false,
+      wildMultiplier: symbol.special === 'wild' ? 1 : undefined,
     });
   }
 
@@ -363,18 +438,18 @@ export function generateCleanGrid(): GridCell[] {
   return grid;
 }
 
-// ============ BONUS SYMBOL COUNTING ============
+// ============ SPECIAL SYMBOL COUNTING ============
 
-export function countBonusSymbols(grid: GridCell[]): number {
-  return grid.filter(cell => cell.symbolId === BONUS_SYMBOL_ID).length;
+export function countSymbol(grid: GridCell[], symbolId: number): number {
+  return grid.filter(cell => cell.symbolId === symbolId).length;
 }
 
-export function getBonusPositions(grid: GridCell[]): Position[] {
+export function getSymbolPositions(grid: GridCell[], symbolId: number): Position[] {
   const positions: Position[] = [];
   for (let row = 0; row < GRID_SIZE; row++) {
     for (let col = 0; col < GRID_SIZE; col++) {
       const cell = getCell(grid, row, col);
-      if (cell?.symbolId === BONUS_SYMBOL_ID) {
+      if (cell?.symbolId === symbolId) {
         positions.push({ row, col });
       }
     }
@@ -397,8 +472,8 @@ export function executeSpin(
     for (const [key, data] of stickyWilds) {
       const pos = keyToPos(key);
       setCell(grid, pos.row, pos.col, {
-        symbolId: data.multiplier > 1 ? MULTIPLIER_SYMBOL_ID : WILD_SYMBOL_ID,
-        multiplier: data.multiplier,
+        symbolId: WILD_SYMBOL_ID,
+        wildMultiplier: data.multiplier,
         isSticky: true,
         isNew: false,
       });
@@ -410,8 +485,13 @@ export function executeSpin(
   let totalPayout = 0;
   let cascadeCount = 0;
 
-  const bonusSymbolCount = countBonusSymbols(grid);
-  const bonusPositions = getBonusPositions(grid);
+  // Count special symbols BEFORE cascades
+  const scatterCount = countSymbol(grid, SCATTER_SYMBOL_ID);
+  const scatterPositions = getSymbolPositions(grid, SCATTER_SYMBOL_ID);
+  const bonusCount = countSymbol(grid, BONUS_SYMBOL_ID);
+  const bonusPositions = getSymbolPositions(grid, BONUS_SYMBOL_ID);
+  const freespinCount = countSymbol(grid, FREESPIN_SYMBOL_ID);
+  const freespinPositions = getSymbolPositions(grid, FREESPIN_SYMBOL_ID);
 
   // Process cascades
   while (cascadeCount < 20) {
@@ -428,6 +508,11 @@ export function executeSpin(
 
     totalPayout += stepPayout;
 
+    // Grow wild multipliers for wilds that were part of wins
+    if (isBonus) {
+      grid = growWildMultipliers(grid, matches, stickyWilds);
+    }
+
     const { newGrid, newSymbols } = applyCascade(grid, matches, isBonus, stickyWilds);
 
     cascadeSteps.push({
@@ -441,7 +526,9 @@ export function executeSpin(
     grid = newGrid;
   }
 
-  const bonusTriggered = !isBonus && bonusSymbolCount >= 3;
+  // Trigger detection
+  const scatterTriggered = !isBonus && scatterCount >= 3;
+  const bonusTriggered = !isBonus && bonusCount >= 3;
 
   return {
     initialGrid: startGrid,
@@ -449,102 +536,89 @@ export function executeSpin(
     finalGrid: grid,
     totalPayout,
     cascadeCount,
+    scatterTriggered,
+    scatterCount,
+    scatterPositions,
     bonusTriggered,
-    bonusSymbolCount,
+    bonusCount,
     bonusPositions,
+    freespinCount,
+    freespinPositions,
   };
 }
 
-// ============ BONUS GAME ============
+// ============ FREE SPINS GAME ============
 
-export function calculateBonusSpins(scatterCount: number): number {
-  if (scatterCount >= 5) return BONUS_CONFIG.freeSpins[5];
-  if (scatterCount >= 4) return BONUS_CONFIG.freeSpins[4];
-  if (scatterCount >= 3) return BONUS_CONFIG.freeSpins[3];
+export function calculateFreeSpins(scatterCount: number): number {
+  if (scatterCount >= 5) return FREE_SPINS_CONFIG.spinsAwarded[5];
+  if (scatterCount >= 4) return FREE_SPINS_CONFIG.spinsAwarded[4];
+  if (scatterCount >= 3) return FREE_SPINS_CONFIG.spinsAwarded[3];
   return 0;
 }
 
-export function calculateRetriggerSpins(scatterCount: number): number {
-  return Math.floor(scatterCount / 2) * BONUS_CONFIG.retriggerSpins;
-}
-
-export function initializeBonus(scatterCount: number): BonusState {
-  const spins = calculateBonusSpins(scatterCount);
+export function initializeFreeSpins(scatterCount: number): FreeSpinsState {
+  const spins = calculateFreeSpins(scatterCount);
 
   return {
     active: true,
     spinsRemaining: spins,
     totalSpins: spins,
     stickyWilds: new Map(),
-    accumulatedMultiplier: 1,
     totalWin: 0,
     spinResults: [],
   };
 }
 
-export function executeBonusSpin(bonusState: BonusState): { result: SpinResult; updatedState: BonusState } {
+export function executeFreeSpinSpin(state: FreeSpinsState): { result: SpinResult; updatedState: FreeSpinsState } {
   const grid = generateGrid(true);
 
-  // Apply existing sticky wilds
-  for (const [key, data] of bonusState.stickyWilds) {
+  // Apply existing sticky wilds with their current multipliers
+  for (const [key, data] of state.stickyWilds) {
     const pos = keyToPos(key);
     const idx = pos.row * GRID_SIZE + pos.col;
     grid[idx] = {
-      symbolId: data.multiplier > 1 ? MULTIPLIER_SYMBOL_ID : WILD_SYMBOL_ID,
-      multiplier: data.multiplier,
+      symbolId: WILD_SYMBOL_ID,
+      wildMultiplier: data.multiplier,
       isSticky: true,
       isNew: false,
     };
   }
 
-  const result = executeSpin(grid, true, bonusState.stickyWilds, bonusState.accumulatedMultiplier);
+  const result = executeSpin(grid, true, state.stickyWilds, 1);
 
-  const updatedState: BonusState = {
-    ...bonusState,
-    stickyWilds: new Map(bonusState.stickyWilds),
-    spinResults: [...bonusState.spinResults],
+  const updatedState: FreeSpinsState = {
+    ...state,
+    stickyWilds: new Map(state.stickyWilds),
+    spinResults: [...state.spinResults],
   };
 
   updatedState.spinsRemaining--;
   updatedState.totalWin += result.totalPayout;
   updatedState.spinResults.push(result);
 
-  // Track new wilds from cascades
-  for (const step of result.cascadeSteps) {
-    for (const pos of step.newSymbols) {
-      const cell = getCell(result.finalGrid, pos.row, pos.col);
-      if (cell && (cell.symbolId === WILD_SYMBOL_ID || cell.symbolId === MULTIPLIER_SYMBOL_ID)) {
-        const key = posToKey(pos.row, pos.col);
-        if (!updatedState.stickyWilds.has(key)) {
-          updatedState.stickyWilds.set(key, { multiplier: cell.multiplier || 1 });
-          if (cell.multiplier && cell.multiplier > 1) {
-            updatedState.accumulatedMultiplier *= cell.multiplier;
-          }
-        }
-      }
-    }
-  }
-
-  // Also check final grid for any wilds that weren't in cascades
+  // Track new wilds from final grid
   for (let i = 0; i < result.finalGrid.length; i++) {
     const cell = result.finalGrid[i];
-    if (cell && (cell.symbolId === WILD_SYMBOL_ID || cell.symbolId === MULTIPLIER_SYMBOL_ID)) {
+    if (cell && isWildSymbol(cell.symbolId)) {
       const row = Math.floor(i / GRID_SIZE);
       const col = i % GRID_SIZE;
       const key = posToKey(row, col);
       if (!updatedState.stickyWilds.has(key)) {
-        updatedState.stickyWilds.set(key, { multiplier: cell.multiplier || 1 });
-        if (cell.multiplier && cell.multiplier > 1) {
-          updatedState.accumulatedMultiplier *= cell.multiplier;
+        updatedState.stickyWilds.set(key, { multiplier: cell.wildMultiplier || 1 });
+      } else {
+        // Update multiplier if it grew
+        const existing = updatedState.stickyWilds.get(key);
+        if (existing && cell.wildMultiplier && cell.wildMultiplier > existing.multiplier) {
+          updatedState.stickyWilds.set(key, { multiplier: cell.wildMultiplier });
         }
       }
     }
   }
 
-  // Check for retrigger
-  if (result.bonusSymbolCount >= 2) {
-    const extraSpins = calculateRetriggerSpins(result.bonusSymbolCount);
-    const maxExtra = BONUS_CONFIG.maxFreeSpins - updatedState.totalSpins;
+  // Check for retrigger (3+ freespin symbols)
+  if (result.freespinCount >= 3) {
+    const extraSpins = FREE_SPINS_CONFIG.retriggerSpins;
+    const maxExtra = FREE_SPINS_CONFIG.maxFreeSpins - updatedState.totalSpins;
     const actualExtra = Math.min(extraSpins, maxExtra);
     updatedState.spinsRemaining += actualExtra;
     updatedState.totalSpins += actualExtra;
@@ -557,6 +631,80 @@ export function executeBonusSpin(bonusState: BonusState): { result: SpinResult; 
   return { result, updatedState };
 }
 
+// ============ HOLD & SPIN BONUS ============
+
+export function initializeHoldSpin(initialBonusPositions: Position[]): HoldSpinState {
+  const lockedCoins = new Map<string, CoinValue>();
+  let totalValue = 0;
+
+  // Lock initial bonus symbols as coins
+  for (const pos of initialBonusPositions) {
+    const coinValue = getRandomCoinValue();
+    lockedCoins.set(posToKey(pos.row, pos.col), coinValue);
+    totalValue += coinValue.multiplier;
+  }
+
+  return {
+    active: true,
+    spinsRemaining: HOLD_SPIN_CONFIG.initialSpins,
+    lockedCoins,
+    totalValue,
+    isGrandWin: false,
+  };
+}
+
+export function executeHoldSpinSpin(state: HoldSpinState): { newCoins: Position[]; updatedState: HoldSpinState } {
+  const newCoins: Position[] = [];
+
+  const updatedState: HoldSpinState = {
+    ...state,
+    lockedCoins: new Map(state.lockedCoins),
+  };
+
+  // Check each empty position for a new coin
+  for (let row = 0; row < GRID_SIZE; row++) {
+    for (let col = 0; col < GRID_SIZE; col++) {
+      const key = posToKey(row, col);
+      if (!updatedState.lockedCoins.has(key)) {
+        // ~15% chance to land a coin on each empty position
+        if (Math.random() < 0.15) {
+          const coinValue = getRandomCoinValue();
+          updatedState.lockedCoins.set(key, coinValue);
+          updatedState.totalValue += coinValue.multiplier;
+          newCoins.push({ row, col });
+        }
+      }
+    }
+  }
+
+  // If new coins landed, reset spins to 3
+  if (newCoins.length > 0) {
+    updatedState.spinsRemaining = HOLD_SPIN_CONFIG.initialSpins;
+  } else {
+    updatedState.spinsRemaining--;
+  }
+
+  // Check for Grand win (all 25 positions filled)
+  if (updatedState.lockedCoins.size === GRID_SIZE * GRID_SIZE) {
+    updatedState.isGrandWin = true;
+    updatedState.totalValue += GRAND_MULTIPLIER;
+    updatedState.active = false;
+  } else if (updatedState.spinsRemaining <= 0) {
+    updatedState.active = false;
+  }
+
+  return { newCoins, updatedState };
+}
+
 // ============ RE-EXPORTS ============
 
-export { GRID_SIZE, SYMBOL_BY_ID, WILD_SYMBOL_ID, MULTIPLIER_SYMBOL_ID, BONUS_SYMBOL_ID } from './gameConfig';
+export {
+  GRID_SIZE,
+  SYMBOL_BY_ID,
+  WILD_SYMBOL_ID,
+  SCATTER_SYMBOL_ID,
+  BONUS_SYMBOL_ID,
+  FREESPIN_SYMBOL_ID,
+  HOLD_SPIN_CONFIG,
+  FREE_SPINS_CONFIG,
+} from './gameConfig';
