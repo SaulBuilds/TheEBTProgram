@@ -12,7 +12,7 @@ export function Footer() {
             <div>
               <h3 className="text-xl font-heading text-ebt-gold mb-4 tracking-wide">EBT CARD</h3>
               <p className="text-sm text-gray-400">
-                Supplemental Nutrition Assistance Program. Est. 2024.
+                The S&P 500 is for peasants.
               </p>
             </div>
 
@@ -42,7 +42,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="block text-sm text-gray-400 hover:text-ebt-gold"
                 >
-                  Twitter
+                  Propaganda
                 </a>
                 <a
                   href="https://discord.gg/ebtcard"
@@ -50,7 +50,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="block text-sm text-gray-400 hover:text-ebt-gold"
                 >
-                  Discord
+                  Cult
                 </a>
                 <a
                   href="https://github.com/ebtcard"
@@ -58,7 +58,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="block text-sm text-gray-400 hover:text-ebt-gold"
                 >
-                  GitHub
+                  Scripture
                 </a>
               </div>
             </div>
@@ -84,14 +84,14 @@ export function Footer() {
           <div className="pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-gray-500">
-                2024 EBT Card. Not affiliated with any government, bank, or your disappointed parents.
+                2024 EBT Card. Not a government. Not a bank. Not financial advice. Definitely not your parents' retirement plan.
               </p>
               <div className="flex items-center gap-4">
                 <span className="text-xs text-gray-500">
-                  DYOR. NFA. WAGMI?
+                  NFA. DYOR. WAGMI?
                 </span>
                 <span className="text-xs font-heading text-welfare-red tracking-wide">
-                  PROBABLY NOTHING
+                  WE ARE ALL LINDA
                 </span>
               </div>
             </div>

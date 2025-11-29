@@ -11,11 +11,11 @@ interface StepHungerProps {
 }
 
 const incomeOptions = [
-  { value: 'poverty', label: 'Below Poverty Line', description: 'Ramen every night' },
-  { value: 'struggling', label: 'Just Scraping By', description: 'Occasionally see daylight' },
-  { value: 'middle', label: 'Middle Class Cosplay', description: 'Avocado toast fears' },
-  { value: 'comfortable', label: 'Comfortable But Anxious', description: 'What even is a 401k' },
-  { value: 'rich', label: 'Filthy Rich', description: 'Just here for the vibes' },
+  { value: 'poverty', label: 'Below Poverty Line', description: 'Missed Bitcoin. Missed Nvidia. Here now.' },
+  { value: 'struggling', label: 'Barely Scraping By', description: 'The struggle is the strategy' },
+  { value: 'middle', label: 'Middle Class Cope', description: 'Avocado toast but anxious about it' },
+  { value: 'comfortable', label: 'Comfortable But Empty', description: 'Money but no meaning' },
+  { value: 'rich', label: 'Already Made It', description: 'Here for the culture' },
 ];
 
 const hungerOptions = [
@@ -51,10 +51,10 @@ export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProp
     <div className="max-w-md mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-mono font-bold text-ebt-gold mb-2">
-          Declare Your Hunger
+          MEANS TESTING
         </h2>
         <p className="text-gray-400 font-mono text-sm">
-          No judgment here. We&apos;re all hungry for something.
+          Everyone qualifies. The only means test is: do you have internet access?
         </p>
       </div>
 
@@ -130,7 +130,7 @@ export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProp
             </button>
           </div>
           <p className="mt-1 text-xs text-gray-600 font-mono">
-            Cats and crypto portfolios count
+            Cats, crypto portfolios, and rugged projects count
           </p>
         </div>
 
@@ -147,7 +147,7 @@ export function StepHunger({ data: initialData, onNext, onBack }: StepHungerProp
             className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg font-mono focus:outline-none focus:ring-2 focus:ring-ebt-gold"
           />
           <p className="mt-1 text-xs text-gray-600 font-mono">
-            For targeted food insecurity algorithms
+            Helps us optimize the algorithm. Or not. We don&apos;t really check.
           </p>
         </div>
 

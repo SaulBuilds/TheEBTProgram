@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
 
 const headlines = [
-  "You're Not Poor. You're Pre-Rich.",
-  "Benefits For The Temporarily Embarrassed",
-  "The Line Starts Here",
-  "Your Parents Had Pensions",
-  "Everyone's On Assistance. Some Just Know It."
+  "THEY PRINTED $6 TRILLION. WE PRINTED THE CARD.",
+  "THE FED IS A MEME COIN WITH A MARKETING BUDGET.",
+  "YOUR PARENTS HAD PENSIONS. YOU HAVE JPGS.",
+  "EVERYONE IS ON ASSISTANCE. SOME ARE JUST HONEST.",
+  "THE LINE STARTS HERE."
 ];
 
 export function Hero() {
@@ -80,10 +80,10 @@ export function Hero() {
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
           <p className="text-xl md:text-2xl mb-2 font-heading text-ebt-green tracking-wide">
-            The program they promised. Finally delivered.
+            The safety net they promised. Deployed on the only infrastructure that works.
           </p>
           <p className="text-lg md:text-xl text-gray-400">
-            PPP got $800B. You get an NFT. Fair is fair.
+            PPP got $800B. Linda got 8 years. You get an NFT. Fair is fair.
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export function Hero() {
             disabled={!ready}
           >
             <span className="relative z-10 flex items-center gap-2">
-              {!authenticated ? 'CONNECT WALLET' : 'APPLY FOR BENEFITS'}
+              {!authenticated ? 'ENTER THE PROGRAM' : 'MINT THE CARD'}
               <span className="animate-pulse">→</span>
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-ebt-gold to-welfare-red transform translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
@@ -109,26 +109,26 @@ export function Hero() {
             variant="secondary"
             className="border-2 border-ebt-gold/50 hover:border-ebt-gold font-heading tracking-wide"
           >
-            CHECK ELIGIBILITY
+            READ THE LORE
           </Button>
         </div>
 
         {/* Stats bar */}
-        <div className="mt-12 bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-4 max-w-xl mx-auto">
+        <div className="mt-12 bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-4 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-8 text-sm">
             <div>
-              <span className="text-ebt-gold font-heading text-lg">$100B</span>
+              <span className="text-ebt-gold font-heading text-lg">$6T</span>
+              <span className="text-gray-500 ml-2">PRINTED 2020-21</span>
+            </div>
+            <div className="w-px h-4 bg-gray-700" />
+            <div>
+              <span className="text-ebt-gold font-heading text-lg">$100B+</span>
               <span className="text-gray-500 ml-2">PPP FRAUD</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
-              <span className="text-ebt-gold font-heading text-lg">$8K</span>
-              <span className="text-gray-500 ml-2">WELFARE QUEEN</span>
-            </div>
-            <div className="w-px h-4 bg-gray-700" />
-            <div>
-              <span className="text-ebt-gold font-heading text-lg">1</span>
-              <span className="text-gray-500 ml-2">GUESS WHO GOT A MOVIE</span>
+              <span className="text-ebt-gold font-heading text-lg">$8,000</span>
+              <span className="text-gray-500 ml-2">LINDA'S CONVICTION</span>
             </div>
           </div>
         </div>

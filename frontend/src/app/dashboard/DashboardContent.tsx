@@ -244,16 +244,16 @@ export default function DashboardContent() {
             className="text-center max-w-md"
           >
             <h1 className="text-3xl font-heading text-ebt-gold mb-4 tracking-wide">
-              No EBT Card Found
+              NO CARD DETECTED
             </h1>
             <p className="text-gray-400 mb-8 font-sans">
-              You haven&apos;t applied for an EBT card yet. Join the breadline today!
+              You&apos;re not in The Program yet. The line starts here.
             </p>
             <Link
               href="/apply"
               className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
             >
-              APPLY FOR EBT CARD
+              ENTER THE PROGRAM
             </Link>
           </motion.div>
         </div>
@@ -305,10 +305,10 @@ export default function DashboardContent() {
           {/* Header */}
           <div className="text-center mb-12">
             <h1 className="text-3xl font-heading text-ebt-gold mb-2 tracking-wide">
-              YOUR EBT DASHBOARD
+              YOUR CASE FILE
             </h1>
             <p className="text-gray-400 font-sans">
-              Welcome to the blockchain breadline, welfare warrior.
+              Benefits active. The algorithm provides.
             </p>
           </div>
 
@@ -334,11 +334,11 @@ export default function DashboardContent() {
 
             {/* Installments Claimed */}
             <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg">
-              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">STIPENDS CLAIMED</div>
+              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">DROPS CLAIMED</div>
               <div className="text-2xl font-heading text-white tracking-wide">
                 {claimCount.toString()} / 3
               </div>
-              <div className="text-xs text-gray-600 mt-1">Monthly distributions</div>
+              <div className="text-xs text-gray-600 mt-1">The algorithm provides</div>
             </div>
           </div>
 
@@ -419,11 +419,11 @@ export default function DashboardContent() {
               href="/leaderboard"
               className="p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-ebt-gold/50 transition-colors text-center"
             >
-              <p className="font-heading text-sm text-white tracking-wide">LEADERBOARD</p>
+              <p className="font-heading text-sm text-white tracking-wide">THE BOARD</p>
             </Link>
             <button
               onClick={() => {
-                const text = `I'm collecting $EBTC on the blockchain breadline!\n\nJoin the decentralized welfare state.\n\n#EBTCard`;
+                const text = `I'm in The Program.\n\nThey printed $6 trillion. We printed the card.\n\nThe line starts here.\n\n#EBTCard`;
                 window.open(
                   `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
                   '_blank'
@@ -431,7 +431,7 @@ export default function DashboardContent() {
               }}
               className="p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-ebt-gold/50 transition-colors text-center"
             >
-              <p className="font-heading text-sm text-white tracking-wide">SHARE</p>
+              <p className="font-heading text-sm text-white tracking-wide">SPREAD THE GOSPEL</p>
             </button>
           </div>
         </motion.div>

@@ -4,26 +4,8 @@ import { motion } from 'framer-motion';
 
 const features = [
   {
-    title: 'Zero Means Testing',
-    description: 'Unlike real welfare, we don\'t make you prove you\'re poor. Got a wallet? You\'re in.',
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Monthly Distributions',
-    description: 'Like a dividend, but we call it assistance. Same energy as corporate tax breaks.',
-    icon: (
-      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-      </svg>
-    ),
-  },
-  {
-    title: 'Token-Bound Accounts',
-    description: 'Your EBT card IS a wallet. The NFT owns the tokens. ERC-6551. Fancy.',
+    title: 'The Card',
+    description: 'Your EBT card is a wallet. It holds your tokens. The NFT owns the money. Try explaining that to your parents.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -31,8 +13,17 @@ const features = [
     ),
   },
   {
-    title: 'Liquidity Engine',
-    description: 'Treasury buybacks. Market operations. Basically the Fed but for degens.',
+    title: 'The Drop',
+    description: 'Distributions hit your card like clockwork. No forms. No caseworker. No means testing. Just vibes and smart contracts.',
+    icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+      </svg>
+    ),
+  },
+  {
+    title: 'The Cliff',
+    description: 'Sell early, lose benefits. The welfare cliff protects the tribe. Stay comfy, stay fed. It\'s game theory.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -40,8 +31,17 @@ const features = [
     ),
   },
   {
-    title: 'Activity Scores',
-    description: 'We track engagement. The more you participate, the more you get. Gamification of poverty.',
+    title: 'The Burn',
+    description: 'We burn supply because deflation is religion. Every transaction is a sacrifice to the green candle.',
+    icon: (
+      <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />
+      </svg>
+    ),
+  },
+  {
+    title: 'The Score',
+    description: 'Check in. Click buttons. The algorithm rewards belief. Engagement farming, formalized.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -49,8 +49,8 @@ const features = [
     ),
   },
   {
-    title: 'Seasonal Recertification',
-    description: 'Re-apply every quarter. Just like real benefits but without the DMV vibes.',
+    title: 'The Recert',
+    description: 'Re-apply quarterly. The DMV is a Discord server now. The paperwork is a signature.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -68,7 +68,7 @@ export function Features() {
             PROGRAM BENEFITS
           </h2>
           <p className="text-xl text-gray-400">
-            What Wall Street gets, but make it retail.
+            What banks get, but for the rest of us.
           </p>
         </div>
 

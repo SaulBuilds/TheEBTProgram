@@ -45,10 +45,10 @@ export function StepSocial({ onNext, onBack }: StepSocialProps) {
     <div className="max-w-md mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-mono font-bold text-ebt-gold mb-2">
-          Link Your Accounts
+          VERIFY YOUR EXISTENCE
         </h2>
         <p className="text-gray-400 font-mono text-sm">
-          Connect your social accounts to boost your score and verify your identity.
+          Link your socials. The algorithm rewards believers.
         </p>
       </div>
 
@@ -194,7 +194,7 @@ export function StepSocial({ onNext, onBack }: StepSocialProps) {
         animate={{ opacity: 1, y: 0 }}
         className="mt-6 p-4 bg-gray-900/50 border border-ebt-gold/30 rounded-lg text-center"
       >
-        <p className="text-sm font-mono text-gray-400 mb-1">Social Score Bonus</p>
+        <p className="text-sm font-mono text-gray-400 mb-1">Belief Score Bonus</p>
         <p className="text-2xl font-mono font-bold text-ebt-gold">+{previewPoints()} pts</p>
       </motion.div>
 

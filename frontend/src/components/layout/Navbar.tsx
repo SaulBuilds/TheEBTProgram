@@ -64,20 +64,20 @@ export function Navbar() {
               href="/about"
               className="text-sm font-heading text-gray-300 hover:text-ebt-gold transition-colors tracking-wide"
             >
-              ABOUT
+              THE LORE
             </Link>
             <Link
               href="/tokenomics"
               className="text-sm font-heading text-gray-300 hover:text-ebt-gold transition-colors tracking-wide"
             >
-              TOKENOMICS
+              THE MATH
             </Link>
             {isFeatureEnabled('leaderboard') && (
               <Link
                 href="/leaderboard"
                 className="text-sm font-heading text-gray-300 hover:text-ebt-gold transition-colors tracking-wide"
               >
-                LEADERBOARD
+                THE BOARD
               </Link>
             )}
             {authenticated && (
@@ -85,7 +85,7 @@ export function Navbar() {
                 href="/dashboard"
                 className="text-sm font-heading text-gray-300 hover:text-ebt-gold transition-colors tracking-wide"
               >
-                DASHBOARD
+                MY CARD
               </Link>
             )}
           </div>
@@ -106,15 +106,15 @@ export function Navbar() {
                   size="sm"
                   variant="primary"
                 >
-                  DASHBOARD
+                  MY CARD
                 </Button>
                 <Button onClick={handleLogout} size="sm" variant="ghost">
-                  LOGOUT
+                  EXIT
                 </Button>
               </div>
             ) : (
               <Button onClick={() => login()} size="sm" variant="primary">
-                CONNECT
+                ENTER
               </Button>
             )}
           </div>

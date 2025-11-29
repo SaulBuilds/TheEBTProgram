@@ -66,10 +66,10 @@ export function StepIdentity({ data: initialData, onNext, walletAddress }: StepI
     <div className="max-w-md mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-mono font-bold text-ebt-gold mb-2">
-          Prove You Exist
+          CASE FILE CREATION
         </h2>
         <p className="text-gray-400 font-mono text-sm">
-          Tell us who you are. We promise not to tell the IRS.
+          Every recipient needs a name on file. The government has yours. Now we need one too.
         </p>
       </div>
 
@@ -128,7 +128,7 @@ export function StepIdentity({ data: initialData, onNext, walletAddress }: StepI
             />
           </div>
           <p className="mt-1 text-xs text-gray-600 font-mono">
-            Link your Twitter for extra clout points
+            For propaganda distribution purposes
           </p>
         </div>
 
@@ -179,7 +179,7 @@ export function StepIdentity({ data: initialData, onNext, walletAddress }: StepI
           disabled={!username || !!usernameError || isChecking}
           className="w-full py-4 bg-ebt-gold text-black font-mono font-bold rounded-lg hover:bg-ebt-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          Continue to Hunger Declaration
+          DECLARE YOUR HUNGER →
         </button>
       </form>
     </div>

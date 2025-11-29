@@ -10,21 +10,22 @@ interface StepOathProps {
   onBack: () => void;
 }
 
-const oathText = `I, the undersigned digital citizen, hereby declare my intention to join the decentralized breadline.
+const oathText = `I, the undersigned digital citizen, hereby declare my intention to join The Program.
 
 I understand that:
 1. This is NOT real government assistance (obviously)
-2. $FOOD tokens have no guaranteed value (like most things in life)
-3. I am minting an NFT that grants me a token-bound account
+2. $EBTC tokens have no guaranteed value (like the dollar, eventually)
+3. I am minting an NFT that owns a wallet. Try explaining that to your parents.
 4. Gas fees are the new means testing
-5. We are all in this together, rich or poor
+5. We are all Linda now
 
 I solemnly swear to:
-- HODL my $FOOD responsibly
-- Share memes about economic inequality
-- Not take any of this too seriously
-- Support the community
+- HOLD the line when others sell
+- Spread the gospel to the uninitiated
+- Touch grass occasionally
+- Accept that we all go to zero together, or we all make it
 
+The only welfare cliff is the one we create for paper hands.
 This oath is binding until the heat death of the universe or the next protocol upgrade, whichever comes first.`;
 
 export function StepOath({ data: initialData, onNext, onBack }: StepOathProps) {
@@ -49,10 +50,10 @@ export function StepOath({ data: initialData, onNext, onBack }: StepOathProps) {
     <div className="max-w-md mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-2xl font-mono font-bold text-ebt-gold mb-2">
-          Take the Oath
+          THE OATH
         </h2>
         <p className="text-gray-400 font-mono text-sm">
-          Pledge your allegiance to the decentralized breadline.
+          Every program has an oath. This is ours.
         </p>
       </div>
 
@@ -128,7 +129,7 @@ export function StepOath({ data: initialData, onNext, onBack }: StepOathProps) {
                 I understand the tokenomics
               </p>
               <p className="text-xs font-mono text-gray-500 mt-1">
-                10K $FOOD on mint + monthly distributions = welfare on the blockchain
+                $EBTC on mint + monthly drops = the safety net they promised
               </p>
             </div>
           </motion.label>
@@ -137,8 +138,8 @@ export function StepOath({ data: initialData, onNext, onBack }: StepOathProps) {
         {/* Warning */}
         <div className="p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg">
           <p className="text-sm font-mono text-welfare-red">
-            <strong>DISCLAIMER:</strong> This is a satirical art project, not real welfare.
-            Do not spend money you cannot afford to lose on magic internet food stamps.
+            <strong>THE FINE PRINT:</strong> This is not financial advice. This is financial destiny.
+            If you lose money, you simply lacked the vision. NFA. DYOR. We are all Linda.
           </p>
         </div>
 
@@ -156,7 +157,7 @@ export function StepOath({ data: initialData, onNext, onBack }: StepOathProps) {
             disabled={!agreedToTerms || !understandsTokenomics}
             className="flex-1 py-4 bg-ebt-gold text-black font-mono font-bold rounded-lg hover:bg-ebt-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            Proceed to Mint
+            SECURE THE CARD →
           </button>
         </div>
       </form>

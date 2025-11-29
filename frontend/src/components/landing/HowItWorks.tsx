@@ -5,23 +5,23 @@ import { motion } from 'framer-motion';
 const steps = [
   {
     number: '01',
-    title: 'Connect',
-    description: 'Wallet, email, whatever. We\'re not the IRS.',
+    title: 'Accept the L',
+    description: 'You missed Bitcoin. You missed Nvidia. You\'re here because you\'re hungry. Hunger is clarity.',
   },
   {
     number: '02',
-    title: 'Apply',
-    description: 'Fill out some forms. Pay the processing fee. You know how this works.',
+    title: 'Secure the Card',
+    description: 'Mint the EBT Card. It\'s your passport. Without it, you\'re just watching from the lobby.',
   },
   {
     number: '03',
-    title: 'Get Your Card',
-    description: 'NFT minted. Tokens deposited. Welcome to the program.',
+    title: 'Collect the Bag',
+    description: 'Tokens deposit to your card automatically. Monthly drops. No action required. Just wait.',
   },
   {
     number: '04',
-    title: 'Collect',
-    description: 'Come back each month. Benefits hit different when they\'re on-chain.',
+    title: 'Hold the Line',
+    description: 'When the normies arrive, we feast. You are early. They are exit liquidity. Or we all go to zero together.',
   },
 ];
 
@@ -31,10 +31,10 @@ export function HowItWorks() {
       <div className="relative max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-heading text-ebt-gold mb-4 tracking-wide">
-            HOW IT WORKS
+            THE PATH
           </h2>
           <p className="text-xl text-gray-400">
-            Faster than the DMV. Less paperwork than a PPP loan.
+            Four steps to supplemental nutrition.
           </p>
         </div>
 
@@ -78,11 +78,11 @@ export function HowItWorks() {
         >
           <div className="bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6 max-w-3xl mx-auto">
             <p className="text-lg font-heading text-welfare-red mb-4 tracking-wide">
-              DISCLAIMER (LEGAL MADE US ADD THIS)
+              THE FINE PRINT
             </p>
             <p className="text-sm text-gray-500">
-              Not a government program. Not financial advice. Not redeemable at Walmart.
-              But neither are most altcoins, and that never stopped anyone.
+              This is not financial advice. This is financial destiny. If you lose money, you simply lacked the vision.
+              We are not a government agency. We are barely a functional protocol. NFA. DYOR. Touch grass occasionally.
             </p>
           </div>
         </motion.div>
