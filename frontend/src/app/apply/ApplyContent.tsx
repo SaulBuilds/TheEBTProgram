@@ -60,13 +60,13 @@ const initialData: ApplicationData = {
 };
 
 const steps = [
-  { id: 'identity', title: 'Verify Identity', achievement: 'Case File Created' },
-  { id: 'social', title: 'Link Credentials', achievement: 'Network Verified' },
-  { id: 'hunger', title: 'Declare Status', achievement: 'Status Documented' },
-  { id: 'oath', title: 'Bureau Oath', achievement: 'Protocol Accepted' },
-  { id: 'submit', title: 'File Application', achievement: 'Case Filed' },
-  { id: 'register', title: 'On-Chain Registration', achievement: 'Chain Registered' },
-  { id: 'success', title: 'Case Pending', achievement: 'Awaiting Processing' },
+  { id: 'identity', title: 'Identity', achievement: 'Identity Verified' },
+  { id: 'social', title: 'Contact', achievement: 'Contact Provided' },
+  { id: 'hunger', title: 'Household', achievement: 'Household Reported' },
+  { id: 'oath', title: 'Agreement', achievement: 'Terms Accepted' },
+  { id: 'submit', title: 'Submit', achievement: 'Application Submitted' },
+  { id: 'register', title: 'Payment', achievement: 'Fee Processed' },
+  { id: 'success', title: 'Complete', achievement: 'Card Issued' },
 ];
 
 export default function ApplyContent() {
@@ -199,11 +199,11 @@ export default function ApplyContent() {
             className="text-center max-w-md"
           >
             <h1 className="text-3xl font-mono font-bold text-ebt-gold mb-4">
-              Open Your Case
+              Apply For Benefits
             </h1>
             <p className="text-gray-400 mb-8 font-mono">
-              Connect your wallet to file an application with the bureau.
-              Zero means testing. Eligibility universal.
+              Connect your wallet to begin your application.
+              Processing time is immediate upon payment.
             </p>
             <button
               onClick={login}

@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
 
 const headlines = [
-  "The Program They Cancelled. Restored.",
-  "Your Parents Bought Houses. You Get This.",
-  "The Simulation is Broken. The Token is Fixed.",
-  "Not Poor. Temporarily Illiquid.",
-  "Welfare for the Overqualified"
+  "Now Accepting Applications",
+  "Benefits Available While Supplies Last",
+  "The Line Starts Here",
+  "Your Balance: Pending",
+  "Assistance Is Available"
 ];
 
 export function Hero() {
@@ -61,7 +61,7 @@ export function Hero() {
             <div className="w-full aspect-[3/2] bg-gradient-to-br from-ebt-gold to-yellow-600 rounded-xl shadow-2xl p-8 flex flex-col justify-between">
               <div>
                 <h3 className="text-4xl font-heading text-black tracking-wider">EBT CARD</h3>
-                <p className="text-lg font-sans text-gray-800 mt-2">BUREAU OF TECHNO-OPTIMISM</p>
+                <p className="text-lg font-sans text-gray-800 mt-2">SUPPLEMENTAL NUTRITION ASSISTANCE</p>
               </div>
               <div className="flex items-end justify-between">
                 <div>
@@ -72,7 +72,7 @@ export function Hero() {
               </div>
             </div>
             <div className="absolute -top-3 -right-3 bg-welfare-red text-white px-3 py-1 rotate-12 font-heading text-sm tracking-wide">
-              CASE PENDING
+              BENEFITS ACTIVE
             </div>
           </div>
         </div>
@@ -80,10 +80,10 @@ export function Hero() {
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
           <p className="text-xl md:text-2xl mb-2 font-heading text-ebt-green tracking-wide">
-            &quot;You&apos;re not poor. You&apos;re temporarily illiquid.&quot;
+            Everyone&apos;s on assistance. Some just don&apos;t know it yet.
           </p>
           <p className="text-lg md:text-xl text-gray-400">
-            The protocol patches the bug. Apply today.
+            Apply for benefits.
           </p>
         </div>
 
@@ -97,7 +97,7 @@ export function Hero() {
             disabled={!ready}
           >
             <span className="relative z-10 flex items-center gap-2">
-              {!authenticated ? 'CONNECT WALLET' : 'FILE APPLICATION'}
+              {!authenticated ? 'CONNECT WALLET' : 'APPLY FOR BENEFITS'}
               <span className="animate-pulse">→</span>
             </span>
             <div className="absolute inset-0 bg-gradient-to-r from-ebt-gold to-welfare-red transform translate-x-full group-hover:translate-x-0 transition-transform duration-500" />
@@ -109,26 +109,26 @@ export function Hero() {
             variant="secondary"
             className="border-2 border-ebt-gold/50 hover:border-ebt-gold font-heading tracking-wide"
           >
-            READ THE MANIFESTO
+            CHECK ELIGIBILITY
           </Button>
         </div>
 
-        {/* Social proof */}
+        {/* Stats bar - real SNAP statistics */}
         <div className="mt-12 bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-4 max-w-xl mx-auto">
           <div className="flex items-center justify-center gap-8 text-sm">
             <div>
-              <span className="text-ebt-gold font-heading text-lg">420</span>
-              <span className="text-gray-500 ml-2">CASES FILED</span>
+              <span className="text-ebt-gold font-heading text-lg">42M</span>
+              <span className="text-gray-500 ml-2">AMERICANS ON SNAP</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
-              <span className="text-ebt-gold font-heading text-lg">$69K</span>
-              <span className="text-gray-500 ml-2">LIQUIDITY</span>
+              <span className="text-ebt-gold font-heading text-lg">$6.27</span>
+              <span className="text-gray-500 ml-2">AVG DAILY BENEFIT</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
-              <span className="text-ebt-gold font-heading text-lg">1.2M</span>
-              <span className="text-gray-500 ml-2">$EBTC ALLOCATED</span>
+              <span className="text-ebt-gold font-heading text-lg">1974</span>
+              <span className="text-gray-500 ml-2">PROGRAM EST.</span>
             </div>
           </div>
         </div>

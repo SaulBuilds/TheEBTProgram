@@ -8,11 +8,12 @@ import { FundraisingMechanics } from './components/FundraisingMechanics';
 import { InstallmentSystem } from './components/InstallmentSystem';
 
 const sections = [
-  { id: 'overview', title: 'The Manifesto' },
-  { id: 'contracts', title: 'Protocol Architecture' },
+  { id: 'overview', title: 'About The Program' },
+  { id: 'history', title: 'Program History' },
+  { id: 'contracts', title: 'Technical Specifications' },
   { id: 'token-flow', title: 'Fund Distribution' },
-  { id: 'fundraising', title: 'Capital Formation' },
-  { id: 'installments', title: 'Benefit Cycles' },
+  { id: 'fundraising', title: 'Funding Sources' },
+  { id: 'installments', title: 'Benefit Schedule' },
 ];
 
 export function AboutContent() {
@@ -28,11 +29,10 @@ export function AboutContent() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-6xl font-heading text-ebt-gold mb-4 tracking-wide">
-            THE BUREAU MANIFESTO
+            PROGRAM INFORMATION
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            A protocol for the cancelled future. Transparent mechanics.
-            The simulation is broken. The token is fixed.
+            Everything you need to know about your benefits.
           </p>
         </motion.div>
 
@@ -64,6 +64,18 @@ export function AboutContent() {
               className="space-y-8"
             >
               <OverviewSection />
+            </motion.div>
+          )}
+
+          {activeSection === 'history' && (
+            <motion.div
+              key="history"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              className="space-y-8"
+            >
+              <HistorySection />
             </motion.div>
           )}
 
@@ -120,14 +132,106 @@ export function AboutContent() {
           className="mt-16 bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6"
         >
           <h3 className="text-lg font-heading text-welfare-red mb-2 tracking-wide">
-            BUREAU NOTICE: EXPERIMENTAL PROGRAM
+            IMPORTANT PROGRAM NOTICE
           </h3>
           <p className="text-sm text-gray-400">
-            This protocol is a satirical art project exploring wealth inequality and cancelled futures.
-            $EBTC tokens carry no guaranteed value. This is not government assistance.
-            The bureau is not responsible for lost allocations. Participate at your own discretion.
+            This is not a government program. $EBTC tokens have no guaranteed cash value.
+            Not redeemable for goods or services. Not FDIC insured. Not backed by any government agency.
+            Program terms subject to change. Participation is voluntary.
           </p>
         </motion.div>
+      </div>
+    </div>
+  );
+}
+
+function HistorySection() {
+  return (
+    <div className="space-y-8">
+      {/* Linda Taylor Section */}
+      <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
+        <h2 className="text-3xl font-heading text-ebt-gold mb-6 tracking-wide">
+          The Welfare Queen: A Case Study
+        </h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div className="space-y-4">
+            <p className="text-gray-400 leading-relaxed">
+              In 1976, Ronald Reagan introduced America to the &quot;Welfare Queen&quot; during his presidential campaign.
+              He described a woman from Chicago&apos;s South Side who allegedly used 80 names, 30 addresses, and
+              12 Social Security cards to collect $150,000 in tax-free income.
+            </p>
+            <p className="text-gray-400 leading-relaxed">
+              The woman was real. Her name was Linda Taylor. But the story was more complicated than a campaign speech.
+            </p>
+            <p className="text-gray-400 leading-relaxed">
+              Taylor was eventually convicted of welfare fraud totaling $8,000 - not $150,000. She was also
+              suspected of kidnapping, identity theft, and possibly murder. The welfare fraud was the least
+              interesting crime she may have committed.
+            </p>
+          </div>
+          <div className="space-y-4">
+            <p className="text-gray-400 leading-relaxed">
+              The &quot;Welfare Queen&quot; narrative shaped American policy for decades. It led to welfare reform in 1996,
+              work requirements, time limits, and a fundamental restructuring of how America thinks about
+              public assistance.
+            </p>
+            <p className="text-gray-400 leading-relaxed">
+              Meanwhile, corporate subsidies, tax breaks, and bailouts continued without similar scrutiny.
+              The 2008 bank bailout cost $700 billion. PPP loan fraud exceeded $100 billion.
+            </p>
+            <div className="p-4 bg-ebt-gold/10 border border-ebt-gold/30 rounded-lg">
+              <p className="text-sm text-ebt-gold">
+                Linda Taylor&apos;s $8,000 fraud conviction reshaped American welfare policy.
+                $100 billion in PPP fraud received significantly less attention.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Statistics */}
+      <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
+        <h2 className="text-3xl font-heading text-ebt-gold mb-6 tracking-wide">
+          By The Numbers
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'SNAP Fraud Rate', value: '1%', note: 'USDA estimate' },
+            { label: 'PPP Fraud', value: '$100B+', note: 'SBA estimate' },
+            { label: 'Corporate Tax Avoidance', value: '$245B/yr', note: 'IRS estimate' },
+            { label: 'SNAP Annual Budget', value: '$113B', note: 'FY2023' },
+          ].map((stat) => (
+            <div key={stat.label} className="bg-black/60 border border-gray-800 rounded-lg p-4 text-center">
+              <div className="text-2xl font-heading text-ebt-gold mb-1 tracking-wide">{stat.value}</div>
+              <div className="text-xs text-gray-500">{stat.label}</div>
+              <div className="text-xs text-gray-600 mt-1">{stat.note}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Timeline */}
+      <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
+        <h2 className="text-3xl font-heading text-ebt-gold mb-6 tracking-wide">
+          Program Timeline
+        </h2>
+        <div className="space-y-4">
+          {[
+            { year: '1939', event: 'First Food Stamp Program launched during Great Depression' },
+            { year: '1964', event: 'Food Stamp Act makes program permanent' },
+            { year: '1976', event: 'Reagan introduces "Welfare Queen" narrative' },
+            { year: '1977', event: 'Linda Taylor convicted of $8,000 welfare fraud' },
+            { year: '1996', event: 'Welfare reform legislation passes' },
+            { year: '2008', event: 'SNAP renamed from Food Stamps; bank bailouts total $700B' },
+            { year: '2020', event: 'PPP loans distributed; fraud exceeds $100B' },
+            { year: '2024', event: 'EBT Card program launches on-chain' },
+          ].map((item) => (
+            <div key={item.year} className="flex gap-4 items-start">
+              <div className="text-ebt-gold font-heading text-lg w-16">{item.year}</div>
+              <div className="text-gray-400 text-sm">{item.event}</div>
+            </div>
+          ))}
+        </div>
       </div>
     </div>
   );
@@ -136,8 +240,8 @@ export function AboutContent() {
 function OverviewSection() {
   const highlights = [
     {
-      title: 'Case File NFT',
-      description: 'Your case file is an ERC-721 credential. The bureau generates a unique identifier for each applicant.',
+      title: 'Digital Benefits Card',
+      description: 'Your benefits card is an NFT. It contains your account information and benefit balance.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -145,8 +249,8 @@ function OverviewSection() {
       ),
     },
     {
-      title: 'Token-Bound Account',
-      description: 'Each NFT owns a smart wallet (ERC-6551). Your case file IS your account. The card holds the tokens.',
+      title: 'Built-in Wallet',
+      description: 'Each card includes a smart wallet (ERC-6551). Benefits are deposited directly to your card.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a2.25 2.25 0 00-2.25-2.25H15a3 3 0 11-6 0H5.25A2.25 2.25 0 003 12m18 0v6a2.25 2.25 0 01-2.25 2.25H5.25A2.25 2.25 0 013 18v-6m18 0V9M3 12V9m18 0a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 9m18 0V6a2.25 2.25 0 00-2.25-2.25H5.25A2.25 2.25 0 003 6v3" />
@@ -154,8 +258,8 @@ function OverviewSection() {
       ),
     },
     {
-      title: '$EBTC Allocation',
-      description: 'ERC-20 tokens distributed to case file holders. Initial allocation on mint, recurring distributions each cycle.',
+      title: 'Monthly Benefits',
+      description: 'Token distributions occur on a regular schedule. Check your balance anytime.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -163,8 +267,8 @@ function OverviewSection() {
       ),
     },
     {
-      title: 'Benefit Cycles',
-      description: 'Claim $EBTC each cycle based on activity score. Seasonal reapplication required every 3 months.',
+      title: 'Quarterly Recertification',
+      description: 'Benefits must be renewed every three months. Standard program requirements apply.',
       icon: (
         <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
@@ -179,21 +283,22 @@ function OverviewSection() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8 space-y-6">
           <h2 className="text-3xl font-heading text-ebt-gold tracking-wide">
-            The Cancelled Future
+            About This Program
           </h2>
           <p className="text-gray-400 leading-relaxed">
-            Your parents bought houses. You got student debt. They promised jetpacks.
-            You got a gig economy. The simulation promised prosperity. It delivered uncertainty.
+            The EBT Card program provides supplemental benefits to qualifying participants.
+            Unlike traditional assistance programs, eligibility is determined by wallet
+            ownership rather than income verification.
           </p>
           <p className="text-gray-400 leading-relaxed">
-            The Bureau of Techno-Optimism exists to patch the bug. We don&apos;t discriminate
-            by income because the old metrics are broken. The overqualified and the underemployed
-            file together. Poor is a mindset. Broke is temporary. Illiquid is solvable.
+            Benefits are distributed in the form of $EBTC tokens, deposited directly to
+            your digital benefits card. Cards are issued as NFTs with built-in smart
+            wallets using the ERC-6551 standard.
           </p>
           <div className="p-4 bg-ebt-gold/10 border border-ebt-gold/30 rounded-lg">
             <p className="text-sm text-ebt-gold">
-              &quot;The program they cancelled. Restored.&quot; - What the old economy promised.
-              What this one delivers.
+              Program participation is voluntary. Benefits have no guaranteed cash value.
+              This is not a government program.
             </p>
           </div>
         </div>
@@ -215,17 +320,17 @@ function OverviewSection() {
         </div>
       </div>
 
-      {/* Tokenomics Summary */}
+      {/* Benefit Amounts */}
       <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
         <h2 className="text-3xl font-heading text-ebt-gold mb-8 tracking-wide text-center">
-          Bureau Allocation Matrix
+          Benefit Amounts
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Reserve', value: '20B $EBTC' },
-            { label: 'Initial Allocation', value: '200K-20M' },
-            { label: 'Cycle Distribution', value: '20K-20M' },
-            { label: 'Operations (5%)', value: '1B $EBTC' },
+            { label: 'Total Program Reserve', value: '20B $EBTC' },
+            { label: 'Initial Card Deposit', value: '200K-20M' },
+            { label: 'Monthly Distribution', value: '20K-20M' },
+            { label: 'Administrative Fee', value: '5%' },
           ].map((stat) => (
             <div
               key={stat.label}
@@ -238,10 +343,10 @@ function OverviewSection() {
         </div>
       </div>
 
-      {/* The Journey */}
+      {/* How It Works */}
       <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
         <h2 className="text-3xl font-heading text-ebt-gold mb-8 text-center tracking-wide">
-          Standard Case Processing
+          How To Apply
         </h2>
         <div className="relative">
           {/* Connection line */}
@@ -249,11 +354,11 @@ function OverviewSection() {
 
           <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
             {[
-              { step: '1', title: 'Open Case', desc: 'Submit application to the bureau' },
-              { step: '2', title: 'Review', desc: 'Zero means testing. Eligibility universal.' },
-              { step: '3', title: 'Mint', desc: 'Processing fee generates your case file NFT' },
-              { step: '4', title: 'Allocate', desc: 'Initial $EBTC deposited to token-bound account' },
-              { step: '5', title: 'Claim', desc: 'Return each cycle for benefit distribution' },
+              { step: '1', title: 'Connect', desc: 'Link your wallet to begin' },
+              { step: '2', title: 'Apply', desc: 'Complete the application form' },
+              { step: '3', title: 'Pay', desc: 'Processing fee required' },
+              { step: '4', title: 'Receive', desc: 'Card issued with initial deposit' },
+              { step: '5', title: 'Collect', desc: 'Claim monthly benefits' },
             ].map((item, index) => (
               <motion.div
                 key={item.step}
@@ -273,25 +378,25 @@ function OverviewSection() {
         </div>
       </div>
 
-      {/* Reapplication Info */}
+      {/* Recertification Info */}
       <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8">
         <h2 className="text-3xl font-heading text-ebt-gold mb-6 tracking-wide">
-          Seasonal Reapplication Protocol
+          Recertification Requirements
         </h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div className="space-y-4">
-            <h3 className="font-heading text-white text-lg tracking-wide">Quarterly Cycles</h3>
+            <h3 className="font-heading text-white text-lg tracking-wide">Quarterly Renewal</h3>
             <p className="text-sm text-gray-400">
-              Case files expire each 3-month season. Shortage. Shutdown. Stimulus.
-              Reapplication ensures active participation and fair allocation based on current activity scores.
+              Benefits expire after 90 days. Participants must recertify each quarter
+              to maintain eligibility. Failure to recertify results in benefit suspension.
             </p>
           </div>
           <div className="space-y-4">
-            <h3 className="font-heading text-white text-lg tracking-wide">Activity Verification</h3>
+            <h3 className="font-heading text-white text-lg tracking-wide">Eligibility Factors</h3>
             <ul className="space-y-2 text-sm text-gray-400">
-              <li>On-chain activity score (transactions, holdings)</li>
-              <li>Employment verification (optional proof of work)</li>
-              <li>Community engagement (protocol participation)</li>
+              <li>Wallet activity during benefit period</li>
+              <li>Participation in program activities</li>
+              <li>Compliance with program terms</li>
             </ul>
           </div>
         </div>
