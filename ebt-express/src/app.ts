@@ -25,6 +25,7 @@ import {
 import { getScoreForApplication, calculateScore } from './services/scoring';
 import { checkIPFSHealth } from './services/ipfs';
 import { checkTokenLiquidity, getETHBalance } from './services/uniswap';
+import slotsRoutes from './slots/routes';
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -762,6 +763,9 @@ app.get('/api/health/ipfs', async (_req, res) => {
   const healthy = await checkIPFSHealth();
   return res.status(healthy ? 200 : 503).json({ status: healthy ? 'ok' : 'unavailable' });
 });
+
+// ==================== SLOT MACHINE ROUTES ====================
+app.use('/api/slots', slotsRoutes);
 
 // ==================== ERROR HANDLER ====================
 

@@ -188,3 +188,64 @@ model GeneratedCard {
 
   generatedAt   DateTime    @default(now())
 }
+
+// ==================== SLOT MACHINE (THE GROCERY RUN) ====================
+
+model SlotPlayer {
+  id              Int         @id @default(autoincrement())
+  privyUserId     String      @unique  // Privy DID
+
+  // Stats
+  totalSpins      Int         @default(0)
+  totalPoints     Int         @default(0)
+  highestCombo    Int         @default(0)  // Best cascade chain
+  biggestWin      Int         @default(0)  // Highest single spin points
+  jackpotsHit     Int         @default(0)
+
+  // Daily limits
+  dailySpinsUsed  Int         @default(0)
+  dailyPointsWon  Int         @default(0)
+  lastSpinAt      DateTime?
+  lastDailyReset  DateTime    @default(now())
+
+  // Streaks
+  currentStreak   Int         @default(0)  // Consecutive days played
+  longestStreak   Int         @default(0)
+  lastPlayDate    DateTime?
+
+  createdAt       DateTime    @default(now())
+  updatedAt       DateTime    @updatedAt
+
+  spins           SlotSpin[]
+}
+
+model SlotSpin {
+  id              Int         @id @default(autoincrement())
+  playerId        Int
+  player          SlotPlayer  @relation(fields: [playerId], references: [id])
+
+  // Initial grid state (5x5 = 25 symbols as JSON array)
+  initialGrid     String      // JSON array of symbol IDs
+
+  // Final result after all cascades
+  finalGrid       String      // JSON array of symbol IDs
+
+  // Cascade history (each step of the waterfall)
+  cascadeHistory  String?     // JSON array of cascade steps
+  cascadeCount    Int         @default(0)
+
+  // Points calculation
+  basePoints      Int         @default(0)
+  comboMultiplier Float       @default(1.0)
+  totalPoints     Int         @default(0)
+
+  // Special events
+  isJackpot       Boolean     @default(false)
+  isBigWin        Boolean     @default(false)  // 5+ in a row
+  matchedSymbols  String?     // JSON array of matched positions
+
+  // Seed for verification (optional fairness)
+  seed            String?
+
+  createdAt       DateTime    @default(now())
+}

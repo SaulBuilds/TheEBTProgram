@@ -3,108 +3,174 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
-import { useAccount } from 'wagmi';
-import { SlotMachine } from './components/SlotMachine';
+import { CascadeGrid } from './components/CascadeGrid';
 import { JackpotCounter } from './components/JackpotCounter';
 import { SpinHistory } from './components/SpinHistory';
 import { PayoutTable } from './components/PayoutTable';
 import {
-  GAME_CONFIG,
-  BACKGROUND_SCENES,
-  type SlotSymbol,
-  getSymbolById,
-  SLOT_SYMBOLS,
-} from '@/lib/slots/config';
-import { useSlotMachine } from '@/lib/hooks/useSlotMachine';
-
-interface SpinResult {
-  reels: [SlotSymbol, SlotSymbol, SlotSymbol];
-  payout: number;
-  isJackpot: boolean;
-  isBonus: boolean;
-  timestamp: number;
-}
+  type Symbol,
+  type PlayerStats,
+  type SpinResult,
+  type CascadeStep,
+  fetchPlayerStats,
+  executeSpin,
+  fetchSymbols,
+  GRID_SIZE,
+} from '@/lib/slots/gameEngine';
 
 export function SlotsContent() {
-  const { authenticated } = usePrivy();
-  const { address } = useAccount();
+  const { authenticated, user, getAccessToken } = usePrivy();
 
-  // Contract hook
-  const slotMachine = useSlotMachine(address);
+  // Game state
+  const [symbols, setSymbols] = useState<Symbol[]>([]);
+  const [playerStats, setPlayerStats] = useState<PlayerStats | null>(null);
+  const [currentGrid, setCurrentGrid] = useState<number[]>([]);
+  const [cascadeHistory, setCascadeHistory] = useState<CascadeStep[]>([]);
+  const [currentCascadeStep, setCurrentCascadeStep] = useState(-1);
 
   // UI state
-  const [currentResult, setCurrentResult] = useState<SpinResult | null>(null);
-  const [spinHistory, setSpinHistory] = useState<SpinResult[]>([]);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [lastResult, setLastResult] = useState<SpinResult | null>(null);
   const [showPayoutTable, setShowPayoutTable] = useState(false);
-  const [backgroundScene, setBackgroundScene] = useState(BACKGROUND_SCENES.default);
+  const [spinHistory, setSpinHistory] = useState<SpinResult[]>([]);
 
-  // Derive state from contract
-  const isSpinning = slotMachine.isSpinning;
-  const freeSpinsUsed = Number(slotMachine.playerStats?.freeSpinsUsed || 0n);
-  const totalWinnings = Number((slotMachine.playerStats?.totalWinnings || 0n) / BigInt(10 ** 18));
-  const jackpotAmount = Number((slotMachine.jackpotPool || 0n) / BigInt(10 ** 18));
-
-  // Calculate remaining free spins
-  const freeSpinsRemaining = Number(slotMachine.remainingFreeSpins || 10n);
-  const hasReachedFreeCap = totalWinnings >= GAME_CONFIG.FREE_SPIN_PAYOUT_CAP && freeSpinsUsed < GAME_CONFIG.FREE_SPIN_LIMIT;
-
-  // Convert contract result to UI format
+  // Initialize game
   useEffect(() => {
-    if (slotMachine.latestSpinResult) {
-      const { reel1, reel2, reel3, payout, isJackpot, isBonus } = slotMachine.latestSpinResult;
+    async function init() {
+      try {
+        // Fetch symbols
+        const { symbols: fetchedSymbols } = await fetchSymbols();
+        setSymbols(fetchedSymbols);
 
-      // Find symbols by id
-      const findSymbol = (id: number): SlotSymbol => {
-        return getSymbolById(id) || SLOT_SYMBOLS[0];
-      };
+        // Generate initial random grid
+        const initialGrid: number[] = [];
+        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
+          const randomIdx = Math.floor(Math.random() * fetchedSymbols.length);
+          initialGrid.push(fetchedSymbols[randomIdx].id);
+        }
+        setCurrentGrid(initialGrid);
 
-      const result: SpinResult = {
-        reels: [findSymbol(reel1), findSymbol(reel2), findSymbol(reel3)],
-        payout: Number(payout / BigInt(10 ** 18)),
-        isJackpot,
-        isBonus,
-        timestamp: Date.now(),
-      };
-
-      setCurrentResult(result);
-      setSpinHistory(prev => [result, ...prev].slice(0, 20));
-
-      // Change background for special wins
-      if (isJackpot) {
-        setBackgroundScene(BACKGROUND_SCENES.jackpot);
-      } else if (isBonus) {
-        setBackgroundScene(BACKGROUND_SCENES.bonus);
-      } else {
-        setBackgroundScene(BACKGROUND_SCENES.default);
+        // Fetch player stats if authenticated
+        if (authenticated && user?.id) {
+          const token = await getAccessToken();
+          if (token) {
+            const stats = await fetchPlayerStats(token, user.id);
+            setPlayerStats(stats);
+          }
+        }
+      } catch (err) {
+        console.error('Init error:', err);
+        setError('Failed to load game');
+      } finally {
+        setIsLoading(false);
       }
     }
-  }, [slotMachine.latestSpinResult]);
+
+    init();
+  }, [authenticated, user?.id, getAccessToken]);
+
+  // Refresh player stats
+  const refreshStats = useCallback(async () => {
+    if (!authenticated || !user?.id) return;
+
+    try {
+      const token = await getAccessToken();
+      if (token) {
+        const stats = await fetchPlayerStats(token, user.id);
+        setPlayerStats(stats);
+      }
+    } catch (err) {
+      console.error('Failed to refresh stats:', err);
+    }
+  }, [authenticated, user?.id, getAccessToken]);
 
   // Handle spin
-  const handleSpin = useCallback(() => {
-    if (slotMachine.isSpinning) return;
-    slotMachine.spin();
-  }, [slotMachine]);
+  const handleSpin = useCallback(async () => {
+    if (!authenticated || !user?.id || isSpinning) return;
 
-  // Check if contract is ready
-  const isContractReady = slotMachine.isPaused === false;
-  const canUserSpin = authenticated && isContractReady && slotMachine.canSpin;
+    setError(null);
+    setIsSpinning(true);
+    setCurrentCascadeStep(-1);
+    setCascadeHistory([]);
+
+    try {
+      const token = await getAccessToken();
+      if (!token) throw new Error('Not authenticated');
+
+      const result = await executeSpin(token, user.id);
+
+      // Store result
+      setLastResult(result.spin);
+      setPlayerStats(result.player);
+      setCascadeHistory(result.spin.cascadeHistory);
+
+      // Show initial grid
+      setCurrentGrid(result.spin.initialGrid);
+
+      // Start cascade animation sequence
+      if (result.spin.cascadeHistory.length > 0) {
+        setCurrentCascadeStep(0);
+      } else {
+        // No cascades, just show final grid
+        setCurrentGrid(result.spin.finalGrid);
+        setIsSpinning(false);
+      }
+
+      // Add to history
+      setSpinHistory(prev => [result.spin, ...prev].slice(0, 20));
+    } catch (err) {
+      console.error('Spin error:', err);
+      setError(err instanceof Error ? err.message : 'Spin failed');
+      setIsSpinning(false);
+    }
+  }, [authenticated, user?.id, isSpinning, getAccessToken]);
+
+  // Handle cascade animation completion
+  const handleCascadeComplete = useCallback(() => {
+    if (currentCascadeStep < cascadeHistory.length - 1) {
+      // Move to next cascade step
+      setCurrentCascadeStep(prev => prev + 1);
+    } else {
+      // Animation complete, show final grid
+      if (lastResult) {
+        setCurrentGrid(lastResult.finalGrid);
+      }
+      setIsSpinning(false);
+    }
+  }, [currentCascadeStep, cascadeHistory.length, lastResult]);
+
+  // Advance cascade steps with timing
+  useEffect(() => {
+    if (!isSpinning || currentCascadeStep < 0) return;
+
+    const timer = setTimeout(() => {
+      handleCascadeComplete();
+    }, 1200); // Time per cascade step
+
+    return () => clearTimeout(timer);
+  }, [isSpinning, currentCascadeStep, handleCascadeComplete]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-black flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
+            className="w-16 h-16 border-4 border-ebt-gold border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-500 font-mono">Loading THE GROCERY RUN...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div
-      className="min-h-screen bg-black relative overflow-hidden"
-      style={{
-        backgroundImage: `url(${backgroundScene})`,
-        backgroundSize: 'cover',
-        backgroundPosition: 'center',
-      }}
-    >
-      {/* Dark overlay */}
-      <div className="absolute inset-0 bg-black/70" />
-
-      {/* Content */}
-      <div className="relative z-10 container mx-auto px-4 py-8">
-        {/* Header */}
+    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
+      {/* Header */}
+      <div className="container mx-auto px-4 py-8">
         <div className="text-center mb-8">
           <motion.h1
             initial={{ y: -50, opacity: 0 }}
@@ -114,63 +180,122 @@ export function SlotsContent() {
             THE GROCERY RUN
           </motion.h1>
           <p className="text-gray-400 font-mono text-lg">
-            Spin to win. The algorithm provides.
+            Match 3+ to clear. Chain reactions = bonus points!
           </p>
-          {slotMachine.spinError && (
-            <div className="mt-2 inline-block px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full">
-              <span className="text-red-400 text-xs font-mono">Error: {slotMachine.spinError.message}</span>
-            </div>
-          )}
-          {!isContractReady && (
-            <div className="mt-2 inline-block px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full">
-              <span className="text-yellow-400 text-xs font-mono">Connecting to contract...</span>
-            </div>
-          )}
         </div>
 
         {/* Jackpot Counter */}
-        <JackpotCounter amount={jackpotAmount || GAME_CONFIG.JACKPOT_BASE} />
+        <JackpotCounter amount={playerStats?.totalPoints || 0} />
 
         {/* Main Game Area */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
-          {/* Slot Machine */}
-          <div className="flex-1 max-w-2xl">
-            <SlotMachine
+        <div className="flex flex-col lg:flex-row gap-8 items-start justify-center mt-8">
+          {/* Game Grid */}
+          <div className="flex-1 max-w-xl">
+            {/* Cascade Grid */}
+            <CascadeGrid
+              grid={currentGrid}
+              symbols={symbols}
+              cascadeHistory={cascadeHistory}
               isSpinning={isSpinning}
-              result={currentResult}
-              onSpin={handleSpin}
-              disabled={!canUserSpin}
+              currentCascadeStep={currentCascadeStep}
+              onAnimationComplete={handleCascadeComplete}
             />
+
+            {/* Spin Button */}
+            <div className="mt-6 flex justify-center">
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleSpin}
+                disabled={!authenticated || isSpinning || !playerStats?.canSpin}
+                className={`
+                  px-12 py-4 rounded-xl font-heading text-2xl uppercase tracking-wider
+                  transition-all duration-200
+                  ${!authenticated || !playerStats?.canSpin
+                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
+                    : isSpinning
+                      ? 'bg-gray-700 text-gray-400'
+                      : 'bg-gradient-to-r from-ebt-gold to-yellow-600 text-black hover:shadow-lg hover:shadow-ebt-gold/30'
+                  }
+                `}
+              >
+                {isSpinning ? 'SPINNING...' : !authenticated ? 'CONNECT TO PLAY' : !playerStats?.canSpin ? 'NO SPINS LEFT' : 'SPIN'}
+              </motion.button>
+            </div>
+
+            {/* Error display */}
+            {error && (
+              <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-center">
+                <p className="text-red-400 text-sm font-mono">{error}</p>
+              </div>
+            )}
+
+            {/* Last win display */}
+            <AnimatePresence>
+              {lastResult && lastResult.pointsEarned > 0 && !isSpinning && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0 }}
+                  className="mt-4 text-center"
+                >
+                  <div className={`
+                    p-4 rounded-xl border
+                    ${lastResult.isJackpot
+                      ? 'bg-ebt-gold/20 border-ebt-gold'
+                      : lastResult.isBigWin
+                        ? 'bg-purple-500/20 border-purple-500'
+                        : 'bg-green-500/20 border-green-500/50'
+                    }
+                  `}>
+                    {lastResult.isJackpot && (
+                      <motion.p
+                        animate={{ scale: [1, 1.1, 1] }}
+                        transition={{ duration: 0.5, repeat: 3 }}
+                        className="text-3xl font-heading text-ebt-gold mb-2"
+                      >
+                        🎰 JACKPOT! 🎰
+                      </motion.p>
+                    )}
+                    {lastResult.isBigWin && !lastResult.isJackpot && (
+                      <p className="text-2xl font-heading text-purple-400 mb-2">BIG WIN!</p>
+                    )}
+                    <p className="text-2xl font-heading text-green-400">
+                      +{lastResult.pointsEarned.toLocaleString()} POINTS
+                    </p>
+                    {lastResult.cascadeCount > 0 && (
+                      <p className="text-sm font-mono text-gray-400 mt-1">
+                        {lastResult.cascadeCount}x cascade chain ({lastResult.comboMultiplier}x multiplier)
+                      </p>
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
 
             {/* Stats Bar */}
             <div className="mt-6 grid grid-cols-3 gap-4">
-              {/* Free Spins */}
+              {/* Daily Spins */}
               <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 text-center">
-                <p className="text-xs font-mono text-gray-500 uppercase">Free Spins</p>
+                <p className="text-xs font-mono text-gray-500 uppercase">Daily Spins</p>
                 <p className="text-2xl font-heading text-ebt-gold">
-                  {freeSpinsRemaining}/{GAME_CONFIG.FREE_SPIN_LIMIT}
+                  {playerStats?.dailySpinsRemaining ?? 10}/{10}
                 </p>
-                {freeSpinsRemaining === 0 && (
-                  <p className="text-xs text-gray-500 mt-1">Infinite mode active</p>
-                )}
               </div>
 
-              {/* Total Winnings */}
+              {/* Today's Points */}
               <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 text-center">
-                <p className="text-xs font-mono text-gray-500 uppercase">Session Winnings</p>
+                <p className="text-xs font-mono text-gray-500 uppercase">Today&apos;s Points</p>
                 <p className="text-2xl font-heading text-green-400">
-                  {totalWinnings.toLocaleString()} $EBTC
+                  {(playerStats?.dailyPointsWon ?? 0).toLocaleString()}
                 </p>
-                {hasReachedFreeCap && (
-                  <p className="text-xs text-welfare-red mt-1">Free cap reached!</p>
-                )}
               </div>
 
-              {/* Points Earned */}
+              {/* Streak */}
               <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 text-center">
-                <p className="text-xs font-mono text-gray-500 uppercase">Points Earned</p>
+                <p className="text-xs font-mono text-gray-500 uppercase">Streak</p>
                 <p className="text-2xl font-heading text-purple-400">
-                  +{(totalWinnings * GAME_CONFIG.POINTS_PER_EBTC).toLocaleString()}
+                  🔥 {playerStats?.currentStreak ?? 0}
                 </p>
               </div>
             </div>
@@ -180,7 +305,7 @@ export function SlotsContent() {
               onClick={() => setShowPayoutTable(!showPayoutTable)}
               className="mt-4 w-full py-2 bg-gray-900/80 border border-gray-700 text-gray-400 font-mono text-sm rounded-lg hover:border-ebt-gold transition-colors"
             >
-              {showPayoutTable ? 'Hide' : 'Show'} Payout Table
+              {showPayoutTable ? 'Hide' : 'Show'} How To Play
             </button>
 
             <AnimatePresence>
@@ -199,6 +324,35 @@ export function SlotsContent() {
 
           {/* Sidebar */}
           <div className="w-full lg:w-80">
+            {/* Player Stats */}
+            {authenticated && playerStats && (
+              <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 mb-6">
+                <h3 className="text-lg font-heading text-ebt-gold mb-3">YOUR STATS</h3>
+                <div className="space-y-2 text-sm font-mono">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Total Spins</span>
+                    <span className="text-white">{playerStats.totalSpins.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Total Points</span>
+                    <span className="text-green-400">{playerStats.totalPoints.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Best Combo</span>
+                    <span className="text-purple-400">{playerStats.highestCombo}x chain</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Biggest Win</span>
+                    <span className="text-ebt-gold">{playerStats.biggestWin.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Longest Streak</span>
+                    <span className="text-orange-400">{playerStats.longestStreak} days</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
             {/* Recent Spins */}
             <SpinHistory history={spinHistory} />
 
@@ -208,27 +362,27 @@ export function SlotsContent() {
               <ul className="space-y-2 text-sm font-mono text-gray-400">
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">1.</span>
-                  EBT Card holders get {GAME_CONFIG.FREE_SPIN_LIMIT} free spins
+                  Match 3+ symbols horizontally or vertically
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">2.</span>
-                  Free spins can win up to {GAME_CONFIG.FREE_SPIN_PAYOUT_CAP.toLocaleString()} $EBTC
+                  Matches disappear and new symbols fall from above
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">3.</span>
-                  After free spins, spin infinitely for jackpot only
+                  Chain reactions = combo multipliers (up to 8x!)
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">4.</span>
-                  Triple Bitcoin Pepe or Triple Diamond = {GAME_CONFIG.JACKPOT_BASE.toLocaleString()} $EBTC JACKPOT
+                  10 free spins daily, earn up to 5,000 points/day
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">5.</span>
-                  Winnings add to your monthly provisions
+                  Daily streaks boost your leaderboard rank
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">6.</span>
-                  All spins are provably fair via Chainlink VRF
+                  Diamond 💎 = Wild, Bitcoin ₿ = Jackpot!
                 </li>
               </ul>
             </div>
@@ -237,7 +391,7 @@ export function SlotsContent() {
             {!authenticated && (
               <div className="mt-6 bg-welfare-red/20 border border-welfare-red/50 rounded-lg p-4 text-center">
                 <p className="text-welfare-red font-mono text-sm">
-                  Connect your wallet and hold an EBT Card to spin
+                  Connect your wallet to play and track your score!
                 </p>
               </div>
             )}
@@ -247,9 +401,9 @@ export function SlotsContent() {
         {/* Footer */}
         <div className="mt-12 text-center">
           <p className="text-xs font-mono text-gray-600">
-            Provably fair. On-chain randomness via Chainlink VRF.
+            Points contribute to your leaderboard ranking.
             <br />
-            We are all Linda.
+            Play daily to maintain your streak!
           </p>
         </div>
       </div>

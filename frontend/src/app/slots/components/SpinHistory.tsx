@@ -2,16 +2,7 @@
 
 import React from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import type { SlotSymbol } from '@/lib/slots/config';
-import { Symbol } from './Symbol';
-
-interface SpinResult {
-  reels: [SlotSymbol, SlotSymbol, SlotSymbol];
-  payout: number;
-  isJackpot: boolean;
-  isBonus: boolean;
-  timestamp: number;
-}
+import type { SpinResult } from '@/lib/slots/gameEngine';
 
 interface SpinHistoryProps {
   history: SpinResult[];
@@ -23,53 +14,60 @@ export function SpinHistory({ history }: SpinHistoryProps) {
       <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4">
         <h3 className="text-lg font-heading text-ebt-gold mb-3">RECENT SPINS</h3>
         <p className="text-sm font-mono text-gray-500 text-center py-8">
-          No spins yet. Pull that lever!
+          No spins yet. Hit that button!
         </p>
       </div>
     );
   }
 
+  const wins = history.filter(s => s.pointsEarned > 0).length;
+  const totalPoints = history.reduce((sum, s) => sum + s.pointsEarned, 0);
+
   return (
     <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4">
       <h3 className="text-lg font-heading text-ebt-gold mb-3">RECENT SPINS</h3>
-      <div className="space-y-2 max-h-80 overflow-y-auto">
+      <div className="space-y-2 max-h-64 overflow-y-auto">
         <AnimatePresence initial={false}>
           {history.slice(0, 10).map((spin, index) => (
             <motion.div
-              key={spin.timestamp}
+              key={index}
               initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: 20 }}
               transition={{ delay: index * 0.05 }}
               className={`
-                flex items-center justify-between p-2 rounded-lg
-                ${spin.isJackpot ? 'bg-ebt-gold/20 border border-ebt-gold' :
-                  spin.isBonus ? 'bg-purple-500/20 border border-purple-500' :
-                  spin.payout > 0 ? 'bg-green-500/10 border border-green-500/30' :
-                  'bg-gray-800/50'}
+                p-2 rounded-lg border text-xs font-mono
+                ${spin.isJackpot
+                  ? 'bg-ebt-gold/20 border-ebt-gold'
+                  : spin.isBigWin
+                    ? 'bg-purple-500/20 border-purple-500/50'
+                    : spin.pointsEarned > 0
+                      ? 'bg-green-500/10 border-green-500/30'
+                      : 'bg-gray-800/50 border-gray-700'
+                }
               `}
             >
-              {/* Symbols */}
-              <div className="flex gap-1">
-                {spin.reels.map((symbol, i) => (
-                  <Symbol key={i} symbol={symbol} size={32} />
-                ))}
+              <div className="flex justify-between items-center">
+                <div className="flex items-center gap-2">
+                  {spin.isJackpot && <span>🎰</span>}
+                  {spin.isBigWin && !spin.isJackpot && <span>⭐</span>}
+                  {spin.cascadeCount > 0 ? (
+                    <span className="text-purple-400">{spin.cascadeCount}x chain</span>
+                  ) : spin.pointsEarned === 0 ? (
+                    <span className="text-gray-500">No matches</span>
+                  ) : (
+                    <span className="text-gray-400">Match!</span>
+                  )}
+                </div>
+                <span className={spin.pointsEarned > 0 ? 'text-green-400' : 'text-gray-500'}>
+                  {spin.pointsEarned > 0 ? `+${spin.pointsEarned.toLocaleString()}` : '0'}
+                </span>
               </div>
-
-              {/* Result */}
-              <div className="text-right">
-                {spin.isJackpot ? (
-                  <span className="text-sm font-heading text-ebt-gold">JACKPOT!</span>
-                ) : spin.isBonus ? (
-                  <span className="text-sm font-heading text-purple-400">BONUS</span>
-                ) : spin.payout > 0 ? (
-                  <span className="text-sm font-mono text-green-400">
-                    +{spin.payout}
-                  </span>
-                ) : (
-                  <span className="text-sm font-mono text-gray-500">-</span>
-                )}
-              </div>
+              {spin.comboMultiplier > 1 && (
+                <div className="text-[10px] text-gray-500 mt-1">
+                  {spin.comboMultiplier}x multiplier applied
+                </div>
+              )}
             </motion.div>
           ))}
         </AnimatePresence>
@@ -78,22 +76,16 @@ export function SpinHistory({ history }: SpinHistoryProps) {
       {/* Summary */}
       <div className="mt-4 pt-4 border-t border-gray-700">
         <div className="flex justify-between text-sm font-mono">
-          <span className="text-gray-500">Spins:</span>
+          <span className="text-gray-500">Session Spins:</span>
           <span className="text-white">{history.length}</span>
         </div>
         <div className="flex justify-between text-sm font-mono">
           <span className="text-gray-500">Wins:</span>
-          <span className="text-green-400">
-            {history.filter(s => s.payout > 0).length}
-          </span>
+          <span className="text-green-400">{wins}</span>
         </div>
         <div className="flex justify-between text-sm font-mono">
-          <span className="text-gray-500">Win Rate:</span>
-          <span className="text-ebt-gold">
-            {history.length > 0
-              ? Math.round((history.filter(s => s.payout > 0).length / history.length) * 100)
-              : 0}%
-          </span>
+          <span className="text-gray-500">Session Points:</span>
+          <span className="text-ebt-gold">{totalPoints.toLocaleString()}</span>
         </div>
       </div>
     </div>
