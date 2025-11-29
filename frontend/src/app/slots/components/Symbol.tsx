@@ -4,7 +4,6 @@ import React, { useState } from 'react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import type { SlotSymbol } from '@/lib/slots/config';
-import symbolsManifest from '@/lib/slots/symbols.json';
 
 interface SymbolProps {
   symbol: SlotSymbol;
@@ -12,66 +11,26 @@ interface SymbolProps {
   isWinning?: boolean;
 }
 
-// Map config symbol names to manifest keys
-function getSymbolSpriteKey(symbol: SlotSymbol): string | null {
-  const name = symbol.name;
+// Rarity colors for glow effects
+const RARITY_COLORS = {
+  common: '#9CA3AF',      // gray
+  uncommon: '#22C55E',    // green
+  rare: '#3B82F6',        // blue
+  epic: '#A855F7',        // purple
+  legendary: '#F59E0B',   // gold
+};
 
-  // Check for grocery items first (most common)
-  if (symbolsManifest.symbols[`grocery_${name}` as keyof typeof symbolsManifest.symbols]) {
-    return `grocery_${name}`;
-  }
-
-  // Check for meme characters by trying different categories
-  const memeCategories = ['chad', 'doge', 'pepe', 'cat'];
-  for (const category of memeCategories) {
-    // Handle names like 'pepe_cart' -> 'meme_pepe_cart'
-    if (name.startsWith(`${category}_`)) {
-      const action = name.replace(`${category}_`, '');
-      const key = `meme_${category}_${action}`;
-      if (symbolsManifest.symbols[key as keyof typeof symbolsManifest.symbols]) {
-        return key;
-      }
-    }
-    // Also try direct lookup for meme symbols
-    const key = `meme_${category}_${name}`;
-    if (symbolsManifest.symbols[key as keyof typeof symbolsManifest.symbols]) {
-      return key;
-    }
-  }
-
-  // Check for special symbols - try to match by id or name
-  if (name === 'ebt_card' || name === 'seven' || name === 'bonus' || name === 'linda') {
-    // Use chad card as fallback for special symbols
-    if (symbolsManifest.symbols['meme_chad_card' as keyof typeof symbolsManifest.symbols]) {
-      return 'meme_chad_card';
-    }
-  }
-
-  return null;
-}
-
-function getSymbolSpritePath(symbol: SlotSymbol): string | null {
-  const key = getSymbolSpriteKey(symbol);
-  if (key && symbolsManifest.symbols[key as keyof typeof symbolsManifest.symbols]) {
-    return (symbolsManifest.symbols[key as keyof typeof symbolsManifest.symbols] as { file: string }).file;
-  }
-  return null;
-}
-
-// Emoji fallback for symbols without sprites
-const emojiMap: Record<string, string> = {
-  // Grocery
-  apple: '🍎', orange: '🍊', carrot: '🥕', broccoli: '🥦', avocado: '🥑',
-  blueberries: '🫐', strawberries: '🍓', grapes: '🍇', watermelon: '🍉', lemon: '🍋',
-  milk: '🥛', eggs: '🥚', cheese: '🧀', bread: '🍞', croissant: '🥐', cereal: '🥣',
-  // Special symbols
-  ebt_card: '💳', seven: '7️⃣', bonus: '🎁', linda: '👩‍🦰',
+// Special symbol indicators
+const SPECIAL_BADGES = {
+  wild: { text: 'W', color: '#F59E0B', fullText: 'WILD' },
+  jackpot: { text: 'J', color: '#EF4444', fullText: 'JACKPOT' },
+  bonus: { text: 'B', color: '#8B5CF6', fullText: 'BONUS' },
+  scatter: { text: 'S', color: '#06B6D4', fullText: 'SCATTER' },
 };
 
 export function Symbol({ symbol, size = 64, isWinning = false }: SymbolProps) {
   const [imageError, setImageError] = useState(false);
-  const spritePath = getSymbolSpritePath(symbol);
-  const useSprite = spritePath && !imageError;
+  const specialBadge = symbol.special ? SPECIAL_BADGES[symbol.special] : null;
 
   // Rarity glow colors
   const glowColors: Record<string, string> = {
@@ -103,10 +62,10 @@ export function Symbol({ symbol, size = 64, isWinning = false }: SymbolProps) {
       `}
       style={{ width: size, height: size }}
     >
-      {/* Sprite Image or Emoji Fallback */}
-      {useSprite ? (
+      {/* Symbol Image */}
+      {!imageError ? (
         <Image
-          src={spritePath}
+          src={symbol.imagePath}
           alt={symbol.displayName}
           width={size - 8}
           height={size - 8}
@@ -116,35 +75,40 @@ export function Symbol({ symbol, size = 64, isWinning = false }: SymbolProps) {
         />
       ) : (
         <span
-          className="text-3xl select-none"
-          style={{ fontSize: size * 0.5 }}
+          className="text-2xl select-none text-gray-500"
+          style={{ fontSize: size * 0.4 }}
         >
-          {emojiMap[symbol.name] || '❓'}
+          {symbol.displayName.charAt(0)}
         </span>
       )}
 
       {/* Special Indicator */}
-      {symbol.special && (
-        <div className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-ebt-gold flex items-center justify-center z-10">
-          <span className="text-[8px] text-black font-bold">
-            {symbol.special === 'wild' ? 'W' :
-             symbol.special === 'bonus' ? 'B' :
-             symbol.special === 'jackpot' ? 'J' :
-             symbol.special === 'scatter' ? 'S' : '?'}
+      {specialBadge && (
+        <div
+          className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center z-10 border border-white/50"
+          style={{ backgroundColor: specialBadge.color }}
+        >
+          <span className="text-[9px] text-white font-bold">
+            {specialBadge.text}
           </span>
         </div>
       )}
 
       {/* Rarity Bar */}
       <div
-        className={`absolute bottom-0 left-0 right-0 h-1 rounded-b z-10 ${
-          symbol.rarity === 'legendary' ? 'bg-ebt-gold' :
-          symbol.rarity === 'epic' ? 'bg-purple-500' :
-          symbol.rarity === 'rare' ? 'bg-blue-500' :
-          symbol.rarity === 'uncommon' ? 'bg-green-500' :
-          'bg-gray-600'
-        }`}
+        className="absolute bottom-0 left-0 right-0 h-1 rounded-b z-10"
+        style={{ backgroundColor: RARITY_COLORS[symbol.rarity] }}
       />
+
+      {/* Winning glow effect */}
+      {isWinning && (
+        <motion.div
+          className="absolute inset-0 rounded-lg"
+          style={{ boxShadow: `0 0 15px ${RARITY_COLORS[symbol.rarity]}` }}
+          animate={{ opacity: [0.3, 0.8, 0.3] }}
+          transition={{ duration: 0.5, repeat: Infinity }}
+        />
+      )}
     </motion.div>
   );
 }

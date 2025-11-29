@@ -12,18 +12,10 @@ import {
   GAME_CONFIG,
   BACKGROUND_SCENES,
   type SlotSymbol,
-  calculatePayout,
-  generateSpinResult,
-  ALL_SYMBOLS,
+  getSymbolById,
+  SLOT_SYMBOLS,
 } from '@/lib/slots/config';
-import { useSlotMachine, getSymbolName } from '@/lib/hooks/useSlotMachine';
-import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID } from '@/lib/contracts/addresses';
-
-// Check if contract is deployed (not zero address)
-const isContractDeployed = CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].EBTSlotMachine !== '0x0000000000000000000000000000000000000000';
-
-// Use mock mode if contract not deployed
-const USE_MOCK_MODE = !isContractDeployed;
+import { useSlotMachine } from '@/lib/hooks/useSlotMachine';
 
 interface SpinResult {
   reels: [SlotSymbol, SlotSymbol, SlotSymbol];
@@ -37,48 +29,33 @@ export function SlotsContent() {
   const { authenticated } = usePrivy();
   const { address } = useAccount();
 
-  // Contract hook (only used when not in mock mode)
+  // Contract hook
   const slotMachine = useSlotMachine(address);
 
-  // Local state for mock mode or UI
-  const [isSpinningLocal, setIsSpinningLocal] = useState(false);
-  const [freeSpinsUsedLocal, setFreeSpinsUsedLocal] = useState(0);
-  const [totalWinningsLocal, setTotalWinningsLocal] = useState(0);
+  // UI state
   const [currentResult, setCurrentResult] = useState<SpinResult | null>(null);
   const [spinHistory, setSpinHistory] = useState<SpinResult[]>([]);
   const [showPayoutTable, setShowPayoutTable] = useState(false);
-  const [jackpotAmountLocal] = useState(GAME_CONFIG.JACKPOT_BASE);
-
-  // Background state
   const [backgroundScene, setBackgroundScene] = useState(BACKGROUND_SCENES.default);
 
-  // Derive state from contract or local
-  const isSpinning = USE_MOCK_MODE ? isSpinningLocal : slotMachine.isSpinning;
-  const freeSpinsUsed = USE_MOCK_MODE
-    ? freeSpinsUsedLocal
-    : Number(slotMachine.playerStats?.freeSpinsUsed || 0n);
-  const totalWinnings = USE_MOCK_MODE
-    ? totalWinningsLocal
-    : Number((slotMachine.playerStats?.totalWinnings || 0n) / BigInt(10 ** 18));
-  const jackpotAmount = USE_MOCK_MODE
-    ? jackpotAmountLocal
-    : Number((slotMachine.jackpotPool || 0n) / BigInt(10 ** 18));
+  // Derive state from contract
+  const isSpinning = slotMachine.isSpinning;
+  const freeSpinsUsed = Number(slotMachine.playerStats?.freeSpinsUsed || 0n);
+  const totalWinnings = Number((slotMachine.playerStats?.totalWinnings || 0n) / BigInt(10 ** 18));
+  const jackpotAmount = Number((slotMachine.jackpotPool || 0n) / BigInt(10 ** 18));
 
   // Calculate remaining free spins
-  const freeSpinsRemaining = USE_MOCK_MODE
-    ? GAME_CONFIG.FREE_SPIN_LIMIT - freeSpinsUsed
-    : Number(slotMachine.remainingFreeSpins || 10n);
+  const freeSpinsRemaining = Number(slotMachine.remainingFreeSpins || 10n);
   const hasReachedFreeCap = totalWinnings >= GAME_CONFIG.FREE_SPIN_PAYOUT_CAP && freeSpinsUsed < GAME_CONFIG.FREE_SPIN_LIMIT;
 
   // Convert contract result to UI format
   useEffect(() => {
-    if (!USE_MOCK_MODE && slotMachine.latestSpinResult) {
+    if (slotMachine.latestSpinResult) {
       const { reel1, reel2, reel3, payout, isJackpot, isBonus } = slotMachine.latestSpinResult;
 
-      // Find symbols by name
+      // Find symbols by id
       const findSymbol = (id: number): SlotSymbol => {
-        const name = getSymbolName(id);
-        return ALL_SYMBOLS.find(s => s.name === name) || ALL_SYMBOLS[0];
+        return getSymbolById(id) || SLOT_SYMBOLS[0];
       };
 
       const result: SpinResult = {
@@ -103,56 +80,15 @@ export function SlotsContent() {
     }
   }, [slotMachine.latestSpinResult]);
 
-  // Handle spin - mock mode
-  const handleSpinMock = useCallback(async () => {
-    if (isSpinningLocal) return;
-
-    setIsSpinningLocal(true);
-
-    // Simulate VRF delay
-    await new Promise(resolve => setTimeout(resolve, GAME_CONFIG.REEL_SPIN_DURATION_MS));
-
-    // Generate result
-    const reels = generateSpinResult();
-    const { payout, isJackpot, isBonus } = calculatePayout(reels);
-
-    const result: SpinResult = {
-      reels,
-      payout,
-      isJackpot,
-      isBonus,
-      timestamp: Date.now(),
-    };
-
-    // Update state
-    setCurrentResult(result);
-    setSpinHistory(prev => [result, ...prev].slice(0, 20));
-    setTotalWinningsLocal(prev => prev + payout);
-
-    if (freeSpinsUsedLocal < GAME_CONFIG.FREE_SPIN_LIMIT) {
-      setFreeSpinsUsedLocal(prev => prev + 1);
-    }
-
-    // Change background for special wins
-    if (isJackpot) {
-      setBackgroundScene(BACKGROUND_SCENES.jackpot);
-    } else if (isBonus) {
-      setBackgroundScene(BACKGROUND_SCENES.bonus);
-    } else {
-      setBackgroundScene(BACKGROUND_SCENES.default);
-    }
-
-    setIsSpinningLocal(false);
-  }, [isSpinningLocal, freeSpinsUsedLocal]);
-
-  // Handle spin - contract mode
-  const handleSpinContract = useCallback(() => {
+  // Handle spin
+  const handleSpin = useCallback(() => {
     if (slotMachine.isSpinning) return;
     slotMachine.spin();
   }, [slotMachine]);
 
-  // Use appropriate spin handler
-  const handleSpin = USE_MOCK_MODE ? handleSpinMock : handleSpinContract;
+  // Check if contract is ready
+  const isContractReady = slotMachine.isPaused === false;
+  const canUserSpin = authenticated && isContractReady && slotMachine.canSpin;
 
   return (
     <div
@@ -180,20 +116,20 @@ export function SlotsContent() {
           <p className="text-gray-400 font-mono text-lg">
             Spin to win. The algorithm provides.
           </p>
-          {USE_MOCK_MODE && (
-            <div className="mt-2 inline-block px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full">
-              <span className="text-yellow-400 text-xs font-mono">DEMO MODE - Contract not deployed</span>
-            </div>
-          )}
-          {!USE_MOCK_MODE && slotMachine.spinError && (
+          {slotMachine.spinError && (
             <div className="mt-2 inline-block px-3 py-1 bg-red-500/20 border border-red-500/50 rounded-full">
               <span className="text-red-400 text-xs font-mono">Error: {slotMachine.spinError.message}</span>
+            </div>
+          )}
+          {!isContractReady && (
+            <div className="mt-2 inline-block px-3 py-1 bg-yellow-500/20 border border-yellow-500/50 rounded-full">
+              <span className="text-yellow-400 text-xs font-mono">Connecting to contract...</span>
             </div>
           )}
         </div>
 
         {/* Jackpot Counter */}
-        <JackpotCounter amount={jackpotAmount} />
+        <JackpotCounter amount={jackpotAmount || GAME_CONFIG.JACKPOT_BASE} />
 
         {/* Main Game Area */}
         <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
@@ -203,7 +139,7 @@ export function SlotsContent() {
               isSpinning={isSpinning}
               result={currentResult}
               onSpin={handleSpin}
-              disabled={!authenticated}
+              disabled={!canUserSpin}
             />
 
             {/* Stats Bar */}
@@ -284,7 +220,7 @@ export function SlotsContent() {
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">4.</span>
-                  Triple 7s or Triple EBT Cards = {GAME_CONFIG.JACKPOT_BASE.toLocaleString()} $EBTC JACKPOT
+                  Triple Bitcoin Pepe or Triple Diamond = {GAME_CONFIG.JACKPOT_BASE.toLocaleString()} $EBTC JACKPOT
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">5.</span>

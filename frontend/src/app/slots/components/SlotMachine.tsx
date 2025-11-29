@@ -5,7 +5,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Reel } from './Reel';
 import { SpinButton } from './SpinButton';
 import type { SlotSymbol } from '@/lib/slots/config';
-import { ALL_SYMBOLS, GAME_CONFIG } from '@/lib/slots/config';
+import { SLOT_SYMBOLS, GAME_CONFIG } from '@/lib/slots/config';
 
 interface SpinResult {
   reels: [SlotSymbol, SlotSymbol, SlotSymbol];
@@ -203,8 +203,8 @@ export function SlotMachine({ isSpinning, result, onSpin, disabled }: SlotMachin
 function getRandomSymbols(count: number): SlotSymbol[] {
   const symbols: SlotSymbol[] = [];
   for (let i = 0; i < count; i++) {
-    const randomIndex = Math.floor(Math.random() * ALL_SYMBOLS.length);
-    symbols.push(ALL_SYMBOLS[randomIndex]);
+    const randomIndex = Math.floor(Math.random() * SLOT_SYMBOLS.length);
+    symbols.push(SLOT_SYMBOLS[randomIndex]);
   }
   return symbols;
 }

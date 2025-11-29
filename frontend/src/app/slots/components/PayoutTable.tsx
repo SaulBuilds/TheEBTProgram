@@ -2,18 +2,16 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
-import { GROCERY_SYMBOLS, MEME_SYMBOLS, SPECIAL_SYMBOLS } from '@/lib/slots/config';
+import { SLOT_SYMBOLS, SPECIAL_SYMBOLS } from '@/lib/slots/config';
 
 export function PayoutTable() {
-  const allSymbols = [...GROCERY_SYMBOLS, ...MEME_SYMBOLS, ...SPECIAL_SYMBOLS];
-
   // Group by rarity
   const byRarity = {
-    legendary: allSymbols.filter(s => s.rarity === 'legendary'),
-    epic: allSymbols.filter(s => s.rarity === 'epic'),
-    rare: allSymbols.filter(s => s.rarity === 'rare'),
-    uncommon: allSymbols.filter(s => s.rarity === 'uncommon'),
-    common: allSymbols.filter(s => s.rarity === 'common'),
+    legendary: SLOT_SYMBOLS.filter(s => s.rarity === 'legendary'),
+    epic: SLOT_SYMBOLS.filter(s => s.rarity === 'epic'),
+    rare: SLOT_SYMBOLS.filter(s => s.rarity === 'rare'),
+    uncommon: SLOT_SYMBOLS.filter(s => s.rarity === 'uncommon'),
+    common: SLOT_SYMBOLS.filter(s => s.rarity === 'common'),
   };
 
   const rarityColors = {
@@ -32,6 +30,11 @@ export function PayoutTable() {
     common: 'COMMON',
   };
 
+  // Get special symbols for display
+  const wildSymbol = SPECIAL_SYMBOLS.find(s => s.special === 'wild');
+  const jackpotSymbol = SPECIAL_SYMBOLS.find(s => s.special === 'jackpot');
+  const bonusSymbol = SPECIAL_SYMBOLS.find(s => s.special === 'bonus');
+
   return (
     <motion.div
       initial={{ opacity: 0 }}
@@ -45,19 +48,19 @@ export function PayoutTable() {
         <h4 className="text-sm font-heading text-ebt-gold mb-2">SPECIAL COMBINATIONS</h4>
         <div className="space-y-1 text-xs font-mono">
           <div className="flex justify-between">
-            <span className="text-gray-300">Triple 7s</span>
-            <span className="text-ebt-gold">777x + JACKPOT</span>
+            <span className="text-gray-300">Triple {jackpotSymbol?.displayName || 'Bitcoin Pepe'}</span>
+            <span className="text-ebt-gold">10,000 $EBTC JACKPOT</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-300">Triple EBT Cards (Wild)</span>
-            <span className="text-ebt-gold">500x + JACKPOT</span>
+            <span className="text-gray-300">Triple {wildSymbol?.displayName || 'Diamond Hands'} (Wild)</span>
+            <span className="text-ebt-gold">20,000 $EBTC MEGA JACKPOT</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-300">Triple LINDA (Scatter)</span>
-            <span className="text-purple-400">25x Scatter Payout</span>
+            <span className="text-gray-300">Character Match (3 same character)</span>
+            <span className="text-purple-400">3x Average Multiplier</span>
           </div>
           <div className="flex justify-between">
-            <span className="text-gray-300">Triple Bonus</span>
+            <span className="text-gray-300">Triple {bonusSymbol?.displayName || 'MAGA Pepe'}</span>
             <span className="text-blue-400">BONUS GAME!</span>
           </div>
         </div>
@@ -116,7 +119,7 @@ export function PayoutTable() {
       {/* Footer */}
       <div className="mt-4 pt-4 border-t border-gray-700 text-center">
         <p className="text-[10px] font-mono text-gray-500">
-          All payouts are in $EBTC. Wild substitutes for any symbol except Bonus/Scatter.
+          All payouts are in $EBTC. Wild substitutes for any symbol except Bonus.
           <br />
           Provably fair via Chainlink VRF.
         </p>

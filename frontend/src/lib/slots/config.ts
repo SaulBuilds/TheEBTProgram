@@ -4,7 +4,7 @@
  * Symbol definitions, payout tables, and game mechanics for the
  * provably fair on-chain slot machine.
  *
- * Assets sourced from /public/slots/spritesheets/
+ * Characters: Cool Cat, Shiba, Tabby, Trump, Pepe Frog, Special Pepe
  */
 
 // ============ SYMBOL DEFINITIONS ============
@@ -13,139 +13,221 @@ export interface SlotSymbol {
   id: number;
   name: string;
   displayName: string;
+  character: 'coolcat' | 'shiba' | 'tabby' | 'trump' | 'pepefrog' | 'pepe';
+  action: string;
   rarity: 'common' | 'uncommon' | 'rare' | 'epic' | 'legendary';
   weight: number;           // Higher = more common (out of 1000)
   baseMultiplier: number;   // Base payout multiplier
-  sprite: {
-    sheet: string;          // Spritesheet filename
-    row: number;            // Row in grid (0-indexed)
-    col: number;            // Column in grid (0-indexed)
-    size: number;           // Icon size in pixels
-  };
+  imagePath: string;        // Direct path to image
   special?: 'wild' | 'bonus' | 'jackpot' | 'scatter';
 }
 
-// Grocery Items (from grocery-items.png - 10x10 grid, ~100px icons)
-export const GROCERY_SYMBOLS: SlotSymbol[] = [
-  // Row 1: Produce
-  { id: 0, name: 'apple', displayName: 'Apple', rarity: 'common', weight: 80, baseMultiplier: 1, sprite: { sheet: 'grocery-items.png', row: 0, col: 0, size: 100 } },
-  { id: 1, name: 'orange', displayName: 'Orange', rarity: 'common', weight: 80, baseMultiplier: 1, sprite: { sheet: 'grocery-items.png', row: 0, col: 2, size: 100 } },
-  { id: 2, name: 'carrot', displayName: 'Carrot', rarity: 'common', weight: 75, baseMultiplier: 1, sprite: { sheet: 'grocery-items.png', row: 0, col: 3, size: 100 } },
-  { id: 3, name: 'broccoli', displayName: 'Broccoli', rarity: 'common', weight: 70, baseMultiplier: 1.5, sprite: { sheet: 'grocery-items.png', row: 0, col: 4, size: 100 } },
-  { id: 4, name: 'avocado', displayName: 'Avocado', rarity: 'uncommon', weight: 40, baseMultiplier: 2, sprite: { sheet: 'grocery-items.png', row: 0, col: 8, size: 100 } },
+// ============ CHARACTER SYMBOLS ============
+// Each character has the same actions, creating matching opportunities
 
-  // Row 2: Berries & Fruits
-  { id: 5, name: 'blueberries', displayName: 'Blueberries', rarity: 'uncommon', weight: 45, baseMultiplier: 2, sprite: { sheet: 'grocery-items.png', row: 1, col: 0, size: 100 } },
-  { id: 6, name: 'strawberries', displayName: 'Strawberries', rarity: 'uncommon', weight: 45, baseMultiplier: 2, sprite: { sheet: 'grocery-items.png', row: 1, col: 1, size: 100 } },
-  { id: 7, name: 'grapes', displayName: 'Grapes', rarity: 'uncommon', weight: 40, baseMultiplier: 2.5, sprite: { sheet: 'grocery-items.png', row: 1, col: 4, size: 100 } },
-  { id: 8, name: 'watermelon', displayName: 'Watermelon', rarity: 'rare', weight: 25, baseMultiplier: 3, sprite: { sheet: 'grocery-items.png', row: 1, col: 5, size: 100 } },
-  { id: 9, name: 'lemon', displayName: 'Lemon', rarity: 'common', weight: 70, baseMultiplier: 1, sprite: { sheet: 'grocery-items.png', row: 1, col: 6, size: 100 } },
+// Action definitions with rarity and multiplier
+const ACTIONS = {
+  // Common actions (high weight)
+  cart: { rarity: 'common' as const, weight: 80, multiplier: 1 },
+  store: { rarity: 'common' as const, weight: 75, multiplier: 1 },
+  basket: { rarity: 'common' as const, weight: 70, multiplier: 1.5 },
+  avocado: { rarity: 'common' as const, weight: 65, multiplier: 1.5 },
 
-  // Row 2-3: Dairy
-  { id: 10, name: 'milk', displayName: 'Milk', rarity: 'common', weight: 65, baseMultiplier: 1.5, sprite: { sheet: 'grocery-items.png', row: 2, col: 0, size: 100 } },
-  { id: 11, name: 'eggs', displayName: 'Eggs', rarity: 'uncommon', weight: 50, baseMultiplier: 2, sprite: { sheet: 'grocery-items.png', row: 2, col: 2, size: 100 } },
-  { id: 12, name: 'cheese', displayName: 'Cheese', rarity: 'uncommon', weight: 45, baseMultiplier: 2, sprite: { sheet: 'grocery-items.png', row: 2, col: 4, size: 100 } },
+  // Uncommon actions
+  bakery: { rarity: 'uncommon' as const, weight: 45, multiplier: 2 },
+  steak: { rarity: 'uncommon' as const, weight: 40, multiplier: 2.5 },
+  bananas: { rarity: 'uncommon' as const, weight: 50, multiplier: 2 },
+  sauces: { rarity: 'uncommon' as const, weight: 45, multiplier: 2 },
 
-  // Row 3: Bakery
-  { id: 13, name: 'bread', displayName: 'Bread', rarity: 'common', weight: 65, baseMultiplier: 1.5, sprite: { sheet: 'grocery-items.png', row: 2, col: 8, size: 100 } },
-  { id: 14, name: 'croissant', displayName: 'Croissant', rarity: 'uncommon', weight: 40, baseMultiplier: 2, sprite: { sheet: 'grocery-items.png', row: 3, col: 1, size: 100 } },
+  // Rare actions
+  linda: { rarity: 'rare' as const, weight: 25, multiplier: 4 },
+  checkout: { rarity: 'rare' as const, weight: 30, multiplier: 3 },
+  card: { rarity: 'rare' as const, weight: 20, multiplier: 5 },
+  bags: { rarity: 'rare' as const, weight: 35, multiplier: 3 },
 
-  // Row 4-5: Canned & Pantry
-  { id: 15, name: 'cereal', displayName: 'Cereal', rarity: 'common', weight: 60, baseMultiplier: 1, sprite: { sheet: 'grocery-items.png', row: 3, col: 3, size: 100 } },
-];
+  // Epic actions
+  shopping: { rarity: 'epic' as const, weight: 12, multiplier: 8 },
+  car: { rarity: 'epic' as const, weight: 10, multiplier: 10 },
+  kitchen: { rarity: 'epic' as const, weight: 15, multiplier: 7 },
+  stonks: { rarity: 'epic' as const, weight: 8, multiplier: 12 },
+};
 
-// Meme Characters (from various sheets - 4x5 grids, ~200px icons)
-export const MEME_SYMBOLS: SlotSymbol[] = [
-  // Pepe Actions (pepe-actions.png)
-  { id: 20, name: 'pepe_cart', displayName: 'Pepe Cart', rarity: 'uncommon', weight: 35, baseMultiplier: 3, sprite: { sheet: 'pepe-actions.png', row: 0, col: 0, size: 200 } },
-  { id: 21, name: 'pepe_money', displayName: 'Pepe Money', rarity: 'rare', weight: 20, baseMultiplier: 5, sprite: { sheet: 'pepe-actions.png', row: 0, col: 1, size: 200 } },
-  { id: 22, name: 'pepe_king', displayName: 'Pepe King', rarity: 'epic', weight: 8, baseMultiplier: 10, sprite: { sheet: 'pepe-actions.png', row: 0, col: 2, size: 200 } },
-  { id: 23, name: 'pepe_stonks', displayName: 'STONKS Pepe', rarity: 'rare', weight: 18, baseMultiplier: 5, sprite: { sheet: 'pepe-actions.png', row: 1, col: 0, size: 200 } },
-  { id: 24, name: 'pepe_cope', displayName: 'COPE Pepe', rarity: 'uncommon', weight: 30, baseMultiplier: 3, sprite: { sheet: 'pepe-actions.png', row: 2, col: 3, size: 200 } },
-  { id: 25, name: 'pepe_bitcoin', displayName: 'Bitcoin Pepe', rarity: 'legendary', weight: 3, baseMultiplier: 25, sprite: { sheet: 'pepe-actions.png', row: 3, col: 1, size: 200 }, special: 'jackpot' },
-  { id: 26, name: 'pepe_diamond', displayName: 'Diamond Pepe', rarity: 'legendary', weight: 2, baseMultiplier: 50, sprite: { sheet: 'pepe-actions.png', row: 3, col: 4, size: 200 }, special: 'wild' },
-  { id: 27, name: 'pepe_feelsgood', displayName: 'Feels Good Man', rarity: 'epic', weight: 6, baseMultiplier: 15, sprite: { sheet: 'pepe-actions.png', row: 3, col: 2, size: 200 } },
+// Characters (ordered by value - lower = more common)
+const CHARACTERS = ['coolcat', 'shiba', 'tabby', 'trump', 'pepefrog'] as const;
 
-  // Doge Actions (doge-actions.png)
-  { id: 30, name: 'doge_cart', displayName: 'Doge Cart', rarity: 'uncommon', weight: 35, baseMultiplier: 3, sprite: { sheet: 'doge-actions.png', row: 0, col: 0, size: 200 } },
-  { id: 31, name: 'doge_money', displayName: 'Much Money Doge', rarity: 'rare', weight: 20, baseMultiplier: 5, sprite: { sheet: 'doge-actions.png', row: 1, col: 0, size: 200 } },
-  { id: 32, name: 'doge_king', displayName: 'King Doge', rarity: 'epic', weight: 8, baseMultiplier: 10, sprite: { sheet: 'doge-actions.png', row: 1, col: 1, size: 200 } },
-  { id: 33, name: 'doge_stonks', displayName: 'STONKS Doge', rarity: 'rare', weight: 18, baseMultiplier: 5, sprite: { sheet: 'doge-actions.png', row: 2, col: 0, size: 200 } },
-  { id: 34, name: 'doge_bitcoin', displayName: 'Bitcoin Doge', rarity: 'legendary', weight: 3, baseMultiplier: 25, sprite: { sheet: 'doge-actions.png', row: 3, col: 2, size: 200 }, special: 'jackpot' },
+// Generate symbols for each character
+let symbolId = 0;
+const REGULAR_SYMBOLS: SlotSymbol[] = [];
 
-  // Wojak Actions (wojak-actions.png)
-  { id: 40, name: 'wojak_cart', displayName: 'Wojak Cart', rarity: 'common', weight: 50, baseMultiplier: 2, sprite: { sheet: 'wojak-actions.png', row: 0, col: 0, size: 200 } },
-  { id: 41, name: 'wojak_cheap', displayName: 'WOW CHEAP', rarity: 'common', weight: 55, baseMultiplier: 1.5, sprite: { sheet: 'wojak-actions.png', row: 0, col: 1, size: 200 } },
-  { id: 42, name: 'wojak_stonks', displayName: 'Wojak STONKS', rarity: 'rare', weight: 22, baseMultiplier: 4, sprite: { sheet: 'wojak-actions.png', row: 1, col: 1, size: 200 } },
-  { id: 43, name: 'wojak_cope', displayName: 'COPE', rarity: 'uncommon', weight: 35, baseMultiplier: 2.5, sprite: { sheet: 'wojak-actions.png', row: 2, col: 0, size: 200 } },
-  { id: 44, name: 'npc', displayName: 'NPC', rarity: 'common', weight: 60, baseMultiplier: 1, sprite: { sheet: 'wojak-actions.png', row: 3, col: 4, size: 200 } },
-];
+for (const character of CHARACTERS) {
+  for (const [action, config] of Object.entries(ACTIONS)) {
+    REGULAR_SYMBOLS.push({
+      id: symbolId++,
+      name: `${character}_${action}`,
+      displayName: `${character.charAt(0).toUpperCase() + character.slice(1)} ${action.charAt(0).toUpperCase() + action.slice(1)}`,
+      character: character as SlotSymbol['character'],
+      action,
+      rarity: config.rarity,
+      weight: config.weight,
+      baseMultiplier: config.multiplier,
+      imagePath: `/slots/symbols/${character}_${action}.png`,
+    });
+  }
+}
 
-// Special Symbols
+// ============ SPECIAL PEPE SYMBOLS ============
+// These are the high-value and special symbols from the Pepe Actions sheet
+
 export const SPECIAL_SYMBOLS: SlotSymbol[] = [
+  // Legendary - WILD (Diamond Hands Pepe)
   {
     id: 100,
-    name: 'ebt_card',
-    displayName: 'EBT CARD',
-    rarity: 'legendary',
-    weight: 1,
-    baseMultiplier: 100,
-    sprite: { sheet: 'pepe-actions.png', row: 0, col: 2, size: 200 }, // Placeholder - use gold card
-    special: 'wild'
-  },
-  {
-    id: 101,
-    name: 'seven',
-    displayName: 'LUCKY 7',
+    name: 'pepe_diamond',
+    displayName: 'DIAMOND HANDS',
+    character: 'pepe',
+    action: 'diamond',
     rarity: 'legendary',
     weight: 2,
-    baseMultiplier: 77,
-    sprite: { sheet: 'pepe-actions.png', row: 3, col: 1, size: 200 }, // Placeholder
-    special: 'jackpot'
+    baseMultiplier: 50,
+    imagePath: '/slots/symbols/pepe_diamond.png',
+    special: 'wild',
   },
+  // Legendary - JACKPOT (Bitcoin Pepe)
+  {
+    id: 101,
+    name: 'pepe_bitcoin',
+    displayName: 'BITCOIN PEPE',
+    character: 'pepe',
+    action: 'bitcoin',
+    rarity: 'legendary',
+    weight: 3,
+    baseMultiplier: 25,
+    imagePath: '/slots/symbols/pepe_bitcoin.png',
+    special: 'jackpot',
+  },
+  // Epic - BONUS (MAGA Pepe)
   {
     id: 102,
-    name: 'bonus',
-    displayName: 'BONUS',
+    name: 'pepe_maga',
+    displayName: 'MAGA PEPE',
+    character: 'pepe',
+    action: 'maga',
     rarity: 'epic',
     weight: 5,
     baseMultiplier: 0,
-    sprite: { sheet: 'pepe-actions.png', row: 3, col: 2, size: 200 }, // Placeholder
-    special: 'bonus'
+    imagePath: '/slots/symbols/pepe_maga.png',
+    special: 'bonus',
   },
+  // Legendary (Feels Good Man)
   {
     id: 103,
-    name: 'linda',
-    displayName: 'LINDA',
+    name: 'pepe_feelsgood',
+    displayName: 'FEELS GOOD MAN',
+    character: 'pepe',
+    action: 'feelsgood',
     rarity: 'legendary',
-    weight: 1,
-    baseMultiplier: 50,
-    sprite: { sheet: 'checkout-memes.png', row: 0, col: 0, size: 200 }, // From background
-    special: 'scatter'
+    weight: 4,
+    baseMultiplier: 20,
+    imagePath: '/slots/symbols/pepe_feelsgood.png',
+  },
+  // Epic (King Pepe)
+  {
+    id: 104,
+    name: 'pepe_king',
+    displayName: 'KING PEPE',
+    character: 'pepe',
+    action: 'king',
+    rarity: 'epic',
+    weight: 6,
+    baseMultiplier: 15,
+    imagePath: '/slots/symbols/pepe_king.png',
+  },
+  // Epic (STONKS)
+  {
+    id: 105,
+    name: 'pepe_stonks',
+    displayName: 'STONKS',
+    character: 'pepe',
+    action: 'stonks',
+    rarity: 'epic',
+    weight: 7,
+    baseMultiplier: 12,
+    imagePath: '/slots/symbols/pepe_stonks.png',
+  },
+  // Rare (Money Pepe)
+  {
+    id: 106,
+    name: 'pepe_money',
+    displayName: 'MONEY PEPE',
+    character: 'pepe',
+    action: 'money',
+    rarity: 'rare',
+    weight: 15,
+    baseMultiplier: 8,
+    imagePath: '/slots/symbols/pepe_money.png',
+  },
+  // Rare (Rich Pepe)
+  {
+    id: 107,
+    name: 'pepe_rich',
+    displayName: 'RICH PEPE',
+    character: 'pepe',
+    action: 'rich',
+    rarity: 'rare',
+    weight: 18,
+    baseMultiplier: 6,
+    imagePath: '/slots/symbols/pepe_rich.png',
+  },
+  // Uncommon (COPE)
+  {
+    id: 108,
+    name: 'pepe_cope',
+    displayName: 'COPE',
+    character: 'pepe',
+    action: 'cope',
+    rarity: 'uncommon',
+    weight: 30,
+    baseMultiplier: 3,
+    imagePath: '/slots/symbols/pepe_cope.png',
+  },
+  // Common (NPC)
+  {
+    id: 109,
+    name: 'pepe_npc',
+    displayName: 'NPC',
+    character: 'pepe',
+    action: 'npc',
+    rarity: 'common',
+    weight: 50,
+    baseMultiplier: 1.5,
+    imagePath: '/slots/symbols/pepe_npc.png',
   },
 ];
 
 // Combined symbol set for slot machine
 export const ALL_SYMBOLS: SlotSymbol[] = [
-  ...GROCERY_SYMBOLS,
-  ...MEME_SYMBOLS,
+  ...REGULAR_SYMBOLS,
   ...SPECIAL_SYMBOLS,
 ];
 
+// Map for quick lookup by name
+export const SYMBOL_MAP = new Map(ALL_SYMBOLS.map(s => [s.name, s]));
+
+// Map for quick lookup by id
+export const SYMBOL_BY_ID = new Map(ALL_SYMBOLS.map(s => [s.id, s]));
+
 // ============ REEL CONFIGURATION ============
 
-// Default reel strip (15 symbols per reel, weighted distribution)
-export const DEFAULT_REEL_STRIP = [
-  0, 1, 2, 3, 10, 13, 15,     // Common grocery
-  40, 41, 44,                  // Common meme
-  4, 5, 6, 11, 12, 14,        // Uncommon grocery
-  20, 24, 30, 43,             // Uncommon meme
-  7, 8,                        // Rare grocery
-  21, 23, 31, 33, 42,         // Rare meme
-  22, 27, 32,                  // Epic meme
-  102,                         // Bonus
-  25, 34, 100, 101, 103,      // Legendary
-  26,                          // Wild
+// Symbols used in the slot machine (subset for better gameplay)
+// We'll use a mix of characters and the special pepes
+export const SLOT_SYMBOLS: SlotSymbol[] = [
+  // One action from each character (for matching)
+  ...ALL_SYMBOLS.filter(s => s.action === 'cart'),      // 5 characters
+  ...ALL_SYMBOLS.filter(s => s.action === 'stonks'),    // 5 characters
+  ...ALL_SYMBOLS.filter(s => s.action === 'card'),      // 5 characters
+  ...ALL_SYMBOLS.filter(s => s.action === 'checkout'),  // 5 characters
+  // Special pepes
+  ...SPECIAL_SYMBOLS,
 ];
 
 // ============ PAYOUT TABLE ============
@@ -165,13 +247,13 @@ export const PAYOUT_RULES: PayoutRule[] = [
   { pattern: 'AWA', multiplier: 5, description: 'Two + Wild' },
   { pattern: 'WAA', multiplier: 5, description: 'Two + Wild' },
 
-  // Three wilds (EBT Cards)
-  { pattern: 'WWW', multiplier: 500, description: 'TRIPLE WILD - JACKPOT!' },
+  // Three wilds (Diamond Hands)
+  { pattern: 'WWW', multiplier: 500, description: 'TRIPLE DIAMOND HANDS - MEGA JACKPOT!' },
 
-  // Three 7s
-  { pattern: '777', multiplier: 777, description: 'LUCKY SEVENS - MEGA JACKPOT!' },
+  // Three jackpots (Bitcoin Pepe)
+  { pattern: 'JJJ', multiplier: 777, description: 'TRIPLE BITCOIN - JACKPOT!' },
 
-  // Three bonus symbols
+  // Three bonus symbols (MAGA Pepe)
   { pattern: 'BBB', multiplier: 0, description: 'BONUS GAME TRIGGERED!' },
 
   // Two of a kind (any position)
@@ -179,12 +261,8 @@ export const PAYOUT_RULES: PayoutRule[] = [
   { pattern: 'A_A', multiplier: 2, description: 'Two of a Kind' },
   { pattern: '_AA', multiplier: 2, description: 'Two of a Kind' },
 
-  // Scatter (Linda) - pays anywhere
-  { pattern: 'S__', multiplier: 1, description: 'Scatter' },
-  { pattern: '_S_', multiplier: 1, description: 'Scatter' },
-  { pattern: '__S', multiplier: 1, description: 'Scatter' },
-  { pattern: 'SS_', multiplier: 5, description: 'Double Scatter' },
-  { pattern: 'SSS', multiplier: 25, description: 'TRIPLE LINDA - WE ARE ALL LINDA!' },
+  // Character matches (same character, different actions)
+  { pattern: 'CCC', multiplier: 3, description: 'Character Match' },
 ];
 
 // ============ GAME CONFIGURATION ============
@@ -195,20 +273,24 @@ export const GAME_CONFIG = {
   FREE_SPIN_PAYOUT_CAP: 5000,  // Max $EBTC from free spins
 
   // Jackpot
-  JACKPOT_BASE: 5000,          // 5k $EBTC base jackpot
-  JACKPOT_CONTRIBUTION: 0.01,  // 1% of each bet goes to jackpot pool
+  JACKPOT_BASE: 10000,          // 10k $EBTC base jackpot
+  JACKPOT_CONTRIBUTION: 0.01,   // 1% of each bet goes to jackpot pool
 
   // Spin mechanics
-  SPIN_COOLDOWN_MS: 2000,      // 2 seconds between spins
-  REEL_SPIN_DURATION_MS: 3000, // 3 seconds for reels to stop
-  REEL_STOP_DELAY_MS: 500,     // Delay between each reel stopping
+  SPIN_COOLDOWN_MS: 2000,       // 2 seconds between spins
+  REEL_SPIN_DURATION_MS: 3000,  // 3 seconds for reels to stop
+  REEL_STOP_DELAY_MS: 500,      // Delay between each reel stopping
 
   // Points integration
-  POINTS_PER_EBTC: 10,         // 10 points per $EBTC won
+  POINTS_PER_EBTC: 10,          // 10 points per $EBTC won
 
   // Bonus game
-  BONUS_TRIGGER_COUNT: 3,      // Need 3 bonus symbols
+  BONUS_TRIGGER_COUNT: 3,       // Need 3 bonus symbols
   BONUS_TYPES: ['pick', 'wheel', 'freespins'] as const,
+
+  // Number of reels
+  NUM_REELS: 3,
+  SYMBOLS_PER_REEL: 16,
 };
 
 // ============ BACKGROUND SCENES ============
@@ -227,15 +309,16 @@ export const BACKGROUND_SCENES = {
  * Get weighted random symbol based on rarity weights
  */
 export function getRandomSymbol(): SlotSymbol {
-  const totalWeight = ALL_SYMBOLS.reduce((sum, s) => sum + s.weight, 0);
+  const symbols = SLOT_SYMBOLS;
+  const totalWeight = symbols.reduce((sum, s) => sum + s.weight, 0);
   let random = Math.random() * totalWeight;
 
-  for (const symbol of ALL_SYMBOLS) {
+  for (const symbol of symbols) {
     random -= symbol.weight;
     if (random <= 0) return symbol;
   }
 
-  return ALL_SYMBOLS[0]; // Fallback
+  return symbols[0]; // Fallback
 }
 
 /**
@@ -243,6 +326,20 @@ export function getRandomSymbol(): SlotSymbol {
  */
 export function generateSpinResult(): [SlotSymbol, SlotSymbol, SlotSymbol] {
   return [getRandomSymbol(), getRandomSymbol(), getRandomSymbol()];
+}
+
+/**
+ * Check if symbols match (same symbol or same character)
+ */
+export function symbolsMatch(a: SlotSymbol, b: SlotSymbol): boolean {
+  return a.id === b.id || a.name === b.name;
+}
+
+/**
+ * Check if symbols are same character (different actions)
+ */
+export function sameCharacter(a: SlotSymbol, b: SlotSymbol): boolean {
+  return a.character === b.character;
 }
 
 /**
@@ -256,23 +353,24 @@ export function calculatePayout(reels: [SlotSymbol, SlotSymbol, SlotSymbol]): {
 } {
   const [r1, r2, r3] = reels;
 
-  // Check for jackpot (three 7s or three wilds)
+  // Check for triple jackpot (Bitcoin Pepe)
   if (r1.special === 'jackpot' && r2.special === 'jackpot' && r3.special === 'jackpot') {
-    return { payout: 777 * r1.baseMultiplier, rule: PAYOUT_RULES[4], isJackpot: true, isBonus: false };
+    return { payout: GAME_CONFIG.JACKPOT_BASE, rule: PAYOUT_RULES[5], isJackpot: true, isBonus: false };
   }
 
+  // Check for triple wild (Diamond Hands)
   if (r1.special === 'wild' && r2.special === 'wild' && r3.special === 'wild') {
-    return { payout: 500 * 100, rule: PAYOUT_RULES[3], isJackpot: true, isBonus: false };
+    return { payout: GAME_CONFIG.JACKPOT_BASE * 2, rule: PAYOUT_RULES[4], isJackpot: true, isBonus: false };
   }
 
-  // Check for bonus trigger
+  // Check for bonus trigger (MAGA Pepe)
   const bonusCount = [r1, r2, r3].filter(s => s.special === 'bonus').length;
   if (bonusCount >= 3) {
-    return { payout: 0, rule: PAYOUT_RULES[5], isJackpot: false, isBonus: true };
+    return { payout: 0, rule: PAYOUT_RULES[6], isJackpot: false, isBonus: true };
   }
 
-  // Check for three of a kind
-  if (r1.id === r2.id && r2.id === r3.id) {
+  // Check for three of a kind (exact match)
+  if (symbolsMatch(r1, r2) && symbolsMatch(r2, r3)) {
     return {
       payout: r1.baseMultiplier * 10,
       rule: PAYOUT_RULES[0],
@@ -285,7 +383,7 @@ export function calculatePayout(reels: [SlotSymbol, SlotSymbol, SlotSymbol]): {
   const hasWild = [r1, r2, r3].some(s => s.special === 'wild');
   if (hasWild) {
     const nonWilds = [r1, r2, r3].filter(s => s.special !== 'wild');
-    if (nonWilds.length === 2 && nonWilds[0].id === nonWilds[1].id) {
+    if (nonWilds.length === 2 && symbolsMatch(nonWilds[0], nonWilds[1])) {
       return {
         payout: nonWilds[0].baseMultiplier * 5,
         rule: PAYOUT_RULES[1],
@@ -295,24 +393,23 @@ export function calculatePayout(reels: [SlotSymbol, SlotSymbol, SlotSymbol]): {
     }
   }
 
-  // Check for two of a kind
-  if (r1.id === r2.id || r2.id === r3.id || r1.id === r3.id) {
-    const matchingSymbol = r1.id === r2.id ? r1 : r2;
+  // Check for character match (same character, different actions)
+  if (sameCharacter(r1, r2) && sameCharacter(r2, r3)) {
+    const avgMultiplier = (r1.baseMultiplier + r2.baseMultiplier + r3.baseMultiplier) / 3;
     return {
-      payout: matchingSymbol.baseMultiplier * 2,
-      rule: PAYOUT_RULES[6],
+      payout: avgMultiplier * 3,
+      rule: PAYOUT_RULES[10],
       isJackpot: false,
       isBonus: false
     };
   }
 
-  // Check for scatter (Linda)
-  const scatterCount = [r1, r2, r3].filter(s => s.special === 'scatter').length;
-  if (scatterCount > 0) {
-    const scatterMultiplier = scatterCount === 1 ? 1 : scatterCount === 2 ? 5 : 25;
+  // Check for two of a kind
+  if (symbolsMatch(r1, r2) || symbolsMatch(r2, r3) || symbolsMatch(r1, r3)) {
+    const matchingSymbol = symbolsMatch(r1, r2) ? r1 : r2;
     return {
-      payout: 50 * scatterMultiplier,
-      rule: PAYOUT_RULES[10 + scatterCount],
+      payout: matchingSymbol.baseMultiplier * 2,
+      rule: PAYOUT_RULES[7],
       isJackpot: false,
       isBonus: false
     };
@@ -323,11 +420,15 @@ export function calculatePayout(reels: [SlotSymbol, SlotSymbol, SlotSymbol]): {
 }
 
 /**
- * Get sprite position for CSS background
+ * Get symbol by name
  */
-export function getSpritePosition(symbol: SlotSymbol): { x: number; y: number } {
-  return {
-    x: -(symbol.sprite.col * symbol.sprite.size),
-    y: -(symbol.sprite.row * symbol.sprite.size),
-  };
+export function getSymbolByName(name: string): SlotSymbol | undefined {
+  return SYMBOL_MAP.get(name);
+}
+
+/**
+ * Get symbol by id
+ */
+export function getSymbolById(id: number): SlotSymbol | undefined {
+  return SYMBOL_BY_ID.get(id);
 }
