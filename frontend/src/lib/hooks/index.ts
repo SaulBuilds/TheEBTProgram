@@ -159,3 +159,32 @@ export {
   useTBAData,
   useTBAOperationStatus,
 } from './useTBA';
+
+// Slot Machine hooks
+export {
+  // Read hooks - Contract state
+  useFreeSpinLimit,
+  useFreeSpinCap,
+  useJackpotBase,
+  useJackpotPool,
+  useTotalPayouts,
+  useSlotsPaused,
+  useEBTHolderBonus,
+  // Read hooks - Player data
+  usePlayerStats,
+  useRemainingFreeSpins,
+  useCanSpin,
+  useIsEBTHolder,
+  useSpinResult,
+  // Write hooks
+  useSpin,
+  useFundJackpot,
+  // Combined hook
+  useSlotMachine,
+  // Helper functions
+  formatEBTC,
+  getSymbolName,
+} from './useSlotMachine';
+
+// Re-export types
+export type { PlayerStats, SpinResult } from './useSlotMachine';

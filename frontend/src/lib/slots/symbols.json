@@ -1,0 +1,720 @@
+{
+  "version": "1.0.0",
+  "generated": "2024-11-29",
+  "symbols": {
+    "grocery_apple": {
+      "id": 0,
+      "name": "apple",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_apple.png",
+      "rarity": "common"
+    },
+    "grocery_orange": {
+      "id": 1,
+      "name": "orange",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_orange.png",
+      "rarity": "common"
+    },
+    "grocery_carrot": {
+      "id": 2,
+      "name": "carrot",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_carrot.png",
+      "rarity": "common"
+    },
+    "grocery_broccoli": {
+      "id": 3,
+      "name": "broccoli",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_broccoli.png",
+      "rarity": "common"
+    },
+    "grocery_tomato": {
+      "id": 4,
+      "name": "tomato",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_tomato.png",
+      "rarity": "common"
+    },
+    "grocery_cucumber": {
+      "id": 5,
+      "name": "cucumber",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_cucumber.png",
+      "rarity": "common"
+    },
+    "grocery_bellpepper": {
+      "id": 6,
+      "name": "bellpepper",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_bellpepper.png",
+      "rarity": "common"
+    },
+    "grocery_avocado": {
+      "id": 7,
+      "name": "avocado",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_avocado.png",
+      "rarity": "common"
+    },
+    "grocery_blueberries": {
+      "id": 8,
+      "name": "blueberries",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_blueberries.png",
+      "rarity": "common"
+    },
+    "grocery_strawberries": {
+      "id": 9,
+      "name": "strawberries",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_strawberries.png",
+      "rarity": "common"
+    },
+    "grocery_raspberries": {
+      "id": 10,
+      "name": "raspberries",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_raspberries.png",
+      "rarity": "common"
+    },
+    "grocery_grapes": {
+      "id": 11,
+      "name": "grapes",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_grapes.png",
+      "rarity": "common"
+    },
+    "grocery_watermelon": {
+      "id": 12,
+      "name": "watermelon",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_watermelon.png",
+      "rarity": "common"
+    },
+    "grocery_lemon": {
+      "id": 13,
+      "name": "lemon",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_lemon.png",
+      "rarity": "common"
+    },
+    "grocery_lime": {
+      "id": 14,
+      "name": "lime",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_lime.png",
+      "rarity": "common"
+    },
+    "grocery_milk": {
+      "id": 15,
+      "name": "milk",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_milk.png",
+      "rarity": "common"
+    },
+    "grocery_butter": {
+      "id": 16,
+      "name": "butter",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_butter.png",
+      "rarity": "common"
+    },
+    "grocery_eggs": {
+      "id": 17,
+      "name": "eggs",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_eggs.png",
+      "rarity": "common"
+    },
+    "grocery_yogurt": {
+      "id": 18,
+      "name": "yogurt",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_yogurt.png",
+      "rarity": "common"
+    },
+    "grocery_cheese": {
+      "id": 19,
+      "name": "cheese",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_cheese.png",
+      "rarity": "common"
+    },
+    "grocery_sourcream": {
+      "id": 20,
+      "name": "sourcream",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_sourcream.png",
+      "rarity": "common"
+    },
+    "grocery_cream": {
+      "id": 21,
+      "name": "cream",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_cream.png",
+      "rarity": "common"
+    },
+    "grocery_bread": {
+      "id": 22,
+      "name": "bread",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_bread.png",
+      "rarity": "common"
+    },
+    "grocery_bagel": {
+      "id": 23,
+      "name": "bagel",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_bagel.png",
+      "rarity": "common"
+    },
+    "grocery_croissant": {
+      "id": 24,
+      "name": "croissant",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_croissant.png",
+      "rarity": "common"
+    },
+    "grocery_muffin": {
+      "id": 25,
+      "name": "muffin",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_muffin.png",
+      "rarity": "common"
+    },
+    "grocery_donut": {
+      "id": 26,
+      "name": "donut",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_donut.png",
+      "rarity": "common"
+    },
+    "grocery_cereal": {
+      "id": 27,
+      "name": "cereal",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_cereal.png",
+      "rarity": "common"
+    },
+    "grocery_oatmeal": {
+      "id": 28,
+      "name": "oatmeal",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_oatmeal.png",
+      "rarity": "common"
+    },
+    "grocery_rice": {
+      "id": 29,
+      "name": "rice",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_rice.png",
+      "rarity": "common"
+    },
+    "grocery_flour": {
+      "id": 30,
+      "name": "flour",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_flour.png",
+      "rarity": "common"
+    },
+    "grocery_sugar": {
+      "id": 31,
+      "name": "sugar",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_sugar.png",
+      "rarity": "common"
+    },
+    "grocery_granola": {
+      "id": 32,
+      "name": "granola",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_granola.png",
+      "rarity": "common"
+    },
+    "grocery_pasta": {
+      "id": 33,
+      "name": "pasta",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_pasta.png",
+      "rarity": "common"
+    },
+    "grocery_ketchup": {
+      "id": 34,
+      "name": "ketchup",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_ketchup.png",
+      "rarity": "common"
+    },
+    "grocery_mustard": {
+      "id": 35,
+      "name": "mustard",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_mustard.png",
+      "rarity": "common"
+    },
+    "grocery_honey": {
+      "id": 36,
+      "name": "honey",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_honey.png",
+      "rarity": "common"
+    },
+    "grocery_soup": {
+      "id": 37,
+      "name": "soup",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_soup.png",
+      "rarity": "common"
+    },
+    "grocery_beans": {
+      "id": 38,
+      "name": "beans",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_beans.png",
+      "rarity": "common"
+    },
+    "grocery_tuna": {
+      "id": 39,
+      "name": "tuna",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_tuna.png",
+      "rarity": "common"
+    },
+    "grocery_corn": {
+      "id": 40,
+      "name": "corn",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_corn.png",
+      "rarity": "common"
+    },
+    "grocery_chips": {
+      "id": 41,
+      "name": "chips",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_chips.png",
+      "rarity": "common"
+    },
+    "grocery_pizza": {
+      "id": 42,
+      "name": "pizza",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_pizza.png",
+      "rarity": "common"
+    },
+    "grocery_frozenpizza": {
+      "id": 43,
+      "name": "frozenpizza",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_frozenpizza.png",
+      "rarity": "common"
+    },
+    "grocery_tea": {
+      "id": 44,
+      "name": "tea",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_tea.png",
+      "rarity": "common"
+    },
+    "grocery_pretzels": {
+      "id": 45,
+      "name": "pretzels",
+      "category": "grocery",
+      "file": "/slots/symbols/grocery_pretzels.png",
+      "rarity": "common"
+    },
+    "meme_chad_cart": {
+      "id": 100,
+      "name": "cart",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_cart.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_receipt": {
+      "id": 101,
+      "name": "receipt",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_receipt.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_bags": {
+      "id": 102,
+      "name": "bags",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_bags.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_register": {
+      "id": 103,
+      "name": "register",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_register.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_rich": {
+      "id": 104,
+      "name": "rich",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_rich.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_stonks": {
+      "id": 105,
+      "name": "stonks",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_stonks.png",
+      "rarity": "rare"
+    },
+    "meme_chad_moneythrow": {
+      "id": 106,
+      "name": "moneythrow",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_moneythrow.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_spend": {
+      "id": 107,
+      "name": "spend",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_spend.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_atm": {
+      "id": 108,
+      "name": "atm",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_atm.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_cope": {
+      "id": 109,
+      "name": "cope",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_cope.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_maga": {
+      "id": 110,
+      "name": "maga",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_maga.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_bitcoin": {
+      "id": 111,
+      "name": "bitcoin",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_bitcoin.png",
+      "rarity": "rare"
+    },
+    "meme_chad_feelsgood": {
+      "id": 112,
+      "name": "feelsgood",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_feelsgood.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_neet": {
+      "id": 113,
+      "name": "neet",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_neet.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_diamond": {
+      "id": 114,
+      "name": "diamond",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_diamond.png",
+      "rarity": "rare"
+    },
+    "meme_chad_moneybag": {
+      "id": 115,
+      "name": "moneybag",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_moneybag.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_npc": {
+      "id": 116,
+      "name": "npc",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_npc.png",
+      "rarity": "uncommon"
+    },
+    "meme_chad_card": {
+      "id": 117,
+      "name": "card",
+      "category": "meme_chad",
+      "file": "/slots/symbols/meme_chad_card.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_cart": {
+      "id": 200,
+      "name": "cart",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_cart.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_shelf": {
+      "id": 201,
+      "name": "shelf",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_shelf.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_basket": {
+      "id": 202,
+      "name": "basket",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_basket.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_avocado": {
+      "id": 203,
+      "name": "avocado",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_avocado.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_bakery": {
+      "id": 204,
+      "name": "bakery",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_bakery.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_steak": {
+      "id": 205,
+      "name": "steak",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_steak.png",
+      "rarity": "rare"
+    },
+    "meme_doge_bananas": {
+      "id": 206,
+      "name": "bananas",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_bananas.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_hotsauce": {
+      "id": 207,
+      "name": "hotsauce",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_hotsauce.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_employee": {
+      "id": 208,
+      "name": "employee",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_employee.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_checkout": {
+      "id": 209,
+      "name": "checkout",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_checkout.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_card": {
+      "id": 210,
+      "name": "card",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_card.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_bags": {
+      "id": 211,
+      "name": "bags",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_bags.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_walking": {
+      "id": 212,
+      "name": "walking",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_walking.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_car": {
+      "id": 213,
+      "name": "car",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_car.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_kitchen": {
+      "id": 214,
+      "name": "kitchen",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_kitchen.png",
+      "rarity": "uncommon"
+    },
+    "meme_doge_stonks": {
+      "id": 215,
+      "name": "stonks",
+      "category": "meme_doge",
+      "file": "/slots/symbols/meme_doge_stonks.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_cart": {
+      "id": 300,
+      "name": "cart",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_cart.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_shelf": {
+      "id": 301,
+      "name": "shelf",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_shelf.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_basket": {
+      "id": 302,
+      "name": "basket",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_basket.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_avocado": {
+      "id": 303,
+      "name": "avocado",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_avocado.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_bakery": {
+      "id": 304,
+      "name": "bakery",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_bakery.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_steak": {
+      "id": 305,
+      "name": "steak",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_steak.png",
+      "rarity": "epic"
+    },
+    "meme_pepe_bananas": {
+      "id": 306,
+      "name": "bananas",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_bananas.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_hotsauce": {
+      "id": 307,
+      "name": "hotsauce",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_hotsauce.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_employee": {
+      "id": 308,
+      "name": "employee",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_employee.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_checkout": {
+      "id": 309,
+      "name": "checkout",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_checkout.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_card": {
+      "id": 310,
+      "name": "card",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_card.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_bags": {
+      "id": 311,
+      "name": "bags",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_bags.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_walking": {
+      "id": 312,
+      "name": "walking",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_walking.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_car": {
+      "id": 313,
+      "name": "car",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_car.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_kitchen": {
+      "id": 314,
+      "name": "kitchen",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_kitchen.png",
+      "rarity": "rare"
+    },
+    "meme_pepe_stonks": {
+      "id": 315,
+      "name": "stonks",
+      "category": "meme_pepe",
+      "file": "/slots/symbols/meme_pepe_stonks.png",
+      "rarity": "epic"
+    },
+    "meme_cat_cart": {
+      "id": 400,
+      "name": "cart",
+      "category": "meme_cat",
+      "file": "/slots/symbols/meme_cat_cart.png",
+      "rarity": "rare"
+    },
+    "meme_cat_shelf": {
+      "id": 401,
+      "name": "shelf",
+      "category": "meme_cat",
+      "file": "/slots/symbols/meme_cat_shelf.png",
+      "rarity": "rare"
+    },
+    "meme_cat_basket": {
+      "id": 402,
+      "name": "basket",
+      "category": "meme_cat",
+      "file": "/slots/symbols/meme_cat_basket.png",
+      "rarity": "rare"
+    },
+    "meme_cat_checkout": {
+      "id": 403,
+      "name": "checkout",
+      "category": "meme_cat",
+      "file": "/slots/symbols/meme_cat_checkout.png",
+      "rarity": "rare"
+    },
+    "meme_cat_card": {
+      "id": 404,
+      "name": "card",
+      "category": "meme_cat",
+      "file": "/slots/symbols/meme_cat_card.png",
+      "rarity": "rare"
+    },
+    "meme_cat_stonks": {
+      "id": 405,
+      "name": "stonks",
+      "category": "meme_cat",
+      "file": "/slots/symbols/meme_cat_stonks.png",
+      "rarity": "rare"
+    }
+  }
+}

@@ -12,6 +12,8 @@ export const CONTRACT_ADDRESSES = {
     EBTApplication: '0xaDE37C7787E8903Bfa5bd4B1402b1C708c7DFa44' as `0x${string}`,
     LiquidityVault: '0x53649868A0F3dE60b4658bDdce0367CF6f2d53D5' as `0x${string}`,
     TeamVesting: '0x593a85a4986cD2214438dEE7f074846bD5200E47' as `0x${string}`,
+    // Slot Machine - not yet deployed, will be updated after deployment
+    EBTSlotMachine: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
 } as const;
 

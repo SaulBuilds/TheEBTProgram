@@ -8,6 +8,7 @@ import ERC6551AccountABI from './abis/ERC6551Account.json';
 import EBTApplicationABI from './abis/EBTApplication.json';
 import LiquidityVaultABI from './abis/LiquidityVault.json';
 import TeamVestingABI from './abis/TeamVesting.json';
+import EBTSlotMachineABI from './abis/EBTSlotMachine.json';
 import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID } from './addresses';
 
 // Export ABIs for use in hooks
@@ -19,6 +20,7 @@ export const abis = {
   EBTApplication: EBTApplicationABI,
   LiquidityVault: LiquidityVaultABI,
   TeamVesting: TeamVestingABI,
+  EBTSlotMachine: EBTSlotMachineABI,
 } as const;
 
 // wagmi config for Sepolia
@@ -63,4 +65,9 @@ export const liquidityVaultConfig = {
 export const teamVestingConfig = {
   address: CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].TeamVesting,
   abi: TeamVestingABI,
+} as const;
+
+export const ebtSlotMachineConfig = {
+  address: CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].EBTSlotMachine,
+  abi: EBTSlotMachineABI,
 } as const;
