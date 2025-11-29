@@ -6,22 +6,22 @@ const steps = [
   {
     number: '01',
     title: 'Connect',
-    description: 'Link wallet, email, or social account to begin your application.',
+    description: 'Wallet, email, whatever. We\'re not the IRS.',
   },
   {
     number: '02',
     title: 'Apply',
-    description: 'Complete required forms. Processing fee required at time of submission.',
+    description: 'Fill out some forms. Pay the processing fee. You know how this works.',
   },
   {
     number: '03',
-    title: 'Receive Card',
-    description: 'Your EBT card NFT is issued with initial benefits deposited.',
+    title: 'Get Your Card',
+    description: 'NFT minted. Tokens deposited. Welcome to the program.',
   },
   {
     number: '04',
-    title: 'Collect Benefits',
-    description: 'Return each distribution period to claim your allocated benefits.',
+    title: 'Collect',
+    description: 'Come back each month. Benefits hit different when they\'re on-chain.',
   },
 ];
 
@@ -31,10 +31,10 @@ export function HowItWorks() {
       <div className="relative max-w-7xl mx-auto px-4">
         <div className="text-center mb-16">
           <h2 className="text-4xl md:text-6xl font-heading text-ebt-gold mb-4 tracking-wide">
-            APPLICATION PROCESS
+            HOW IT WORKS
           </h2>
           <p className="text-xl text-gray-400">
-            Standard processing time is immediate upon payment.
+            Faster than the DMV. Less paperwork than a PPP loan.
           </p>
         </div>
 
@@ -78,11 +78,11 @@ export function HowItWorks() {
         >
           <div className="bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6 max-w-3xl mx-auto">
             <p className="text-lg font-heading text-welfare-red mb-4 tracking-wide">
-              PROGRAM NOTICE
+              DISCLAIMER (LEGAL MADE US ADD THIS)
             </p>
             <p className="text-sm text-gray-500">
-              This is not a government program. Benefits have no guaranteed cash value.
-              Not redeemable at participating retailers. Terms subject to change without notice.
+              Not a government program. Not financial advice. Not redeemable at Walmart.
+              But neither are most altcoins, and that never stopped anyone.
             </p>
           </div>
         </motion.div>

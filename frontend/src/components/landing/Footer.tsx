@@ -84,14 +84,14 @@ export function Footer() {
           <div className="pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-gray-500">
-                2024 EBT Card Program. Not affiliated with USDA or any government agency.
+                2024 EBT Card. Not affiliated with any government, bank, or your disappointed parents.
               </p>
               <div className="flex items-center gap-4">
                 <span className="text-xs text-gray-500">
-                  Benefits subject to availability
+                  DYOR. NFA. WAGMI?
                 </span>
                 <span className="text-xs font-heading text-welfare-red tracking-wide">
-                  NOT FDIC INSURED
+                  PROBABLY NOTHING
                 </span>
               </div>
             </div>

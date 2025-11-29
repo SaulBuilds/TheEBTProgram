@@ -29,10 +29,10 @@ export function AboutContent() {
           className="text-center mb-12"
         >
           <h1 className="text-4xl md:text-6xl font-heading text-ebt-gold mb-4 tracking-wide">
-            PROGRAM INFORMATION
+            THE DOCUMENTATION
           </h1>
           <p className="text-xl text-gray-400 max-w-2xl mx-auto">
-            Everything you need to know about your benefits.
+            Because transparency is for the poors. Here&apos;s how it actually works.
           </p>
         </motion.div>
 
@@ -132,12 +132,12 @@ export function AboutContent() {
           className="mt-16 bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6"
         >
           <h3 className="text-lg font-heading text-welfare-red mb-2 tracking-wide">
-            IMPORTANT PROGRAM NOTICE
+            THE FINE PRINT
           </h3>
           <p className="text-sm text-gray-400">
-            This is not a government program. $EBTC tokens have no guaranteed cash value.
-            Not redeemable for goods or services. Not FDIC insured. Not backed by any government agency.
-            Program terms subject to change. Participation is voluntary.
+            This is art, not financial advice. $EBTC is worth exactly what someone will pay for it,
+            like everything else. Not FDIC insured, not SEC approved, not your mother&apos;s crypto.
+            We don&apos;t know what we&apos;re doing either but at least we&apos;re transparent about it.
           </p>
         </motion.div>
       </div>
@@ -283,22 +283,20 @@ function OverviewSection() {
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8 space-y-6">
           <h2 className="text-3xl font-heading text-ebt-gold tracking-wide">
-            About This Program
+            What Is This?
           </h2>
           <p className="text-gray-400 leading-relaxed">
-            The EBT Card program provides supplemental benefits to qualifying participants.
-            Unlike traditional assistance programs, eligibility is determined by wallet
-            ownership rather than income verification.
+            Your parents bought houses at 25. You have a podcast and $80k in student debt.
+            They promised jetpacks. You got Uber Eats. The simulation is glitching.
           </p>
           <p className="text-gray-400 leading-relaxed">
-            Benefits are distributed in the form of $EBTC tokens, deposited directly to
-            your digital benefits card. Cards are issued as NFTs with built-in smart
-            wallets using the ERC-6551 standard.
+            EBT Card is what happens when you apply startup logic to welfare.
+            Your benefits card is an NFT. It has its own wallet. The tokens inside
+            are yours. No means testing. No caseworker. Just vibes and smart contracts.
           </p>
           <div className="p-4 bg-ebt-gold/10 border border-ebt-gold/30 rounded-lg">
             <p className="text-sm text-ebt-gold">
-              Program participation is voluntary. Benefits have no guaranteed cash value.
-              This is not a government program.
+              &quot;You&apos;re not broke. You&apos;re pre-revenue.&quot;
             </p>
           </div>
         </div>

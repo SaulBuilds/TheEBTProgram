@@ -8,11 +8,11 @@ import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
 
 const headlines = [
-  "Now Accepting Applications",
-  "Benefits Available While Supplies Last",
+  "You're Not Poor. You're Pre-Rich.",
+  "Benefits For The Temporarily Embarrassed",
   "The Line Starts Here",
-  "Your Balance: Pending",
-  "Assistance Is Available"
+  "Your Parents Had Pensions",
+  "Everyone's On Assistance. Some Just Know It."
 ];
 
 export function Hero() {
@@ -80,10 +80,10 @@ export function Hero() {
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
           <p className="text-xl md:text-2xl mb-2 font-heading text-ebt-green tracking-wide">
-            Everyone&apos;s on assistance. Some just don&apos;t know it yet.
+            The program they promised. Finally delivered.
           </p>
           <p className="text-lg md:text-xl text-gray-400">
-            Apply for benefits.
+            PPP got $800B. You get an NFT. Fair is fair.
           </p>
         </div>
 
@@ -113,22 +113,22 @@ export function Hero() {
           </Button>
         </div>
 
-        {/* Stats bar - real SNAP statistics */}
+        {/* Stats bar */}
         <div className="mt-12 bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-4 max-w-xl mx-auto">
           <div className="flex items-center justify-center gap-8 text-sm">
             <div>
-              <span className="text-ebt-gold font-heading text-lg">42M</span>
-              <span className="text-gray-500 ml-2">AMERICANS ON SNAP</span>
+              <span className="text-ebt-gold font-heading text-lg">$100B</span>
+              <span className="text-gray-500 ml-2">PPP FRAUD</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
-              <span className="text-ebt-gold font-heading text-lg">$6.27</span>
-              <span className="text-gray-500 ml-2">AVG DAILY BENEFIT</span>
+              <span className="text-ebt-gold font-heading text-lg">$8K</span>
+              <span className="text-gray-500 ml-2">WELFARE QUEEN</span>
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
-              <span className="text-ebt-gold font-heading text-lg">1974</span>
-              <span className="text-gray-500 ml-2">PROGRAM EST.</span>
+              <span className="text-ebt-gold font-heading text-lg">1</span>
+              <span className="text-gray-500 ml-2">GUESS WHO GOT A MOVIE</span>
             </div>
           </div>
         </div>
