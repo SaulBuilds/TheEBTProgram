@@ -2,204 +2,299 @@
 
 import React, { useState, useCallback, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
+import Image from 'next/image';
 import { usePrivy } from '@privy-io/react-auth';
-import { CascadeGrid } from './components/CascadeGrid';
-import { JackpotCounter } from './components/JackpotCounter';
-import { SpinHistory } from './components/SpinHistory';
-import { PayoutTable } from './components/PayoutTable';
 import {
-  type Symbol,
-  type PlayerStats,
-  type SpinResult,
-  type CascadeStep,
-  fetchPlayerStats,
+  SYMBOL_BY_ID,
+  RARITY_COLORS,
+  generateRandomGrid,
+} from '@/lib/slots/symbols';
+import {
   executeSpin,
-  fetchSymbols,
   GRID_SIZE,
-} from '@/lib/slots/gameEngine';
+  COMBO_MULTIPLIERS,
+  type CascadeStep,
+} from '@/lib/slots/cascadeEngine';
 
-export function SlotsContent() {
-  const { authenticated, user, getAccessToken } = usePrivy();
+// ============ CELL COMPONENT ============
 
-  // Game state
-  const [symbols, setSymbols] = useState<Symbol[]>([]);
-  const [playerStats, setPlayerStats] = useState<PlayerStats | null>(null);
-  const [currentGrid, setCurrentGrid] = useState<number[]>([]);
-  const [cascadeHistory, setCascadeHistory] = useState<CascadeStep[]>([]);
-  const [currentCascadeStep, setCurrentCascadeStep] = useState(-1);
+interface CellProps {
+  symbolId: number;
+  isMatched: boolean;
+  isNew: boolean;
+  fallDelay: number;
+}
 
-  // UI state
-  const [isSpinning, setIsSpinning] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [lastResult, setLastResult] = useState<SpinResult | null>(null);
-  const [showPayoutTable, setShowPayoutTable] = useState(false);
-  const [spinHistory, setSpinHistory] = useState<SpinResult[]>([]);
+function Cell({ symbolId, isMatched, isNew, fallDelay }: CellProps) {
+  const symbol = SYMBOL_BY_ID.get(symbolId);
+  if (!symbol) return <div className="w-full h-full bg-gray-800 rounded-lg" />;
 
-  // Initialize game
-  useEffect(() => {
-    async function init() {
-      try {
-        // Fetch symbols
-        const { symbols: fetchedSymbols } = await fetchSymbols();
-        setSymbols(fetchedSymbols);
-
-        // Generate initial random grid
-        const initialGrid: number[] = [];
-        for (let i = 0; i < GRID_SIZE * GRID_SIZE; i++) {
-          const randomIdx = Math.floor(Math.random() * fetchedSymbols.length);
-          initialGrid.push(fetchedSymbols[randomIdx].id);
-        }
-        setCurrentGrid(initialGrid);
-
-        // Fetch player stats if authenticated
-        if (authenticated && user?.id) {
-          const token = await getAccessToken();
-          if (token) {
-            const stats = await fetchPlayerStats(token, user.id);
-            setPlayerStats(stats);
-          }
-        }
-      } catch (err) {
-        console.error('Init error:', err);
-        setError('Failed to load game');
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    init();
-  }, [authenticated, user?.id, getAccessToken]);
-
-  // Refresh player stats
-  const refreshStats = useCallback(async () => {
-    if (!authenticated || !user?.id) return;
-
-    try {
-      const token = await getAccessToken();
-      if (token) {
-        const stats = await fetchPlayerStats(token, user.id);
-        setPlayerStats(stats);
-      }
-    } catch (err) {
-      console.error('Failed to refresh stats:', err);
-    }
-  }, [authenticated, user?.id, getAccessToken]);
-
-  // Handle spin
-  const handleSpin = useCallback(async () => {
-    if (!authenticated || !user?.id || isSpinning) return;
-
-    setError(null);
-    setIsSpinning(true);
-    setCurrentCascadeStep(-1);
-    setCascadeHistory([]);
-
-    try {
-      const token = await getAccessToken();
-      if (!token) throw new Error('Not authenticated');
-
-      const result = await executeSpin(token, user.id);
-
-      // Store result
-      setLastResult(result.spin);
-      setPlayerStats(result.player);
-      setCascadeHistory(result.spin.cascadeHistory);
-
-      // Show initial grid
-      setCurrentGrid(result.spin.initialGrid);
-
-      // Start cascade animation sequence
-      if (result.spin.cascadeHistory.length > 0) {
-        setCurrentCascadeStep(0);
-      } else {
-        // No cascades, just show final grid
-        setCurrentGrid(result.spin.finalGrid);
-        setIsSpinning(false);
-      }
-
-      // Add to history
-      setSpinHistory(prev => [result.spin, ...prev].slice(0, 20));
-    } catch (err) {
-      console.error('Spin error:', err);
-      setError(err instanceof Error ? err.message : 'Spin failed');
-      setIsSpinning(false);
-    }
-  }, [authenticated, user?.id, isSpinning, getAccessToken]);
-
-  // Handle cascade animation completion
-  const handleCascadeComplete = useCallback(() => {
-    if (currentCascadeStep < cascadeHistory.length - 1) {
-      // Move to next cascade step
-      setCurrentCascadeStep(prev => prev + 1);
-    } else {
-      // Animation complete, show final grid
-      if (lastResult) {
-        setCurrentGrid(lastResult.finalGrid);
-      }
-      setIsSpinning(false);
-    }
-  }, [currentCascadeStep, cascadeHistory.length, lastResult]);
-
-  // Advance cascade steps with timing
-  useEffect(() => {
-    if (!isSpinning || currentCascadeStep < 0) return;
-
-    const timer = setTimeout(() => {
-      handleCascadeComplete();
-    }, 1200); // Time per cascade step
-
-    return () => clearTimeout(timer);
-  }, [isSpinning, currentCascadeStep, handleCascadeComplete]);
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen bg-black flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: 'linear' }}
-            className="w-16 h-16 border-4 border-ebt-gold border-t-transparent rounded-full mx-auto mb-4"
-          />
-          <p className="text-gray-500 font-mono">Loading THE GROCERY RUN...</p>
-        </div>
-      </div>
-    );
-  }
+  const rarity = RARITY_COLORS[symbol.rarity];
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-gray-900 to-black">
-      {/* Header */}
-      <div className="container mx-auto px-4 py-8">
-        <div className="text-center mb-8">
+    <motion.div
+      className="relative w-full h-full"
+      initial={isNew ? { y: -80, opacity: 0 } : false}
+      animate={{
+        y: 0,
+        opacity: 1,
+        scale: isMatched ? [1, 1.2, 0] : 1,
+      }}
+      transition={{
+        y: { type: 'spring', damping: 12, stiffness: 200, delay: fallDelay },
+        opacity: { duration: 0.2, delay: fallDelay },
+        scale: { duration: 0.4 },
+      }}
+    >
+      <div
+        className={`
+          relative w-full h-full rounded-lg overflow-hidden
+          border-2 bg-gray-900/80
+          ${isMatched ? 'border-yellow-400 shadow-lg shadow-yellow-400/50' : ''}
+        `}
+        style={{
+          borderColor: isMatched ? '#FBBF24' : rarity.border,
+          boxShadow: isMatched ? `0 0 20px ${rarity.glow}` : undefined,
+        }}
+      >
+        <Image
+          src={symbol.imagePath}
+          alt={symbol.name}
+          fill
+          className="object-contain p-1"
+          sizes="70px"
+          unoptimized
+        />
+
+        {/* Special badge */}
+        {symbol.special && (
+          <div
+            className={`
+              absolute -top-1 -right-1 w-5 h-5 rounded-full
+              flex items-center justify-center text-[9px] font-bold text-white z-10
+              ${symbol.special === 'wild' ? 'bg-yellow-500' :
+                symbol.special === 'jackpot' ? 'bg-red-500' : 'bg-purple-500'}
+            `}
+          >
+            {symbol.special === 'wild' ? 'W' : symbol.special === 'jackpot' ? '₿' : 'B'}
+          </div>
+        )}
+
+        {/* Rarity bar */}
+        <div
+          className="absolute bottom-0 left-0 right-0 h-1"
+          style={{ backgroundColor: rarity.border }}
+        />
+      </div>
+
+      {/* Match glow effect */}
+      {isMatched && (
+        <motion.div
+          className="absolute inset-0 rounded-lg pointer-events-none"
+          initial={{ opacity: 0.8 }}
+          animate={{ opacity: 0, scale: 1.5 }}
+          transition={{ duration: 0.5 }}
+          style={{
+            background: `radial-gradient(circle, ${rarity.glow} 0%, transparent 70%)`,
+          }}
+        />
+      )}
+    </motion.div>
+  );
+}
+
+// ============ MAIN COMPONENT ============
+
+export function SlotsContent() {
+  const { authenticated } = usePrivy();
+
+  // Game state
+  const [grid, setGrid] = useState<number[]>([]);
+  const [isSpinning, setIsSpinning] = useState(false);
+  const [currentStep, setCurrentStep] = useState(-1);
+  const [cascadeSteps, setCascadeSteps] = useState<CascadeStep[]>([]);
+  const [matchedPositions, setMatchedPositions] = useState<Set<string>>(new Set());
+  const [newPositions, setNewPositions] = useState<Set<string>>(new Set());
+
+  // Stats
+  const [sessionPoints, setSessionPoints] = useState(0);
+  const [lastWin, setLastWin] = useState<{ points: number; cascades: number; multiplier: number } | null>(null);
+  const [isJackpot, setIsJackpot] = useState(false);
+  const [isBigWin, setIsBigWin] = useState(false);
+  const [spinCount, setSpinCount] = useState(0);
+
+  // Initialize grid on mount
+  useEffect(() => {
+    setGrid(generateRandomGrid(GRID_SIZE));
+  }, []);
+
+  // Process cascade animation
+  useEffect(() => {
+    if (!isSpinning || currentStep < 0 || currentStep >= cascadeSteps.length) return;
+
+    const step = cascadeSteps[currentStep];
+
+    // Show matched positions
+    const matched = new Set<string>();
+    step.matches.forEach(match => {
+      match.positions.forEach(pos => {
+        matched.add(`${pos.row}-${pos.col}`);
+      });
+    });
+    setMatchedPositions(matched);
+
+    // After match animation, apply cascade
+    const cascadeTimer = setTimeout(() => {
+      // Update grid and show new symbols
+      if (currentStep + 1 < cascadeSteps.length) {
+        const nextStep = cascadeSteps[currentStep + 1];
+        setGrid(nextStep.grid);
+
+        const newPos = new Set<string>();
+        step.newSymbols.forEach(ns => {
+          newPos.add(`${ns.position.row}-${ns.position.col}`);
+        });
+        setNewPositions(newPos);
+      }
+
+      setMatchedPositions(new Set());
+
+      // Move to next step
+      setTimeout(() => {
+        setNewPositions(new Set());
+        setCurrentStep(prev => prev + 1);
+      }, 400);
+    }, 600);
+
+    return () => clearTimeout(cascadeTimer);
+  }, [isSpinning, currentStep, cascadeSteps]);
+
+  // End of cascade sequence
+  useEffect(() => {
+    if (isSpinning && currentStep >= cascadeSteps.length && cascadeSteps.length > 0) {
+      setIsSpinning(false);
+      setCurrentStep(-1);
+    }
+  }, [isSpinning, currentStep, cascadeSteps.length]);
+
+  // Handle spin
+  const handleSpin = useCallback(() => {
+    if (isSpinning) return;
+
+    setIsSpinning(true);
+    setLastWin(null);
+    setIsJackpot(false);
+    setIsBigWin(false);
+    setMatchedPositions(new Set());
+    setNewPositions(new Set());
+
+    // Execute spin
+    const result = executeSpin(grid);
+
+    if (result.cascadeSteps.length > 0) {
+      setCascadeSteps(result.cascadeSteps);
+      setCurrentStep(0);
+      setGrid(result.cascadeSteps[0].grid);
+
+      // Update stats after animation completes
+      setTimeout(() => {
+        setGrid(result.finalGrid);
+        setSessionPoints(prev => prev + result.totalPoints);
+        setLastWin({
+          points: result.totalPoints,
+          cascades: result.cascadeCount,
+          multiplier: result.comboMultiplier,
+        });
+        setIsJackpot(result.isJackpot);
+        setIsBigWin(result.isBigWin);
+        setSpinCount(prev => prev + 1);
+      }, result.cascadeSteps.length * 1000 + 500);
+    } else {
+      // No matches - just show new grid
+      setGrid(result.finalGrid);
+      setSpinCount(prev => prev + 1);
+      setTimeout(() => setIsSpinning(false), 500);
+    }
+  }, [isSpinning, grid]);
+
+  return (
+    <div
+      className="min-h-screen relative"
+      style={{
+        backgroundImage: 'url(/slots/backgrounds/store-pov.png)',
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+      }}
+    >
+      {/* Dark overlay */}
+      <div className="absolute inset-0 bg-black/70" />
+
+      {/* Content */}
+      <div className="relative z-10 container mx-auto px-4 py-8">
+        {/* Header */}
+        <div className="text-center mb-6">
           <motion.h1
             initial={{ y: -50, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            className="text-5xl md:text-7xl font-heading text-ebt-gold mb-2"
+            className="text-5xl md:text-7xl font-heading text-transparent bg-clip-text bg-gradient-to-r from-yellow-400 to-yellow-600 mb-2"
+            style={{ textShadow: '0 0 40px rgba(251, 191, 36, 0.5)' }}
           >
             THE GROCERY RUN
           </motion.h1>
-          <p className="text-gray-400 font-mono text-lg">
-            Match 3+ to clear. Chain reactions = bonus points!
+          <p className="text-gray-400 font-mono">
+            Match 3+ • Cascade Wins • Chain Multipliers up to 8x!
           </p>
         </div>
 
-        {/* Jackpot Counter */}
-        <JackpotCounter amount={playerStats?.totalPoints || 0} />
+        {/* Stats Bar */}
+        <div className="flex justify-center gap-4 mb-6">
+          <div className="bg-black/60 backdrop-blur border border-yellow-500/30 rounded-lg px-6 py-3 text-center">
+            <p className="text-xs font-mono text-gray-500">SESSION POINTS</p>
+            <p className="text-2xl font-heading text-yellow-400">{sessionPoints.toLocaleString()}</p>
+          </div>
+          <div className="bg-black/60 backdrop-blur border border-green-500/30 rounded-lg px-6 py-3 text-center">
+            <p className="text-xs font-mono text-gray-500">SPINS</p>
+            <p className="text-2xl font-heading text-green-400">{spinCount}</p>
+          </div>
+        </div>
 
         {/* Main Game Area */}
-        <div className="flex flex-col lg:flex-row gap-8 items-start justify-center mt-8">
+        <div className="flex flex-col lg:flex-row gap-8 items-start justify-center">
           {/* Game Grid */}
-          <div className="flex-1 max-w-xl">
-            {/* Cascade Grid */}
-            <CascadeGrid
-              grid={currentGrid}
-              symbols={symbols}
-              cascadeHistory={cascadeHistory}
-              isSpinning={isSpinning}
-              currentCascadeStep={currentCascadeStep}
-              onAnimationComplete={handleCascadeComplete}
-            />
+          <div className="flex-1 max-w-md mx-auto">
+            {/* Grid Container */}
+            <div className="relative bg-black/80 backdrop-blur rounded-2xl p-4 border-2 border-yellow-500/50 shadow-2xl shadow-yellow-500/20">
+              {/* Corner decorations */}
+              <div className="absolute -top-2 -left-2 w-4 h-4 bg-yellow-500 rounded-full" />
+              <div className="absolute -top-2 -right-2 w-4 h-4 bg-yellow-500 rounded-full" />
+              <div className="absolute -bottom-2 -left-2 w-4 h-4 bg-yellow-500 rounded-full" />
+              <div className="absolute -bottom-2 -right-2 w-4 h-4 bg-yellow-500 rounded-full" />
+
+              {/* 5x5 Grid */}
+              <div
+                className="grid gap-1.5"
+                style={{
+                  gridTemplateColumns: `repeat(${GRID_SIZE}, 1fr)`,
+                  aspectRatio: '1',
+                }}
+              >
+                {grid.map((symbolId, index) => {
+                  const row = Math.floor(index / GRID_SIZE);
+                  const col = index % GRID_SIZE;
+                  const key = `${row}-${col}`;
+
+                  return (
+                    <Cell
+                      key={`${index}-${symbolId}`}
+                      symbolId={symbolId}
+                      isMatched={matchedPositions.has(key)}
+                      isNew={newPositions.has(key)}
+                      fallDelay={col * 0.05}
+                    />
+                  );
+                })}
+              </div>
+            </div>
 
             {/* Spin Button */}
             <div className="mt-6 flex justify-center">
@@ -207,191 +302,126 @@ export function SlotsContent() {
                 whileHover={{ scale: 1.05 }}
                 whileTap={{ scale: 0.95 }}
                 onClick={handleSpin}
-                disabled={!authenticated || isSpinning || !playerStats?.canSpin}
+                disabled={isSpinning}
                 className={`
-                  px-12 py-4 rounded-xl font-heading text-2xl uppercase tracking-wider
-                  transition-all duration-200
-                  ${!authenticated || !playerStats?.canSpin
-                    ? 'bg-gray-700 text-gray-500 cursor-not-allowed'
-                    : isSpinning
-                      ? 'bg-gray-700 text-gray-400'
-                      : 'bg-gradient-to-r from-ebt-gold to-yellow-600 text-black hover:shadow-lg hover:shadow-ebt-gold/30'
+                  px-16 py-5 rounded-xl font-heading text-3xl uppercase tracking-wider
+                  transition-all duration-200 shadow-lg
+                  ${isSpinning
+                    ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                    : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl'
                   }
                 `}
               >
-                {isSpinning ? 'SPINNING...' : !authenticated ? 'CONNECT TO PLAY' : !playerStats?.canSpin ? 'NO SPINS LEFT' : 'SPIN'}
+                {isSpinning ? 'SPINNING...' : 'SPIN'}
               </motion.button>
             </div>
 
-            {/* Error display */}
-            {error && (
-              <div className="mt-4 p-3 bg-red-500/20 border border-red-500/50 rounded-lg text-center">
-                <p className="text-red-400 text-sm font-mono">{error}</p>
-              </div>
-            )}
-
-            {/* Last win display */}
+            {/* Last Win Display */}
             <AnimatePresence>
-              {lastResult && lastResult.pointsEarned > 0 && !isSpinning && (
+              {lastWin && lastWin.points > 0 && !isSpinning && (
                 <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="mt-4 text-center"
+                  initial={{ opacity: 0, y: 20, scale: 0.9 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.9 }}
+                  className="mt-4"
                 >
                   <div className={`
-                    p-4 rounded-xl border
-                    ${lastResult.isJackpot
-                      ? 'bg-ebt-gold/20 border-ebt-gold'
-                      : lastResult.isBigWin
+                    p-4 rounded-xl border text-center
+                    ${isJackpot
+                      ? 'bg-yellow-500/20 border-yellow-500'
+                      : isBigWin
                         ? 'bg-purple-500/20 border-purple-500'
                         : 'bg-green-500/20 border-green-500/50'
                     }
                   `}>
-                    {lastResult.isJackpot && (
+                    {isJackpot && (
                       <motion.p
                         animate={{ scale: [1, 1.1, 1] }}
                         transition={{ duration: 0.5, repeat: 3 }}
-                        className="text-3xl font-heading text-ebt-gold mb-2"
+                        className="text-3xl font-heading text-yellow-400 mb-2"
                       >
                         🎰 JACKPOT! 🎰
                       </motion.p>
                     )}
-                    {lastResult.isBigWin && !lastResult.isJackpot && (
-                      <p className="text-2xl font-heading text-purple-400 mb-2">BIG WIN!</p>
+                    {isBigWin && !isJackpot && (
+                      <p className="text-2xl font-heading text-purple-400 mb-2">⭐ BIG WIN! ⭐</p>
                     )}
-                    <p className="text-2xl font-heading text-green-400">
-                      +{lastResult.pointsEarned.toLocaleString()} POINTS
+                    <p className="text-3xl font-heading text-green-400">
+                      +{lastWin.points.toLocaleString()} POINTS
                     </p>
-                    {lastResult.cascadeCount > 0 && (
-                      <p className="text-sm font-mono text-gray-400 mt-1">
-                        {lastResult.cascadeCount}x cascade chain ({lastResult.comboMultiplier}x multiplier)
+                    {lastWin.cascades > 0 && (
+                      <p className="text-sm font-mono text-gray-400 mt-2">
+                        {lastWin.cascades} cascade{lastWin.cascades > 1 ? 's' : ''} • {lastWin.multiplier}x multiplier
                       </p>
                     )}
                   </div>
                 </motion.div>
               )}
             </AnimatePresence>
-
-            {/* Stats Bar */}
-            <div className="mt-6 grid grid-cols-3 gap-4">
-              {/* Daily Spins */}
-              <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 text-center">
-                <p className="text-xs font-mono text-gray-500 uppercase">Daily Spins</p>
-                <p className="text-2xl font-heading text-ebt-gold">
-                  {playerStats?.dailySpinsRemaining ?? 10}/{10}
-                </p>
-              </div>
-
-              {/* Today's Points */}
-              <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 text-center">
-                <p className="text-xs font-mono text-gray-500 uppercase">Today&apos;s Points</p>
-                <p className="text-2xl font-heading text-green-400">
-                  {(playerStats?.dailyPointsWon ?? 0).toLocaleString()}
-                </p>
-              </div>
-
-              {/* Streak */}
-              <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 text-center">
-                <p className="text-xs font-mono text-gray-500 uppercase">Streak</p>
-                <p className="text-2xl font-heading text-purple-400">
-                  🔥 {playerStats?.currentStreak ?? 0}
-                </p>
-              </div>
-            </div>
-
-            {/* Payout Table Toggle */}
-            <button
-              onClick={() => setShowPayoutTable(!showPayoutTable)}
-              className="mt-4 w-full py-2 bg-gray-900/80 border border-gray-700 text-gray-400 font-mono text-sm rounded-lg hover:border-ebt-gold transition-colors"
-            >
-              {showPayoutTable ? 'Hide' : 'Show'} How To Play
-            </button>
-
-            <AnimatePresence>
-              {showPayoutTable && (
-                <motion.div
-                  initial={{ height: 0, opacity: 0 }}
-                  animate={{ height: 'auto', opacity: 1 }}
-                  exit={{ height: 0, opacity: 0 }}
-                  className="overflow-hidden"
-                >
-                  <PayoutTable />
-                </motion.div>
-              )}
-            </AnimatePresence>
           </div>
 
           {/* Sidebar */}
-          <div className="w-full lg:w-80">
-            {/* Player Stats */}
-            {authenticated && playerStats && (
-              <div className="bg-gray-900/80 border border-gray-800 rounded-lg p-4 mb-6">
-                <h3 className="text-lg font-heading text-ebt-gold mb-3">YOUR STATS</h3>
-                <div className="space-y-2 text-sm font-mono">
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Total Spins</span>
-                    <span className="text-white">{playerStats.totalSpins.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Total Points</span>
-                    <span className="text-green-400">{playerStats.totalPoints.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Best Combo</span>
-                    <span className="text-purple-400">{playerStats.highestCombo}x chain</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Biggest Win</span>
-                    <span className="text-ebt-gold">{playerStats.biggestWin.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-500">Longest Streak</span>
-                    <span className="text-orange-400">{playerStats.longestStreak} days</span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Recent Spins */}
-            <SpinHistory history={spinHistory} />
-
-            {/* Game Rules */}
-            <div className="mt-6 bg-gray-900/80 border border-gray-800 rounded-lg p-4">
-              <h3 className="text-lg font-heading text-ebt-gold mb-3">THE RULES</h3>
+          <div className="w-full lg:w-72">
+            {/* How to Play */}
+            <div className="bg-black/60 backdrop-blur border border-gray-700 rounded-lg p-4 mb-4">
+              <h3 className="text-lg font-heading text-yellow-400 mb-3">HOW TO PLAY</h3>
               <ul className="space-y-2 text-sm font-mono text-gray-400">
                 <li className="flex items-start gap-2">
-                  <span className="text-ebt-gold">1.</span>
+                  <span className="text-yellow-400">•</span>
                   Match 3+ symbols horizontally or vertically
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-ebt-gold">2.</span>
-                  Matches disappear and new symbols fall from above
+                  <span className="text-yellow-400">•</span>
+                  Matches clear & new symbols fall down
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-ebt-gold">3.</span>
-                  Chain reactions = combo multipliers (up to 8x!)
+                  <span className="text-yellow-400">•</span>
+                  Chain reactions = combo multipliers!
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="text-ebt-gold">4.</span>
-                  10 free spins daily, earn up to 5,000 points/day
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-ebt-gold">5.</span>
-                  Daily streaks boost your leaderboard rank
-                </li>
-                <li className="flex items-start gap-2">
-                  <span className="text-ebt-gold">6.</span>
-                  Diamond 💎 = Wild, Bitcoin ₿ = Jackpot!
+                  <span className="text-yellow-400">•</span>
+                  5+ in a row = BIG WIN
                 </li>
               </ul>
             </div>
 
-            {/* Not Authenticated Warning */}
+            {/* Multipliers */}
+            <div className="bg-black/60 backdrop-blur border border-gray-700 rounded-lg p-4 mb-4">
+              <h3 className="text-lg font-heading text-yellow-400 mb-3">COMBO MULTIPLIERS</h3>
+              <div className="grid grid-cols-3 gap-2 text-center text-sm font-mono">
+                {Object.entries(COMBO_MULTIPLIERS).map(([cascades, mult]) => (
+                  <div key={cascades} className="bg-gray-800/50 rounded p-2">
+                    <p className="text-gray-500">{cascades}x</p>
+                    <p className="text-yellow-400 font-bold">{mult}x</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Special Symbols */}
+            <div className="bg-black/60 backdrop-blur border border-gray-700 rounded-lg p-4">
+              <h3 className="text-lg font-heading text-yellow-400 mb-3">SPECIAL SYMBOLS</h3>
+              <div className="space-y-2 text-sm font-mono">
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-yellow-500 rounded-full flex items-center justify-center text-black font-bold text-xs">W</span>
+                  <span className="text-gray-400">Wild - Matches anything</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center text-white font-bold text-xs">₿</span>
+                  <span className="text-gray-400">Bitcoin - 4+ = JACKPOT</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white font-bold text-xs">B</span>
+                  <span className="text-gray-400">Bonus - Coming soon!</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Auth Notice */}
             {!authenticated && (
-              <div className="mt-6 bg-welfare-red/20 border border-welfare-red/50 rounded-lg p-4 text-center">
-                <p className="text-welfare-red font-mono text-sm">
-                  Connect your wallet to play and track your score!
+              <div className="mt-4 bg-red-500/20 border border-red-500/50 rounded-lg p-4 text-center">
+                <p className="text-red-400 font-mono text-sm">
+                  Connect wallet to save progress!
                 </p>
               </div>
             )}
@@ -399,11 +429,9 @@ export function SlotsContent() {
         </div>
 
         {/* Footer */}
-        <div className="mt-12 text-center">
+        <div className="mt-8 text-center">
           <p className="text-xs font-mono text-gray-600">
-            Points contribute to your leaderboard ranking.
-            <br />
-            Play daily to maintain your streak!
+            Points contribute to your leaderboard ranking • Play daily for streak bonuses
           </p>
         </div>
       </div>

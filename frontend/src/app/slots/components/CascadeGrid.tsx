@@ -1,10 +1,10 @@
 'use client';
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
-import type { Symbol, CascadeStep, Match, Position } from '@/lib/slots/gameEngine';
-import { GRID_SIZE, RARITY_COLORS, gridTo2D, isPositionMatched } from '@/lib/slots/gameEngine';
+import type { Symbol, CascadeStep } from '@/lib/slots/gameEngine';
+import { GRID_SIZE, RARITY_COLORS, gridTo2D } from '@/lib/slots/gameEngine';
 
 interface CascadeGridProps {
   grid: number[];

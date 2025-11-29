@@ -32,3 +32,5 @@ __tests__/*.db
 
 # TypeScript
 *.tsbuildinfo
+.vercel
+.env*.local
