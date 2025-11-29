@@ -43,6 +43,11 @@ export function SlotsContent() {
   const [spinCount, setSpinCount] = useState(0);
   const [showWin, setShowWin] = useState(false);
 
+  // Autoplay state
+  const [autoplayActive, setAutoplayActive] = useState(false);
+  const [autoplaySpinsRemaining, setAutoplaySpinsRemaining] = useState(0);
+  const autoplayRef = useRef(false); // Ref for immediate access in callbacks
+
   // Initialize grid on mount
   useEffect(() => {
     const initialGrid = generateCleanGrid();
@@ -250,6 +255,37 @@ export function SlotsContent() {
     setShowBonusComplete(false);
   }, []);
 
+  // Autoplay functions
+  const startAutoplay = useCallback((spins: number) => {
+    setAutoplayActive(true);
+    setAutoplaySpinsRemaining(spins);
+    autoplayRef.current = true;
+  }, []);
+
+  const stopAutoplay = useCallback(() => {
+    setAutoplayActive(false);
+    setAutoplaySpinsRemaining(0);
+    autoplayRef.current = false;
+  }, []);
+
+  // Autoplay effect - trigger next spin when current spin finishes
+  useEffect(() => {
+    if (!autoplayActive || isSpinning || autoplaySpinsRemaining <= 0) return;
+    if (showBonusIntro || showBonusComplete) return; // Don't autoplay during modals
+
+    const timeout = setTimeout(() => {
+      if (autoplayRef.current && autoplaySpinsRemaining > 0) {
+        setAutoplaySpinsRemaining(prev => prev - 1);
+        if (autoplaySpinsRemaining === 1) {
+          stopAutoplay();
+        }
+        animateSpin(bonusState?.active || false);
+      }
+    }, 800); // Small delay between spins
+
+    return () => clearTimeout(timeout);
+  }, [autoplayActive, isSpinning, autoplaySpinsRemaining, showBonusIntro, showBonusComplete, animateSpin, bonusState, stopAutoplay]);
+
   // Render cell - FULL BLEED, no borders
   const renderCell = (cell: GridCell, index: number) => {
     const symbol = SYMBOL_BY_ID.get(cell.symbolId);
@@ -415,24 +451,59 @@ export function SlotsContent() {
           )}
         </div>
 
-        {/* Spin Button - Fixed at bottom */}
-        <div className="mt-2 sm:mt-4 flex justify-center flex-shrink-0 pb-safe">
-          <button
-            onClick={handleSpin}
-            disabled={isSpinning}
-            className={`
-              w-full max-w-xs px-8 sm:px-16 py-4 sm:py-5 rounded-xl font-heading text-xl sm:text-2xl uppercase tracking-wider
-              transition-all duration-200 shadow-lg transform
-              ${isSpinning
-                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-                : isInBonus
-                  ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:shadow-purple-500/50 hover:shadow-xl active:scale-95'
-                  : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl active:scale-95'
-              }
-            `}
-          >
-            {isSpinning ? 'SPINNING...' : isInBonus ? 'FREE SPIN' : 'SPIN'}
-          </button>
+        {/* Spin Button & Autoplay - Fixed at bottom */}
+        <div className="mt-2 sm:mt-4 flex flex-col items-center gap-2 flex-shrink-0 pb-safe">
+          {/* Main spin button */}
+          <div className="flex items-center gap-2 w-full max-w-md justify-center">
+            <button
+              onClick={handleSpin}
+              disabled={isSpinning || autoplayActive}
+              className={`
+                flex-1 max-w-xs px-8 sm:px-16 py-4 sm:py-5 rounded-xl font-heading text-xl sm:text-2xl uppercase tracking-wider
+                transition-all duration-200 shadow-lg transform
+                ${isSpinning || autoplayActive
+                  ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                  : isInBonus
+                    ? 'bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:shadow-purple-500/50 hover:shadow-xl active:scale-95'
+                    : 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-black hover:shadow-yellow-500/50 hover:shadow-xl active:scale-95'
+                }
+              `}
+            >
+              {autoplayActive
+                ? `AUTO (${autoplaySpinsRemaining})`
+                : isSpinning
+                  ? 'SPINNING...'
+                  : isInBonus
+                    ? 'FREE SPIN'
+                    : 'SPIN'}
+            </button>
+
+            {/* Stop autoplay button */}
+            {autoplayActive && (
+              <button
+                onClick={stopAutoplay}
+                className="px-4 py-4 sm:py-5 rounded-xl font-heading text-lg uppercase bg-red-600 text-white hover:bg-red-700 transition-all active:scale-95"
+              >
+                STOP
+              </button>
+            )}
+          </div>
+
+          {/* Autoplay options - only show when not spinning and not in autoplay */}
+          {!autoplayActive && !isSpinning && !isInBonus && (
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-mono text-gray-500">AUTO:</span>
+              {[10, 25, 50, 100].map(count => (
+                <button
+                  key={count}
+                  onClick={() => startAutoplay(count)}
+                  className="px-3 py-1.5 text-xs font-mono bg-gray-800 hover:bg-gray-700 text-gray-300 hover:text-white rounded-lg border border-gray-700 hover:border-gray-600 transition-all"
+                >
+                  {count}
+                </button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Auth Notice */}
