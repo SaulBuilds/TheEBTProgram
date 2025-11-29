@@ -16,9 +16,29 @@ interface MousePosition {
   normalizedY: number;
 }
 
+// Detect mobile/touch devices
+function useIsMobile() {
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouchDevice || isSmallScreen);
+    };
+
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
+
+  return isMobile;
+}
+
 export function DitheredVideoBackground() {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const [mousePos, setMousePos] = useState<MousePosition>({
     x: 0,
     y: 0,
@@ -28,8 +48,11 @@ export function DitheredVideoBackground() {
   const [isLoaded, setIsLoaded] = useState(false);
   const [videoDuration, setVideoDuration] = useState(0);
 
-  // Handle mouse movement for interactive effects
+  // Handle mouse movement for interactive effects (desktop only)
   useEffect(() => {
+    // Skip mouse effects on mobile
+    if (isMobile) return;
+
     const handleMouseMove = (e: MouseEvent) => {
       setMousePos({
         x: e.clientX,
@@ -41,7 +64,7 @@ export function DitheredVideoBackground() {
 
     window.addEventListener('mousemove', handleMouseMove);
     return () => window.removeEventListener('mousemove', handleMouseMove);
-  }, []);
+  }, [isMobile]);
 
   // Handle video load
   useEffect(() => {
@@ -72,13 +95,22 @@ export function DitheredVideoBackground() {
     };
   }, []);
 
-  // Set up GSAP ScrollTrigger for video scrubbing
+  // Set up GSAP ScrollTrigger for video scrubbing (desktop) or autoplay (mobile)
   useEffect(() => {
     if (!isLoaded || !videoDuration || typeof window === 'undefined') return;
 
     const video = videoRef.current;
     if (!video) return;
 
+    // On mobile: simple autoplay loop
+    if (isMobile) {
+      video.play().catch(() => {
+        // Autoplay might be blocked, that's okay
+      });
+      return;
+    }
+
+    // On desktop: scroll-controlled video
     // Create a scroll timeline that controls video playback
     // Slower scrubbing - video plays at 1/3 speed relative to scroll
     const scrollTrigger = ScrollTrigger.create({
@@ -102,10 +134,18 @@ export function DitheredVideoBackground() {
     return () => {
       scrollTrigger.kill();
     };
-  }, [isLoaded, videoDuration]);
+  }, [isLoaded, videoDuration, isMobile]);
 
-  // Calculate CSS filter values based on mouse position
+  // Calculate CSS filter values based on mouse position (simplified on mobile)
   const getFilterStyles = useCallback(() => {
+    // On mobile, use fixed filter values for better performance
+    if (isMobile) {
+      return {
+        filter: 'contrast(1.1) brightness(0.9) saturate(0.6) sepia(0.2)',
+      };
+    }
+
+    // Desktop: dynamic filters based on mouse position
     // Contrast varies from 1.0 to 1.5 based on X
     const contrast = 1.0 + mousePos.normalizedX * 0.5;
     // Brightness varies from 0.8 to 1.2 based on Y
@@ -121,7 +161,7 @@ export function DitheredVideoBackground() {
     return {
       filter: `contrast(${contrast}) brightness(${brightness}) saturate(${saturate}) sepia(${sepia})`,
     };
-  }, [mousePos.normalizedX, mousePos.normalizedY]);
+  }, [mousePos.normalizedX, mousePos.normalizedY, isMobile]);
 
   return (
     <div
@@ -136,52 +176,51 @@ export function DitheredVideoBackground() {
         style={{
           ...getFilterStyles(),
           opacity: isLoaded ? 0.7 : 0,
-          transition: 'opacity 0.8s ease-in-out, filter 0.15s ease-out',
+          transition: isMobile ? 'opacity 0.8s ease-in-out' : 'opacity 0.8s ease-in-out, filter 0.15s ease-out',
         }}
         muted
         playsInline
-        preload="auto"
+        preload={isMobile ? 'metadata' : 'auto'}
+        autoPlay={isMobile}
         loop
       />
 
-      {/* Pixelation/Dither overlay using SVG filter */}
-      <svg className="absolute" style={{ width: 0, height: 0 }}>
-        <defs>
-          <filter id="dither-filter" x="0" y="0" width="100%" height="100%">
-            {/* Pixelate effect */}
-            <feFlood x="4" y="4" height="2" width="2" />
-            <feComposite width="10" height="10" />
-            <feTile result="a" />
-            <feComposite in="SourceGraphic" in2="a" operator="in" />
-            <feMorphology operator="dilate" radius="5" />
-            {/* Add noise for dither effect */}
-            <feTurbulence
-              type="fractalNoise"
-              baseFrequency={0.5 + mousePos.normalizedX * 0.5}
-              numOctaves="2"
-              result="noise"
-            />
-            <feDisplacementMap
-              in2="noise"
-              scale={2 + mousePos.normalizedY * 3}
-              xChannelSelector="R"
-              yChannelSelector="G"
-            />
-          </filter>
-        </defs>
-      </svg>
+      {/* Pixelation/Dither overlay using SVG filter (desktop only - too heavy for mobile) */}
+      {!isMobile && (
+        <svg className="absolute" style={{ width: 0, height: 0 }}>
+          <defs>
+            <filter id="dither-filter" x="0" y="0" width="100%" height="100%">
+              {/* Pixelate effect */}
+              <feFlood x="4" y="4" height="2" width="2" />
+              <feComposite width="10" height="10" />
+              <feTile result="a" />
+              <feComposite in="SourceGraphic" in2="a" operator="in" />
+              <feMorphology operator="dilate" radius="5" />
+              {/* Add noise for dither effect */}
+              <feTurbulence
+                type="fractalNoise"
+                baseFrequency={0.5 + mousePos.normalizedX * 0.5}
+                numOctaves="2"
+                result="noise"
+              />
+              <feDisplacementMap
+                in2="noise"
+                scale={2 + mousePos.normalizedY * 3}
+                xChannelSelector="R"
+                yChannelSelector="G"
+              />
+            </filter>
+          </defs>
+        </svg>
+      )}
 
-      {/* Scanlines overlay */}
+      {/* Scanlines overlay (simplified on mobile) */}
       <div
         className="absolute inset-0 pointer-events-none"
         style={{
-          background: `repeating-linear-gradient(
-            0deg,
-            transparent,
-            transparent 2px,
-            rgba(0, 0, 0, ${0.2 + mousePos.normalizedY * 0.2}) 2px,
-            rgba(0, 0, 0, ${0.2 + mousePos.normalizedY * 0.2}) 4px
-          )`,
+          background: isMobile
+            ? `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, 0.15) 2px, rgba(0, 0, 0, 0.15) 4px)`
+            : `repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0, 0, 0, ${0.2 + mousePos.normalizedY * 0.2}) 2px, rgba(0, 0, 0, ${0.2 + mousePos.normalizedY * 0.2}) 4px)`,
           mixBlendMode: 'multiply',
         }}
       />
@@ -200,22 +239,24 @@ export function DitheredVideoBackground() {
         }}
       />
 
-      {/* Mouse-following gold spotlight */}
-      <div
-        className="absolute w-[600px] h-[600px] rounded-full pointer-events-none"
-        style={{
-          background: `radial-gradient(
-            circle,
-            rgba(255, 215, 0, 0.08) 0%,
-            rgba(255, 215, 0, 0.03) 30%,
-            transparent 70%
-          )`,
-          left: mousePos.x - 300,
-          top: mousePos.y - 300,
-          transition: 'left 0.2s ease-out, top 0.2s ease-out',
-          mixBlendMode: 'screen',
-        }}
-      />
+      {/* Mouse-following gold spotlight (desktop only) */}
+      {!isMobile && (
+        <div
+          className="absolute w-[600px] h-[600px] rounded-full pointer-events-none"
+          style={{
+            background: `radial-gradient(
+              circle,
+              rgba(255, 215, 0, 0.08) 0%,
+              rgba(255, 215, 0, 0.03) 30%,
+              transparent 70%
+            )`,
+            left: mousePos.x - 300,
+            top: mousePos.y - 300,
+            transition: 'left 0.2s ease-out, top 0.2s ease-out',
+            mixBlendMode: 'screen',
+          }}
+        />
+      )}
 
       {/* Noise/grain overlay */}
       <div

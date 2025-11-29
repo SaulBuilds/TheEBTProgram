@@ -3,14 +3,33 @@
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/Button';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { isFeatureEnabled } from '@/config/featureFlags';
+import { useQueryClient } from '@tanstack/react-query';
 
 export function Navbar() {
   const { ready, authenticated, user, login, logout } = usePrivy();
   const router = useRouter();
   const [scrolled, setScrolled] = useState(false);
+  const queryClient = useQueryClient();
+
+  // Enhanced logout that clears all cached data
+  const handleLogout = useCallback(async () => {
+    // Clear React Query cache to prevent stale data
+    queryClient.clear();
+
+    // Clear sessionStorage (application form data)
+    if (typeof window !== 'undefined') {
+      sessionStorage.removeItem('ebt_application_state');
+    }
+
+    // Perform Privy logout
+    await logout();
+
+    // Redirect to home
+    router.push('/');
+  }, [logout, queryClient, router]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -89,7 +108,7 @@ export function Navbar() {
                 >
                   DASHBOARD
                 </Button>
-                <Button onClick={() => logout()} size="sm" variant="ghost">
+                <Button onClick={handleLogout} size="sm" variant="ghost">
                   LOGOUT
                 </Button>
               </div>
