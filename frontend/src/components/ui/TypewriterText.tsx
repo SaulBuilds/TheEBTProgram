@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 interface TypewriterTextProps {
   text: string;
@@ -10,15 +10,17 @@ interface TypewriterTextProps {
 
 export function TypewriterText({ text, className = '', speed = 50 }: TypewriterTextProps) {
   const [displayedText, setDisplayedText] = useState('');
+  const indexRef = useRef(0);
 
   useEffect(() => {
-    let index = 0;
+    indexRef.current = 0;
     setDisplayedText('');
 
     const interval = setInterval(() => {
-      if (index < text.length) {
-        setDisplayedText((prev) => prev + text.charAt(index));
-        index++;
+      if (indexRef.current < text.length) {
+        const currentIndex = indexRef.current;
+        setDisplayedText(text.slice(0, currentIndex + 1));
+        indexRef.current++;
       } else {
         clearInterval(interval);
       }
