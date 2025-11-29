@@ -4,7 +4,7 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { usePrivy } from '@privy-io/react-auth';
 
-type LeaderboardCategory = 'total' | 'weekly' | 'streaks' | 'social';
+type LeaderboardCategory = 'total' | 'weekly' | 'streaks' | 'social' | 'slots';
 
 interface LeaderboardEntry {
   rank: number;
@@ -46,6 +46,11 @@ const mockLeaderboardData: Record<LeaderboardCategory, LeaderboardEntry[]> = {
     { rank: 2, userId: 'user1', username: 'breadlord420', profilePic: '', value: 980, valueLabel: 'social score', change: 0, badges: [] },
     { rank: 3, userId: 'user9', username: 'starvingArtist', profilePic: '', value: 850, valueLabel: 'social score', change: 1, badges: ['OG'] },
   ],
+  slots: [
+    { rank: 1, userId: 'user1', username: 'breadlord420', profilePic: '', value: 125000, valueLabel: 'slot points', change: 0, badges: ['High Roller'] },
+    { rank: 2, userId: 'user5', username: 'cryptoHungry', profilePic: '', value: 98000, valueLabel: 'slot points', change: 2, badges: [] },
+    { rank: 3, userId: 'user4', username: 'degenChef', profilePic: '', value: 75000, valueLabel: 'slot points', change: -1, badges: [] },
+  ],
 };
 
 const categories: { id: LeaderboardCategory; name: string; icon: React.ReactNode }[] = [
@@ -82,6 +87,15 @@ const categories: { id: LeaderboardCategory; name: string; icon: React.ReactNode
     icon: (
       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z" />
+      </svg>
+    ),
+  },
+  {
+    id: 'slots',
+    name: 'Slot Points',
+    icon: (
+      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
       </svg>
     ),
   },

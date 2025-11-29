@@ -2,6 +2,7 @@
 
 import React, { useState, useCallback, useEffect, useRef } from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { usePrivy } from '@privy-io/react-auth';
 import gsap from 'gsap';
 import {
@@ -13,6 +14,7 @@ import {
   FREESPIN_SYMBOL_ID,
   HOLD_SPIN_CONFIG,
   generateCleanGrid,
+  generateGrid,
   executeSpin,
   initializeFreeSpins,
   executeFreeSpinSpin,
@@ -26,12 +28,30 @@ import {
 } from '@/lib/slots/gameEngine';
 import { getRandomSymbol, CASCADE_MULTIPLIERS } from '@/lib/slots/gameConfig';
 
+// ============ TYPES ============
+
+interface SlotStats {
+  totalSpins: number;
+  totalWins: number;
+  totalPoints: number;
+  biggestWin: number;
+  grandWins: number;
+  pendingAirdrop: boolean;
+  currentStreak: number;
+  bestStreak: number;
+}
+
 // ============ MAIN COMPONENT ============
 
 export function SlotsContent() {
-  const { authenticated } = usePrivy();
+  const { authenticated, user, getAccessToken } = usePrivy();
   const gridRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Access control state
+  const [isEligible, setIsEligible] = useState<boolean | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+  const [serverStats, setServerStats] = useState<SlotStats | null>(null);
 
   // Game state
   const [grid, setGrid] = useState<GridCell[]>([]);
@@ -45,24 +65,105 @@ export function SlotsContent() {
   const [showFreeSpinsComplete, setShowFreeSpinsComplete] = useState(false);
   const [showHoldSpinIntro, setShowHoldSpinIntro] = useState(false);
   const [showHoldSpinComplete, setShowHoldSpinComplete] = useState(false);
+  const [showGrandWin, setShowGrandWin] = useState(false);
 
-  // Stats
+  // Stats (local session)
   const [sessionPoints, setSessionPoints] = useState(0);
   const [lastWin, setLastWin] = useState<{ points: number; cascades: number; multiplier: number } | null>(null);
   const [spinCount, setSpinCount] = useState(0);
   const [showWin, setShowWin] = useState(false);
+
+  // Cascade win display
+  const [cascadeWinDisplay, setCascadeWinDisplay] = useState<{ amount: number; cascade: number } | null>(null);
 
   // Autoplay state
   const [autoplayActive, setAutoplayActive] = useState(false);
   const [autoplaySpinsRemaining, setAutoplaySpinsRemaining] = useState(0);
   const autoplayRef = useRef(false);
 
-  // Initialize grid on mount
+  // Check eligibility on mount
   useEffect(() => {
-    const initialGrid = generateCleanGrid();
-    setGrid(initialGrid);
-    setDisplayGrid(initialGrid);
-  }, []);
+    async function checkEligibility() {
+      if (!authenticated || !user?.id) {
+        setIsEligible(false);
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const token = await getAccessToken();
+        const response = await fetch('/api/slots/stats', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'x-user-id': user.id,
+          },
+        });
+
+        const data = await response.json();
+
+        if (data.eligible) {
+          setIsEligible(true);
+          setServerStats(data.stats);
+          // Initialize grid
+          const initialGrid = generateCleanGrid();
+          setGrid(initialGrid);
+          setDisplayGrid(initialGrid);
+        } else {
+          setIsEligible(false);
+        }
+      } catch (error) {
+        console.error('Error checking eligibility:', error);
+        setIsEligible(false);
+      }
+
+      setIsLoading(false);
+    }
+
+    checkEligibility();
+  }, [authenticated, user, getAccessToken]);
+
+  // Record spin to server
+  const recordSpin = useCallback(async (
+    winAmount: number,
+    cascadeCount: number,
+    triggeredBonus: 'freespins' | 'holdspin' | null,
+    isGrandWin: boolean,
+    spinType: 'base' | 'free' | 'hold'
+  ) => {
+    if (!authenticated || !user?.id) return;
+
+    try {
+      const token = await getAccessToken();
+      const response = await fetch('/api/slots/spin', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'x-user-id': user.id,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          winAmount,
+          cascadeCount,
+          triggeredBonus,
+          isGrandWin,
+          spinType,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        setServerStats(data.stats);
+
+        // Show grand win celebration
+        if (data.airdropTriggered) {
+          setShowGrandWin(true);
+        }
+      }
+    } catch (error) {
+      console.error('Error recording spin:', error);
+    }
+  }, [authenticated, user, getAccessToken]);
 
   // Create spinning grid for animation
   const createSpinningGrid = useCallback((): GridCell[] => {
@@ -77,26 +178,25 @@ export function SlotsContent() {
   }, []);
 
   // ============ SMOOTH REEL SPIN ANIMATION ============
-  const animateSpin = useCallback(async (isFreeSpins = false, isHoldSpin = false) => {
+  const animateSpin = useCallback(async (isFreeSpins = false) => {
     if (!gridRef.current || isSpinning) return;
 
     setIsSpinning(true);
     setLastWin(null);
     setShowWin(false);
+    setCascadeWinDisplay(null);
 
     const cells = cellRefs.current.filter(Boolean) as HTMLDivElement[];
 
     // Phase 1: All symbols move UP slightly, then blur and fall down
     const spinTimeline = gsap.timeline();
 
-    // Lift all cells up first (anticipation)
     spinTimeline.to(cells, {
       y: -20,
       duration: 0.15,
       ease: 'power2.out',
     });
 
-    // Then blur and drop
     for (let col = 0; col < GRID_SIZE; col++) {
       const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
       spinTimeline.to(colCells, {
@@ -117,27 +217,29 @@ export function SlotsContent() {
       setDisplayGrid(createSpinningGrid());
     }
 
-    // Phase 3: Execute game logic
+    // Phase 3: Execute game logic - GENERATE NEW GRID, don't reuse old one!
     let result: SpinResult;
     let updatedFreeSpins: FreeSpinsState | null = null;
+    let spinType: 'base' | 'free' | 'hold' = 'base';
 
     if (isFreeSpins && freeSpinsState) {
       const freeSpinResult = executeFreeSpinSpin(freeSpinsState);
       result = freeSpinResult.result;
       updatedFreeSpins = freeSpinResult.updatedState;
+      spinType = 'free';
     } else {
-      result = executeSpin(grid);
+      // IMPORTANT: Generate a NEW grid for each spin!
+      const newGrid = generateGrid(false);
+      result = executeSpin(newGrid);
+      spinType = 'base';
     }
 
     // Phase 4: Land symbols column by column with bounce
     setDisplayGrid(result.cascadeSteps.length > 0 ? result.cascadeSteps[0].grid : result.finalGrid);
 
     const landTimeline = gsap.timeline();
-
-    // First reset all cells to above position
     gsap.set(cells, { y: -50, opacity: 0.3, filter: 'blur(4px)' });
 
-    // Land each column with delay
     for (let col = 0; col < GRID_SIZE; col++) {
       const colCells = cells.filter((_, idx) => idx % GRID_SIZE === col);
       landTimeline.to(colCells, {
@@ -152,10 +254,19 @@ export function SlotsContent() {
 
     await landTimeline.play();
 
-    // Phase 5: Process cascades with animations
+    // Phase 5: Process cascades with animations and show accumulating wins
+    let runningTotal = 0;
+
     if (result.cascadeSteps.length > 0) {
       for (let stepIdx = 0; stepIdx < result.cascadeSteps.length; stepIdx++) {
         const step = result.cascadeSteps[stepIdx];
+        runningTotal += step.pointsEarned;
+
+        // Show cascade win accumulation
+        setCascadeWinDisplay({
+          amount: runningTotal,
+          cascade: step.cascadeNumber,
+        });
 
         // Highlight matched symbols
         const matchedIndices: number[] = [];
@@ -167,7 +278,6 @@ export function SlotsContent() {
 
         const matchedCells = matchedIndices.map(idx => cells[idx]).filter(Boolean);
 
-        // Pulse and glow effect
         await gsap.to(matchedCells, {
           scale: 1.15,
           boxShadow: '0 0 20px rgba(255, 215, 0, 0.8)',
@@ -177,7 +287,6 @@ export function SlotsContent() {
           ease: 'power2.inOut',
         });
 
-        // Explode matched symbols
         await gsap.to(matchedCells, {
           scale: 0,
           opacity: 0,
@@ -188,14 +297,12 @@ export function SlotsContent() {
 
         await new Promise(resolve => setTimeout(resolve, 100));
 
-        // Update grid with next step
         const nextGrid = stepIdx + 1 < result.cascadeSteps.length
           ? result.cascadeSteps[stepIdx + 1].grid
           : result.finalGrid;
 
         setDisplayGrid(nextGrid);
 
-        // Animate new symbols falling in
         const newSymbolIndices = step.newSymbols.map(ns => ns.row * GRID_SIZE + ns.col);
         const newCells = newSymbolIndices.map(idx => cells[idx]).filter(Boolean);
 
@@ -214,6 +321,9 @@ export function SlotsContent() {
       }
     }
 
+    // Clear cascade display
+    setCascadeWinDisplay(null);
+
     // Update final state
     setGrid(result.finalGrid);
     setDisplayGrid(result.finalGrid);
@@ -229,6 +339,14 @@ export function SlotsContent() {
       });
       setShowWin(true);
     }
+
+    // Determine triggered bonus
+    let triggeredBonus: 'freespins' | 'holdspin' | null = null;
+    if (result.scatterTriggered) triggeredBonus = 'freespins';
+    if (result.bonusTriggered) triggeredBonus = 'holdspin';
+
+    // Record spin to server
+    await recordSpin(result.totalPayout, result.cascadeCount, triggeredBonus, false, spinType);
 
     // Handle Free Spins trigger (scatter)
     if (result.scatterTriggered && !isFreeSpins) {
@@ -260,7 +378,7 @@ export function SlotsContent() {
 
     setSpinCount(prev => prev + 1);
     setIsSpinning(false);
-  }, [grid, isSpinning, freeSpinsState, createSpinningGrid]);
+  }, [isSpinning, freeSpinsState, createSpinningGrid, recordSpin]);
 
   // ============ HOLD & SPIN ANIMATION ============
   const animateHoldSpin = useCallback(async () => {
@@ -270,7 +388,6 @@ export function SlotsContent() {
 
     const cells = cellRefs.current.filter(Boolean) as HTMLDivElement[];
 
-    // Only animate unlocked cells
     const unlockedIndices: number[] = [];
     for (let row = 0; row < GRID_SIZE; row++) {
       for (let col = 0; col < GRID_SIZE; col++) {
@@ -283,7 +400,6 @@ export function SlotsContent() {
 
     const unlockedCells = unlockedIndices.map(idx => cells[idx]).filter(Boolean);
 
-    // Spin unlocked cells
     await gsap.to(unlockedCells, {
       y: -20,
       opacity: 0.3,
@@ -292,10 +408,8 @@ export function SlotsContent() {
       ease: 'power2.in',
     });
 
-    // Execute hold spin logic
     const { newCoins, updatedState } = executeHoldSpinSpin(holdSpinState);
 
-    // Land animation
     gsap.set(unlockedCells, { y: -40 });
     await gsap.to(unlockedCells, {
       y: 0,
@@ -305,7 +419,6 @@ export function SlotsContent() {
       ease: 'back.out(1.3)',
     });
 
-    // Flash new coins
     if (newCoins.length > 0) {
       const newCoinIndices = newCoins.map(pos => pos.row * GRID_SIZE + pos.col);
       const newCoinCells = newCoinIndices.map(idx => cells[idx]).filter(Boolean);
@@ -325,12 +438,21 @@ export function SlotsContent() {
     setHoldSpinState(updatedState);
 
     if (!updatedState.active) {
+      const winAmount = updatedState.totalValue * 10;
+      setSessionPoints(prev => prev + winAmount);
+
+      // Record the hold spin completion
+      await recordSpin(winAmount, 0, null, updatedState.isGrandWin, 'hold');
+
+      if (updatedState.isGrandWin) {
+        setShowGrandWin(true);
+      }
+
       setShowHoldSpinComplete(true);
-      setSessionPoints(prev => prev + updatedState.totalValue * 10); // Base bet multiplier
     }
 
     setIsSpinning(false);
-  }, [holdSpinState, isSpinning]);
+  }, [holdSpinState, isSpinning, recordSpin]);
 
   // ============ HANDLERS ============
   const handleSpin = useCallback(() => {
@@ -362,6 +484,10 @@ export function SlotsContent() {
     setHoldSpinState(null);
   }, []);
 
+  const closeGrandWin = useCallback(() => {
+    setShowGrandWin(false);
+  }, []);
+
   // Autoplay functions
   const startAutoplay = useCallback((spins: number) => {
     setAutoplayActive(true);
@@ -378,7 +504,7 @@ export function SlotsContent() {
   // Autoplay effect
   useEffect(() => {
     if (!autoplayActive || isSpinning || autoplaySpinsRemaining <= 0) return;
-    if (showFreeSpinsIntro || showFreeSpinsComplete || showHoldSpinIntro || showHoldSpinComplete) return;
+    if (showFreeSpinsIntro || showFreeSpinsComplete || showHoldSpinIntro || showHoldSpinComplete || showGrandWin) return;
 
     const timeout = setTimeout(() => {
       if (autoplayRef.current && autoplaySpinsRemaining > 0) {
@@ -391,7 +517,7 @@ export function SlotsContent() {
     }, 1000);
 
     return () => clearTimeout(timeout);
-  }, [autoplayActive, isSpinning, autoplaySpinsRemaining, showFreeSpinsIntro, showFreeSpinsComplete, showHoldSpinIntro, showHoldSpinComplete, handleSpin, stopAutoplay]);
+  }, [autoplayActive, isSpinning, autoplaySpinsRemaining, showFreeSpinsIntro, showFreeSpinsComplete, showHoldSpinIntro, showHoldSpinComplete, showGrandWin, handleSpin, stopAutoplay]);
 
   // ============ RENDER CELL ============
   const renderCell = (cell: GridCell, index: number) => {
@@ -404,7 +530,6 @@ export function SlotsContent() {
     const isFreeSpin = cell.symbolId === FREESPIN_SYMBOL_ID;
     const isSticky = cell.isSticky;
 
-    // If in hold spin mode, show coins for locked positions
     if (holdSpinState?.active) {
       const row = Math.floor(index / GRID_SIZE);
       const col = index % GRID_SIZE;
@@ -441,7 +566,6 @@ export function SlotsContent() {
         className="relative w-full h-full overflow-hidden"
         style={{ transformOrigin: 'center center' }}
       >
-        {/* Full-bleed image - object-contain to show full image */}
         <Image
           src={symbol.imagePath}
           alt={symbol.name}
@@ -452,7 +576,6 @@ export function SlotsContent() {
           priority={index < 10}
         />
 
-        {/* Sticky wild glow */}
         {isSticky && (
           <div
             className="absolute inset-0 pointer-events-none animate-pulse"
@@ -463,28 +586,24 @@ export function SlotsContent() {
           />
         )}
 
-        {/* Wild badge with multiplier */}
         {isWild && (
           <div className="absolute top-0 right-0 bg-gradient-to-br from-yellow-400 to-yellow-600 text-black text-xs font-bold px-2 py-1 rounded-bl-lg shadow-lg">
             {cell.wildMultiplier && cell.wildMultiplier > 1 ? `${cell.wildMultiplier}x` : 'W'}
           </div>
         )}
 
-        {/* Scatter badge */}
         {isScatter && (
           <div className="absolute top-0 right-0 bg-gradient-to-br from-purple-500 to-purple-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-pulse shadow-lg">
             FS
           </div>
         )}
 
-        {/* Bonus badge */}
         {isBonus && (
           <div className="absolute top-0 right-0 bg-gradient-to-br from-green-500 to-green-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-pulse shadow-lg">
             $
           </div>
         )}
 
-        {/* Free Spin retrigger badge */}
         {isFreeSpin && (
           <div className="absolute top-0 right-0 bg-gradient-to-br from-pink-500 to-pink-700 text-white text-xs font-bold px-2 py-1 rounded-bl-lg animate-pulse shadow-lg">
             +
@@ -493,6 +612,55 @@ export function SlotsContent() {
       </div>
     );
   };
+
+  // ============ LOADING STATE ============
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-black">
+        <div className="text-center">
+          <div className="animate-spin w-16 h-16 border-4 border-yellow-500 border-t-transparent rounded-full mx-auto mb-4" />
+          <p className="text-yellow-400 font-heading text-xl">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // ============ NOT ELIGIBLE STATE ============
+  if (!isEligible) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-b from-gray-900 to-black p-4">
+        <div className="max-w-md w-full text-center">
+          <h1 className="text-4xl font-heading text-yellow-400 mb-4">THE GROCERY RUN</h1>
+          <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8 mb-6">
+            <div className="text-6xl mb-4">🎰</div>
+            <h2 className="text-2xl font-heading text-white mb-4">Members Only</h2>
+            <p className="text-gray-400 mb-6">
+              You must be an approved EBT Card holder to play The Grocery Run.
+              Apply now for a chance to win up to <span className="text-green-400 font-bold">2 ETH</span>!
+            </p>
+            {!authenticated ? (
+              <Link
+                href="/"
+                className="inline-block px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-lg rounded-xl hover:shadow-xl transition-all"
+              >
+                CONNECT WALLET
+              </Link>
+            ) : (
+              <Link
+                href="/apply"
+                className="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-heading text-lg rounded-xl hover:shadow-xl transition-all"
+              >
+                APPLY NOW
+              </Link>
+            )}
+          </div>
+          <p className="text-xs text-gray-500">
+            Every spin counts. Grand prize winners receive 2 ETH airdrop.
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   const isInFreeSpins = freeSpinsState?.active || false;
   const isInHoldSpin = holdSpinState?.active || false;
@@ -506,14 +674,12 @@ export function SlotsContent() {
         backgroundPosition: 'center',
       }}
     >
-      {/* Dark overlay */}
       <div className={`absolute inset-0 transition-colors duration-500 ${
         isInFreeSpins ? 'bg-purple-900/60' :
         isInHoldSpin ? 'bg-green-900/60' :
         'bg-black/70'
       }`} />
 
-      {/* Content */}
       <div className="relative z-10 flex flex-col h-screen max-h-screen p-2 sm:p-4">
         {/* Header */}
         <div className="text-center mb-2 sm:mb-4 flex-shrink-0">
@@ -529,49 +695,47 @@ export function SlotsContent() {
               <span className="text-xl sm:text-3xl font-heading text-yellow-400">
                 {freeSpinsState.spinsRemaining}/{freeSpinsState.totalSpins}
               </span>
-              {freeSpinsState.stickyWilds.size > 0 && (
-                <span className="text-sm sm:text-lg font-mono text-yellow-400">
-                  {freeSpinsState.stickyWilds.size} WILDS
-                </span>
-              )}
             </div>
           )}
           {isInHoldSpin && holdSpinState && (
             <div className="mt-1 sm:mt-2 flex items-center justify-center gap-2 sm:gap-4 text-green-300">
               <span className="text-sm sm:text-lg font-mono">HOLD & SPIN</span>
               <span className="text-xl sm:text-3xl font-heading text-yellow-400">
-                {holdSpinState.spinsRemaining} SPINS
-              </span>
-              <span className="text-sm sm:text-lg font-mono text-green-400">
-                {holdSpinState.lockedCoins.size}/25 COINS
+                {holdSpinState.spinsRemaining} SPINS LEFT
               </span>
             </div>
           )}
         </div>
 
         {/* Stats Bar */}
-        <div className="flex justify-center gap-2 sm:gap-4 mb-2 sm:mb-4 flex-shrink-0">
+        <div className="flex justify-center gap-2 sm:gap-4 mb-2 sm:mb-4 flex-shrink-0 flex-wrap">
           <div className="bg-black/70 backdrop-blur border border-yellow-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
-            <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Points</p>
+            <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Session</p>
             <p className="text-lg sm:text-2xl font-heading text-yellow-400">{sessionPoints.toLocaleString()}</p>
           </div>
           <div className="bg-black/70 backdrop-blur border border-green-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
-            <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Spins</p>
-            <p className="text-lg sm:text-2xl font-heading text-green-400">{spinCount}</p>
+            <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Total Spins</p>
+            <p className="text-lg sm:text-2xl font-heading text-green-400">
+              {(serverStats?.totalSpins || 0) + spinCount}
+            </p>
           </div>
-          {isInHoldSpin && holdSpinState && (
-            <div className="bg-black/70 backdrop-blur border border-yellow-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
-              <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Total</p>
-              <p className="text-lg sm:text-2xl font-heading text-yellow-400">{holdSpinState.totalValue}x</p>
+          <div className="bg-black/70 backdrop-blur border border-purple-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center">
+            <p className="text-[10px] sm:text-xs font-mono text-gray-500 uppercase">Lifetime</p>
+            <p className="text-lg sm:text-2xl font-heading text-purple-400">
+              {((serverStats?.totalPoints || 0) + sessionPoints).toLocaleString()}
+            </p>
+          </div>
+          {serverStats?.pendingAirdrop && (
+            <div className="bg-black/70 backdrop-blur border border-red-500/40 rounded-lg px-3 py-1.5 sm:px-6 sm:py-3 text-center animate-pulse">
+              <p className="text-[10px] sm:text-xs font-mono text-red-400 uppercase">2 ETH</p>
+              <p className="text-lg sm:text-2xl font-heading text-red-400">PENDING!</p>
             </div>
           )}
         </div>
 
         {/* Main Game Area */}
         <div className="flex-1 flex flex-col items-center justify-center min-h-0">
-          {/* Slot Machine Frame - WIDER with thick black border */}
           <div className="relative w-full max-w-[min(95vw,550px)] mx-auto">
-            {/* Outer black border frame */}
             <div
               className="absolute -inset-3 sm:-inset-4 rounded-2xl sm:rounded-3xl"
               style={{
@@ -580,7 +744,6 @@ export function SlotsContent() {
               }}
             />
 
-            {/* Inner gold trim */}
             <div
               className="absolute -inset-1 sm:-inset-2 rounded-xl sm:rounded-2xl"
               style={{
@@ -589,7 +752,6 @@ export function SlotsContent() {
               }}
             />
 
-            {/* Grid background */}
             <div
               className={`relative rounded-lg sm:rounded-xl overflow-hidden ${
                 isInFreeSpins ? 'bg-purple-900/40' :
@@ -598,7 +760,6 @@ export function SlotsContent() {
               }`}
               style={{ aspectRatio: '5/5' }}
             >
-              {/* 5x5 Grid */}
               <div
                 ref={gridRef}
                 className="w-full h-full grid"
@@ -612,7 +773,7 @@ export function SlotsContent() {
                 {displayGrid.map((cell, index) => (
                   <div
                     key={index}
-                    className="relative bg-black/30 rounded-sm overflow-hidden"
+                    className="relative bg-white rounded-sm overflow-hidden"
                     style={{ aspectRatio: '1/1' }}
                   >
                     {renderCell(cell, index)}
@@ -620,8 +781,21 @@ export function SlotsContent() {
                 ))}
               </div>
 
-              {/* Spinning overlay effect */}
-              {isSpinning && (
+              {/* Cascade Win Display - Shows during cascades */}
+              {cascadeWinDisplay && (
+                <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div className="bg-black/80 px-6 py-3 rounded-xl border-2 border-yellow-500 animate-pulse">
+                    <p className="text-3xl font-heading text-yellow-400">
+                      +{cascadeWinDisplay.amount.toLocaleString()}
+                    </p>
+                    <p className="text-sm font-mono text-yellow-300 text-center">
+                      CASCADE {cascadeWinDisplay.cascade}
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {isSpinning && !cascadeWinDisplay && (
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="absolute inset-0 bg-gradient-to-b from-yellow-500/5 via-transparent to-yellow-500/5 animate-pulse" />
                 </div>
@@ -699,13 +873,6 @@ export function SlotsContent() {
             </div>
           )}
         </div>
-
-        {/* Auth Notice */}
-        {!authenticated && !isInFreeSpins && !isInHoldSpin && (
-          <p className="text-center text-xs text-gray-500 mt-2 flex-shrink-0">
-            Connect wallet to save progress
-          </p>
-        )}
       </div>
 
       {/* Free Spins Intro Modal */}
@@ -738,11 +905,8 @@ export function SlotsContent() {
             <h2 className="text-3xl sm:text-4xl font-heading text-yellow-400 mb-4">
               FREE SPINS COMPLETE!
             </h2>
-            <p className="text-2xl sm:text-3xl font-heading text-green-400 mb-2">
+            <p className="text-2xl sm:text-3xl font-heading text-green-400 mb-6">
               +{sessionPoints.toLocaleString()}
-            </p>
-            <p className="text-sm font-mono text-green-300 mb-6">
-              Total bonus win
             </p>
             <button
               onClick={closeFreeSpinsComplete}
@@ -765,16 +929,9 @@ export function SlotsContent() {
               {holdSpinState.lockedCoins.size} COINS LOCKED
             </p>
             <p className="text-sm font-mono text-green-300 mb-4">
-              Land coins to reset spins!<br/>
-              Fill all 25 for GRAND PRIZE!
+              Fill all 25 for GRAND PRIZE!<br/>
+              <span className="text-yellow-400">2 ETH AIRDROP!</span>
             </p>
-            <div className="flex justify-center gap-2 mb-6 flex-wrap">
-              <span className="px-2 py-1 bg-amber-900 text-amber-200 text-xs rounded">MINI</span>
-              <span className="px-2 py-1 bg-gray-600 text-gray-200 text-xs rounded">MINOR</span>
-              <span className="px-2 py-1 bg-yellow-600 text-yellow-200 text-xs rounded">MAJOR</span>
-              <span className="px-2 py-1 bg-purple-600 text-purple-200 text-xs rounded">MEGA</span>
-              <span className="px-2 py-1 bg-red-600 text-red-200 text-xs rounded">GRAND</span>
-            </div>
             <button
               onClick={startHoldSpin}
               className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
@@ -798,14 +955,44 @@ export function SlotsContent() {
             <p className="text-lg font-mono text-yellow-300 mb-2">
               +{(holdSpinState.totalValue * 10).toLocaleString()} POINTS
             </p>
-            <p className="text-sm font-mono text-gray-400 mb-6">
-              {holdSpinState.lockedCoins.size} coins collected
-            </p>
+            {holdSpinState.isGrandWin && (
+              <p className="text-lg font-heading text-red-400 animate-pulse mb-2">
+                2 ETH AIRDROP INCOMING!
+              </p>
+            )}
             <button
               onClick={closeHoldSpinComplete}
               className="w-full py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
             >
               CONTINUE
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Grand Win Celebration Modal */}
+      {showGrandWin && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/90 p-4">
+          <div className="bg-gradient-to-b from-red-900 to-red-950 border-4 border-red-400 rounded-2xl p-8 max-w-md w-full text-center animate-pulse">
+            <div className="text-6xl mb-4">🎉🎰🎉</div>
+            <h2 className="text-4xl sm:text-5xl font-heading text-yellow-400 mb-4">
+              GRAND WINNER!
+            </h2>
+            <p className="text-2xl font-heading text-white mb-4">
+              You filled all 25 positions!
+            </p>
+            <p className="text-3xl font-heading text-green-400 mb-6">
+              2 ETH AIRDROP
+            </p>
+            <p className="text-sm font-mono text-gray-400 mb-6">
+              Your account has been flagged for airdrop.<br/>
+              You will receive 2 ETH within 24-48 hours.
+            </p>
+            <button
+              onClick={closeGrandWin}
+              className="w-full py-4 bg-gradient-to-r from-red-500 to-red-600 text-white font-heading text-xl rounded-xl hover:shadow-xl transition-all active:scale-95"
+            >
+              AMAZING!
             </button>
           </div>
         </div>

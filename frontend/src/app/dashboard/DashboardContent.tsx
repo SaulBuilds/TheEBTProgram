@@ -166,12 +166,20 @@ export default function DashboardContent() {
                   <p className="text-gray-400 text-sm mb-4">
                     Your application has been approved! You can now mint your EBT Card.
                   </p>
-                  <Link
-                    href={`/mint/${application.userId}`}
-                    className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
-                  >
-                    MINT YOUR EBT CARD
-                  </Link>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Link
+                      href={`/mint/${application.userId}`}
+                      className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
+                    >
+                      MINT YOUR EBT CARD
+                    </Link>
+                    <Link
+                      href="/slots"
+                      className="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-green-600 text-white font-heading tracking-wide rounded-lg hover:from-purple-500 hover:to-green-500 transition-colors"
+                    >
+                      🎰 PLAY SLOTS
+                    </Link>
+                  </div>
                 </div>
               )}
 
@@ -413,12 +421,61 @@ export default function DashboardContent() {
             </div>
           )}
 
+          {/* Slots CTA - Play for 2 ETH */}
+          <div className="mb-8">
+            <Link href="/slots">
+              <motion.div
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                className="relative p-6 bg-gradient-to-r from-purple-900/50 via-ebt-gold/20 to-green-900/50 border-2 border-ebt-gold rounded-xl overflow-hidden cursor-pointer group"
+              >
+                {/* Animated background effect */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/5 to-transparent -skew-x-12 group-hover:animate-shimmer" />
+
+                <div className="relative flex items-center justify-between">
+                  <div className="flex items-center gap-4">
+                    {/* Slot machine icon */}
+                    <div className="w-16 h-16 bg-gradient-to-br from-ebt-gold to-yellow-600 rounded-lg flex items-center justify-center shadow-lg">
+                      <span className="text-3xl">🎰</span>
+                    </div>
+
+                    <div>
+                      <h3 className="text-xl font-heading text-ebt-gold tracking-wide mb-1">
+                        THE GROCERY RUN
+                      </h3>
+                      <p className="text-gray-400 text-sm">
+                        Play free slots for a chance to win <span className="text-green-400 font-bold">2 ETH</span>
+                      </p>
+                      <p className="text-gray-500 text-xs mt-1">
+                        Hit the Grand Jackpot to trigger the airdrop!
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="text-right">
+                    <div className="px-6 py-3 bg-ebt-gold text-black font-heading tracking-wide rounded-lg group-hover:bg-yellow-400 transition-colors">
+                      PLAY NOW
+                    </div>
+                  </div>
+                </div>
+              </motion.div>
+            </Link>
+          </div>
+
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-3 gap-4">
+            <Link
+              href="/slots"
+              className="p-4 bg-gradient-to-br from-purple-900/30 to-green-900/30 border border-ebt-gold/50 rounded-lg hover:border-ebt-gold transition-colors text-center"
+            >
+              <span className="text-2xl mb-2 block">🎰</span>
+              <p className="font-heading text-sm text-ebt-gold tracking-wide">PLAY SLOTS</p>
+            </Link>
             <Link
               href="/leaderboard"
               className="p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-ebt-gold/50 transition-colors text-center"
             >
+              <span className="text-2xl mb-2 block">🏆</span>
               <p className="font-heading text-sm text-white tracking-wide">THE BOARD</p>
             </Link>
             <button
@@ -431,7 +488,8 @@ export default function DashboardContent() {
               }}
               className="p-4 bg-gray-900 border border-gray-800 rounded-lg hover:border-ebt-gold/50 transition-colors text-center"
             >
-              <p className="font-heading text-sm text-white tracking-wide">SPREAD THE GOSPEL</p>
+              <span className="text-2xl mb-2 block">📢</span>
+              <p className="font-heading text-sm text-white tracking-wide">SHARE</p>
             </button>
           </div>
         </motion.div>

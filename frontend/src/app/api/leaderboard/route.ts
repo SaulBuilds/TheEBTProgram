@@ -26,7 +26,7 @@ interface LeaderboardEntry {
  * - Only public: userId, username, profilePicURL, score, mintedTokenId
  *
  * Supports:
- * - ?category=total|weekly|streaks|social
+ * - ?category=total|weekly|streaks|social|slots
  * - ?limit=N (max 100)
  * - ?userId=X - Returns top 25 + surrounding 25 around the user
  */
@@ -36,6 +36,51 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category') || 'total';
     const limit = Math.min(Number(searchParams.get('limit')) || 50, 100);
     const contextUserId = searchParams.get('userId'); // For dashboard context
+
+    // For slots category, use the dedicated slot stats
+    if (category === 'slots') {
+      const slotStats = await prisma.slotStats.findMany({
+        where: { totalSpins: { gt: 0 } },
+        orderBy: { totalPoints: 'desc' },
+        take: limit,
+      });
+
+      const userIds = slotStats.map(s => s.userId);
+      const applications = await prisma.application.findMany({
+        where: { userId: { in: userIds } },
+        select: { userId: true, username: true, profilePicURL: true, mintedTokenId: true },
+      });
+      const appMap = new Map(applications.map(a => [a.userId, a]));
+
+      const slotLeaderboard: LeaderboardEntry[] = slotStats.map((stat, index) => {
+        const app = appMap.get(stat.userId);
+        const badges: string[] = [];
+        if (stat.grandWins > 0) badges.push('Grand Winner');
+        if (stat.pendingAirdrop) badges.push('2 ETH Pending');
+        if (stat.bestStreak >= 10) badges.push('Hot Streak');
+
+        return {
+          rank: index + 1,
+          userId: stat.userId,
+          username: app?.username || 'Unknown',
+          profilePic: app?.profilePicURL || '',
+          value: stat.totalPoints,
+          valueLabel: 'slot points',
+          badges,
+          hasMinted: !!app?.mintedTokenId,
+          hasTwitter: false,
+          hasDiscord: false,
+          hasGithub: false,
+        };
+      });
+
+      return NextResponse.json({
+        category: 'slots',
+        leaderboard: slotLeaderboard,
+        totalCount: slotLeaderboard.length,
+        updatedAt: new Date().toISOString(),
+      });
+    }
 
     // SECURITY: Only select public, non-PII fields
     const applications = await prisma.application.findMany({

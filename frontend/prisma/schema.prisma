@@ -191,3 +191,59 @@ model GeneratedCard {
 
   generatedAt   DateTime    @default(now())
 }
+
+// ==================== SLOT MACHINE STATS ====================
+
+model SlotStats {
+  id              Int       @id @default(autoincrement())
+
+  // Link to application (user must be on leaderboard to play)
+  applicationId   Int       @unique
+  userId          String    @unique  // Match the Application.userId
+
+  // Lifetime stats
+  totalSpins      Int       @default(0)
+  totalWins       Int       @default(0)
+  totalPoints     Int       @default(0)
+  biggestWin      Int       @default(0)
+
+  // Bonus tracking
+  freeSpinsWon    Int       @default(0)
+  holdSpinsWon    Int       @default(0)
+
+  // Grand prize tracking
+  grandWins       Int       @default(0)
+  pendingAirdrop  Boolean   @default(false)  // Flag for 2 ETH airdrop
+  airdropClaimed  Boolean   @default(false)
+  airdropTxHash   String?   // Transaction hash when airdrop is sent
+
+  // Session tracking
+  lastPlayedAt    DateTime?
+  currentStreak   Int       @default(0)  // Consecutive winning spins
+  bestStreak      Int       @default(0)
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+}
+
+// Track individual spin history (for verification/auditing)
+model SlotSpin {
+  id              Int       @id @default(autoincrement())
+  userId          String
+
+  // Spin details
+  spinType        String    @default("base")  // "base", "free", "hold"
+  betAmount       Int       @default(0)       // If we add betting later
+  winAmount       Int       @default(0)
+  cascadeCount    Int       @default(0)
+
+  // Special events
+  triggeredBonus  String?   // "freespins", "holdspin", null
+  isGrandWin      Boolean   @default(false)
+
+  // Audit trail
+  gridHash        String?   // Hash of initial grid for verification
+  resultHash      String?   // Hash of result for verification
+
+  spunAt          DateTime  @default(now())
+}
