@@ -61,7 +61,6 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     error AlreadyRefunded();
     error SoftCapReached();
     error TGEAirdropExpired();
-    error RateLimitExceeded();
     error ReapplicationUserNotApproved();
 
     // ============ Enums ============
@@ -139,10 +138,6 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
     mapping(address => uint256) public contributions;
     mapping(address => bool) public hasRefunded;
 
-    uint256 public lastMintBlock; // Deprecated - kept for storage layout
-    uint256 public lastMintTimestamp; // Time-based rate limiting
-    uint256 public constant MINT_COOLDOWN = 30 seconds; // 30 second cooldown between mints
-
     // ============ Events ============
     event ContributionReceived(address indexed contributor, uint256 amount, uint256 tokenId);
     event FundraisingClosed(uint256 totalRaised, bool softCapReached);
@@ -201,11 +196,6 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
 
     modifier onlyProtocol() {
         if (msg.sender != protocolCaller) revert OnlyProtocol();
-        _;
-    }
-
-    modifier rateLimited() {
-        if (block.timestamp < lastMintTimestamp + MINT_COOLDOWN) revert RateLimitExceeded();
         _;
     }
 
@@ -278,7 +268,6 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
         whenInitialized
         whenNotPaused
         duringFundraising
-        rateLimited
         nonReentrant
     {
         // Validations
@@ -298,7 +287,6 @@ contract EBTProgram is ERC721URIStorage, ERC2981, Ownable, ReentrancyGuard, Paus
 
         uint256 newTokenId = _currentTokenId++;
         hasMinted[msg.sender] = true;
-        lastMintTimestamp = block.timestamp;
 
         // Store token data
         tokenData[newTokenId] = TokenData({

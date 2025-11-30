@@ -381,9 +381,9 @@ contract SecurityFixesTest is Test {
         newProgram.claimRefund();
     }
 
-    // ============ H-6: Time-Based Rate Limiting Tests ============
+    // ============ H-6: Concurrent Minting Tests (Rate Limiting Removed) ============
 
-    function testH6_RateLimitingUsesTime() public {
+    function testH6_ConcurrentMintingAllowed() public {
         // First mint
         vm.warp(1000);
         vm.prank(user1);
@@ -394,48 +394,40 @@ contract SecurityFixesTest is Test {
         app.apply4EBT("user2", "pic", "tw", 100, "user2");
         app.approveUsers(_single("user2"));
 
-        // Try to mint within cooldown (30 seconds)
-        vm.warp(1010); // Only 10 seconds passed
-        vm.prank(user2);
-        vm.expectRevert(EBTProgram.RateLimitExceeded.selector);
-        program.mint{value: MIN_PRICE}("user2");
-
-        // Mint after cooldown
-        vm.warp(1031); // 31 seconds passed
+        // Second mint can happen immediately (no rate limiting)
         vm.prank(user2);
         program.mint{value: MIN_PRICE}("user2");
 
+        // Both users should have their NFTs
+        assertEq(program.ownerOf(1), user1);
         assertEq(program.ownerOf(2), user2);
     }
 
-    function testH6_LastMintTimestampUpdated() public {
+    function testH6_MultipleMintsSameBlock() public {
         vm.warp(1000);
-        vm.prank(user1);
-        program.mint{value: MIN_PRICE}("user1");
 
-        assertEq(program.lastMintTimestamp(), 1000, "lastMintTimestamp should be set");
-    }
+        // Setup multiple users
+        address user3 = makeAddr("user3");
+        vm.deal(user3, 1 ether);
+        vm.prank(user3);
+        app.apply4EBT("user3", "pic", "tw", 100, "user3");
+        app.approveUsers(_single("user3"));
 
-    function testH6_CooldownPreciselyEnforced() public {
-        vm.warp(1000);
-        vm.prank(user1);
-        program.mint{value: MIN_PRICE}("user1");
-
-        // Setup user2
         vm.prank(user2);
         app.apply4EBT("user2", "pic", "tw", 100, "user2");
         app.approveUsers(_single("user2"));
 
-        // At 29 seconds - should fail (still within cooldown)
-        vm.warp(1029);
+        // All mints succeed
+        vm.prank(user1);
+        program.mint{value: MIN_PRICE}("user1");
         vm.prank(user2);
-        vm.expectRevert(EBTProgram.RateLimitExceeded.selector);
         program.mint{value: MIN_PRICE}("user2");
+        vm.prank(user3);
+        program.mint{value: MIN_PRICE}("user3");
 
-        // At exactly 30 seconds - should succeed (condition is <, not <=)
-        vm.warp(1030);
-        vm.prank(user2);
-        program.mint{value: MIN_PRICE}("user2");
+        assertEq(program.ownerOf(1), user1);
+        assertEq(program.ownerOf(2), user2);
+        assertEq(program.ownerOf(3), user3);
     }
 
     // ============ H-8: Reapplication Re-verification Tests ============

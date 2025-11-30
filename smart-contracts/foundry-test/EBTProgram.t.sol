@@ -195,10 +195,8 @@ contract EBTProgramTest is Test {
         program.mint{value: MIN_PRICE}("bad");
     }
 
-    function testHonorsTimeCooldownBetweenMints() public {
-        // Set a base timestamp and advance past initial cooldown
-        uint256 baseTime = 1000;
-        vm.warp(baseTime);
+    function testMultipleMintsConcurrently() public {
+        // Test that multiple users can mint without rate limiting
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 
@@ -209,23 +207,13 @@ contract EBTProgramTest is Test {
         app.apply4EBT("user2", "pic", "tw", 100, userId2);
         app.approveUsers(_single(userId2));
 
-        // Try to mint immediately (should fail - within 30 second cooldown)
-        // Warp to 10 seconds after first mint (still within cooldown)
-        vm.warp(baseTime + 10 seconds);
-        vm.prank(user2);
-        vm.expectRevert(EBTProgram.RateLimitExceeded.selector);
-        program.mint{value: MIN_PRICE}(userId2);
-
-        // Advance time past cooldown (31 seconds from first mint)
-        vm.warp(baseTime + 31 seconds);
+        // Second user can mint immediately (no rate limiting)
         vm.prank(user2);
         program.mint{value: MIN_PRICE}(userId2);
         assertEq(program.ownerOf(2), user2);
     }
 
     function testProtocolOnlyClaimWithScoreMultiplier() public {
-        // Advance time past cooldown
-        vm.warp(block.timestamp + 31 seconds);
         vm.prank(user);
         program.mint{value: MIN_PRICE}(userId);
 

@@ -309,8 +309,8 @@ contract HardeningTests is Test {
         assertEq(program.ownerOf(tokenId), buyer, "Buyer should own NFT");
     }
 
-    /// @notice PEN-3: Attempt to bypass rate limiting
-    function testPen_RateLimitingBypass() public {
+    /// @notice PEN-3: Test concurrent minting (no rate limiting)
+    function testPen_ConcurrentMinting() public {
         address user1 = makeAddr("user1");
         address user2 = makeAddr("user2");
         vm.deal(user1, 1 ether);
@@ -325,15 +325,13 @@ contract HardeningTests is Test {
         vm.prank(user1);
         program.mint{value: 0.1 ether}("USER_1");
 
-        // Immediate second mint should fail (rate limited)
+        // Second user can mint immediately (no rate limiting)
         vm.prank(user2);
-        vm.expectRevert(EBTProgram.RateLimitExceeded.selector);
         program.mint{value: 0.1 ether}("USER_2");
 
-        // After cooldown, second mint succeeds
-        vm.warp(block.timestamp + 31);
-        vm.prank(user2);
-        program.mint{value: 0.1 ether}("USER_2");
+        // Both users should have their NFTs
+        assertEq(program.ownerOf(1), user1);
+        assertEq(program.ownerOf(2), user2);
     }
 
     /// @notice PEN-4: Attempt double-claim attack
@@ -717,8 +715,8 @@ contract HardeningTests is Test {
         program.claim(1);
     }
 
-    /// @notice Edge case: Rate limit at exact cooldown boundary
-    function testEdge_RateLimitAtExactCooldownBoundary() public {
+    /// @notice Edge case: Rapid consecutive mints (no rate limiting)
+    function testEdge_RapidConsecutiveMints() public {
         address user1 = makeAddr("cooldown1");
         address user2 = makeAddr("cooldown2");
         vm.deal(user1, 1 ether);
@@ -731,16 +729,13 @@ contract HardeningTests is Test {
         vm.prank(user1);
         program.mint{value: 0.1 ether}("COOLDOWN_1");
 
-        // At exactly 29 seconds - should fail (< 30 seconds)
-        vm.warp(1029);
+        // Second mint can happen immediately (no rate limiting)
         vm.prank(user2);
-        vm.expectRevert(EBTProgram.RateLimitExceeded.selector);
         program.mint{value: 0.1 ether}("COOLDOWN_2");
 
-        // At 30 seconds (>= MINT_COOLDOWN) - should succeed
-        vm.warp(1030);
-        vm.prank(user2);
-        program.mint{value: 0.1 ether}("COOLDOWN_2");
+        // Verify both mints succeeded
+        assertEq(program.ownerOf(1), user1);
+        assertEq(program.ownerOf(2), user2);
     }
 
     /// @notice Edge case: TGE airdrop at exact deadline
