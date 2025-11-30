@@ -1,17 +1,17 @@
 // Contract addresses for Sepolia testnet
-// Deployed: 2025-11-27 (latest with fundraising control functions)
+// Deployed: 2025-11-30 Block 9737213 (production deployment - rate limiting removed)
 
 export const SEPOLIA_CHAIN_ID = 11155111;
 
 export const CONTRACT_ADDRESSES = {
   [SEPOLIA_CHAIN_ID]: {
-    EBTProgram: '0xa00a2AbC42cf88735bbBDFcb1B2c1cD00d4CAAf4' as `0x${string}`,
-    FoodStamps: '0x345e91EBa4815252048c240020c96143380858F1' as `0x${string}`,
-    ERC6551Registry: '0x4208B13926D2Fd2D6669f4224b1f22cF8a993B5c' as `0x${string}`,
-    ERC6551Account: '0x6DF10b933c9851e977e13396d46f3488a91D3D70' as `0x${string}`,
-    EBTApplication: '0xaDE37C7787E8903Bfa5bd4B1402b1C708c7DFa44' as `0x${string}`,
-    LiquidityVault: '0x53649868A0F3dE60b4658bDdce0367CF6f2d53D5' as `0x${string}`,
-    TeamVesting: '0x593a85a4986cD2214438dEE7f074846bD5200E47' as `0x${string}`,
+    EBTProgram: '0xB225F65B6a297dfe3A11BAD6e19E6f2f5D4AB247' as `0x${string}`,
+    FoodStamps: '0x8cF9b1CC15e78ebB7A36F8eBbA06446631C8E274' as `0x${string}`,
+    ERC6551Registry: '0x83801B2A1EFA6F657860d5548538416b4d54e359' as `0x${string}`,
+    ERC6551Account: '0x38F8cB6591B225C0454AD3cEd9cd66Fca3a086c9' as `0x${string}`,
+    EBTApplication: '0x76B206cE2394373A314809e09fcc7237dfa67E2f' as `0x${string}`,
+    LiquidityVault: '0xF8d9dEf403a805e76Acb435A5D1D996041224A7d' as `0x${string}`,
+    TeamVesting: '0xDed24E1A51eFa78E19786Bf8D387988b770e36dC' as `0x${string}`,
     // Slot Machine - not yet deployed, will be updated after deployment
     EBTSlotMachine: '0x0000000000000000000000000000000000000000' as `0x${string}`,
   },
@@ -31,9 +31,9 @@ export function getContractAddress(
 // Deployment info
 export const DEPLOYMENT_INFO = {
   chainId: SEPOLIA_CHAIN_ID,
-  blockNumber: 9717087,
-  timestamp: '2025-11-27',
-  deployer: '0x1Dc2040919412AC58A999B981Bff5Ea19181ccb9',
+  blockNumber: 9737213,
+  timestamp: '2025-11-30',
+  deployer: '0x902C23dF3d01EA287C46B3Ec2e2F2e17A9483e17',
 };
 
 // Contract constants (matching deployed configuration)

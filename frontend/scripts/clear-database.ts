@@ -2,13 +2,16 @@
  * Database Clear Script
  *
  * This script clears all user data from the database for a fresh start.
- * Run with: npx ts-node scripts/clear-database.ts
+ * Run with: npx tsx scripts/clear-database.ts
  *
  * Or run directly with Prisma:
  * npx prisma db push --force-reset (WARNING: This drops all tables)
  */
 
-import { PrismaClient } from '@prisma/client';
+// Load environment variables from .env.local
+require('dotenv').config({ path: '.env.local' });
+
+const { PrismaClient } = require('@prisma/client');
 
 const prisma = new PrismaClient();
 
