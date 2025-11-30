@@ -45,6 +45,15 @@ interface SlotStats {
 
 export function SlotsContent() {
   const { authenticated, user, getAccessToken } = usePrivy();
+
+  // Get the user's wallet address from Privy linked accounts
+  const walletAddress = user?.wallet?.address || (() => {
+    const walletAccount = user?.linkedAccounts?.find(
+      (account) => account.type === 'wallet'
+    );
+    // Type guard: wallet accounts have an 'address' property
+    return walletAccount && 'address' in walletAccount ? walletAccount.address : undefined;
+  })();
   const gridRef = useRef<HTMLDivElement>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -97,6 +106,7 @@ export function SlotsContent() {
           headers: {
             'Authorization': `Bearer ${token}`,
             'x-user-id': user.id,
+            ...(walletAddress ? { 'x-wallet-address': walletAddress } : {}),
           },
         });
 
@@ -124,7 +134,7 @@ export function SlotsContent() {
     }
 
     checkEligibility();
-  }, [authenticated, user, getAccessToken]);
+  }, [authenticated, user, walletAddress, getAccessToken]);
 
   // Record spin to server
   const recordSpin = useCallback(async (
@@ -143,6 +153,7 @@ export function SlotsContent() {
         headers: {
           'Authorization': `Bearer ${token}`,
           'x-user-id': user.id,
+          ...(walletAddress ? { 'x-wallet-address': walletAddress } : {}),
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
@@ -167,7 +178,7 @@ export function SlotsContent() {
     } catch (error) {
       console.error('Error recording spin:', error);
     }
-  }, [authenticated, user, getAccessToken]);
+  }, [authenticated, user, walletAddress, getAccessToken]);
 
   // Create spinning grid for animation
   const createSpinningGrid = useCallback((): GridCell[] => {

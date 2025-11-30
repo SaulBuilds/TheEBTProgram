@@ -18,6 +18,8 @@ export async function POST(request: NextRequest) {
     }
 
     const privyUserId = request.headers.get('x-user-id');
+    const walletAddress = request.headers.get('x-wallet-address');
+
     if (!privyUserId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
@@ -26,11 +28,34 @@ export async function POST(request: NextRequest) {
     const { winAmount, cascadeCount, triggeredBonus, isGrandWin, spinType } = body;
 
     // Verify user has an application (any status - lets them play while waiting for approval)
-    // Look up by privyUserId since that's what Privy auth provides
-    const application = await prisma.application.findFirst({
+    // Try multiple lookup strategies for backwards compatibility with older accounts
+    let application = await prisma.application.findFirst({
       where: { privyUserId },
       select: { id: true, userId: true, status: true },
     });
+
+    // Fallback 1: older accounts may have privyUserId stored in userId field
+    if (!application) {
+      application = await prisma.application.findFirst({
+        where: { userId: privyUserId },
+        select: { id: true, userId: true, status: true },
+      });
+    }
+
+    // Fallback 2: lookup by wallet address for oldest accounts without privyUserId
+    if (!application && walletAddress) {
+      application = await prisma.application.findFirst({
+        where: { walletAddress: walletAddress.toLowerCase() },
+        select: { id: true, userId: true, status: true },
+      });
+
+      if (!application) {
+        application = await prisma.application.findFirst({
+          where: { walletAddress },
+          select: { id: true, userId: true, status: true },
+        });
+      }
+    }
 
     if (!application) {
       return NextResponse.json({ error: 'Must submit an application to play' }, { status: 403 });
