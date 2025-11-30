@@ -240,6 +240,32 @@
   },
   {
     "type": "function",
+    "name": "terminateVesting",
+    "inputs": [
+      {
+        "name": "returnTo",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "terminated",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "tgeStarted",
     "inputs": [],
     "outputs": [
@@ -380,6 +406,24 @@
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "VestingTerminated",
+    "inputs": [
+      {
+        "name": "returnedAmount",
+        "type": "uint256",
+        "indexed": false,
+        "internalType": "uint256"
+      }
+    ],
+    "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "AlreadyTerminated",
+    "inputs": []
+  },
+  {
     "type": "error",
     "name": "InvalidAddress",
     "inputs": []
@@ -397,6 +441,11 @@
   {
     "type": "error",
     "name": "TeamWalletNotSet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "VestingAlreadyTerminated",
     "inputs": []
   }
 ]

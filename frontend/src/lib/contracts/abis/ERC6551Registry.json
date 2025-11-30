@@ -102,6 +102,19 @@
   },
   {
     "type": "function",
+    "name": "implementationLocked",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "bool",
+        "internalType": "bool"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "owner",
     "inputs": [],
     "outputs": [
@@ -207,6 +220,11 @@
       }
     ],
     "anonymous": false
+  },
+  {
+    "type": "error",
+    "name": "ImplementationLocked",
+    "inputs": []
   },
   {
     "type": "error",

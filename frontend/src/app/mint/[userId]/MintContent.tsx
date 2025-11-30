@@ -14,6 +14,53 @@ import { MintChecklist } from '@/components/mint/MintChecklist';
 import { MintSuccess } from '@/components/mint/MintSuccess';
 import { PriceSelector, calculateTokensForPrice } from '@/components/mint/PriceSelector';
 
+// Map contract error names to user-friendly messages
+const CONTRACT_ERROR_MESSAGES: Record<string, string> = {
+  NotApproved: 'Your application has not been approved on-chain. Contact support.',
+  Blacklisted: 'This wallet has been blacklisted from minting.',
+  AlreadyMinted: 'This wallet has already minted an EBT Card.',
+  PriceBelowMinimum: 'Mint price is below the minimum (0.02 ETH).',
+  PriceAboveMaximum: 'Mint price exceeds the maximum (2 ETH).',
+  InvalidPricePrecision: 'Price must be a multiple of 0.001 ETH.',
+  HardCapReached: 'The fundraising hard cap has been reached.',
+  NotInitialized: 'Contract is not initialized. Contact support.',
+  RateLimitExceeded: 'Please wait 30 seconds between mints. Try again shortly.',
+  FundraisingAlreadyClosed: 'Fundraising has ended.',
+  AccountImplementationNotSet: 'Contract configuration error. Contact support.',
+};
+
+// Parse contract error from wagmi/viem error
+function parseContractError(error: unknown): string {
+  if (!error) return 'Transaction failed';
+
+  const errorString = error instanceof Error ? error.message : String(error);
+
+  // Check for known contract error names
+  for (const [errorName, message] of Object.entries(CONTRACT_ERROR_MESSAGES)) {
+    if (errorString.includes(errorName)) {
+      return message;
+    }
+  }
+
+  // Check for "UserID not owned by caller" require message
+  if (errorString.includes('UserID not owned by caller')) {
+    return 'This wallet is not registered for this userId. Please use the wallet you applied with.';
+  }
+
+  // Check for user rejection
+  if (errorString.includes('User rejected') || errorString.includes('user rejected')) {
+    return 'Transaction was rejected in your wallet.';
+  }
+
+  // Check for insufficient funds
+  if (errorString.includes('insufficient funds') || errorString.includes('InsufficientFunds')) {
+    return 'Insufficient ETH balance for this transaction.';
+  }
+
+  // Return original error if no match
+  return errorString.length > 200 ? errorString.slice(0, 200) + '...' : errorString;
+}
+
 interface GeneratedCard {
   imageCid: string;
   metadataCid: string;
@@ -399,8 +446,9 @@ export default function MintContent() {
         {/* Error Display */}
         {mintError && (
           <div className="p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg mb-6">
-            <p className="text-welfare-red text-sm">
-              {mintError instanceof Error ? mintError.message : 'Transaction failed'}
+            <p className="text-welfare-red text-sm font-medium mb-1">Transaction Failed</p>
+            <p className="text-welfare-red/80 text-sm">
+              {parseContractError(mintError)}
             </p>
           </div>
         )}

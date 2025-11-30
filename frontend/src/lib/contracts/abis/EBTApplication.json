@@ -32,6 +32,19 @@
   },
   {
     "type": "function",
+    "name": "MAX_BATCH_SIZE",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "uint256",
+        "internalType": "uint256"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
     "name": "addressToUserID",
     "inputs": [
       {
@@ -468,6 +481,19 @@
   },
   {
     "type": "function",
+    "name": "revokeUsers",
+    "inputs": [
+      {
+        "name": "_userIDs",
+        "type": "string[]",
+        "internalType": "string[]"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
     "name": "setMetadataURI",
     "inputs": [
       {
@@ -705,13 +731,51 @@
     "anonymous": false
   },
   {
+    "type": "event",
+    "name": "UserRevoked",
+    "inputs": [
+      {
+        "name": "userID",
+        "type": "string",
+        "indexed": true,
+        "internalType": "string"
+      }
+    ],
+    "anonymous": false
+  },
+  {
     "type": "error",
     "name": "AlreadyApplied",
     "inputs": []
   },
   {
     "type": "error",
+    "name": "BatchTooLarge",
+    "inputs": []
+  },
+  {
+    "type": "error",
     "name": "CannotReapplyYet",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EmptyUserID",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "EmptyUsername",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidMetadataURI",
+    "inputs": []
+  },
+  {
+    "type": "error",
+    "name": "InvalidScore",
     "inputs": []
   },
   {
