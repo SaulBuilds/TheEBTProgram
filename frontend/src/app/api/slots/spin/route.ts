@@ -25,14 +25,14 @@ export async function POST(request: NextRequest) {
     const body: SpinResultPayload = await request.json();
     const { winAmount, cascadeCount, triggeredBonus, isGrandWin, spinType } = body;
 
-    // Verify user is eligible
+    // Verify user has an application (any status - lets them play while waiting for approval)
     const application = await prisma.application.findUnique({
       where: { userId },
       select: { id: true, status: true },
     });
 
-    if (!application || application.status !== 'approved') {
-      return NextResponse.json({ error: 'Not eligible to play' }, { status: 403 });
+    if (!application) {
+      return NextResponse.json({ error: 'Must submit an application to play' }, { status: 403 });
     }
 
     // Get or create stats

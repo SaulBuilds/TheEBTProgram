@@ -113,6 +113,21 @@ export function Hero() {
           </Button>
         </div>
 
+        {/* Slots CTA - Small promo banner */}
+        <div
+          onClick={() => router.push('/slots')}
+          className="mt-6 inline-flex items-center gap-3 px-6 py-3 bg-gradient-to-r from-purple-900/60 to-green-900/60 border border-purple-500/50 rounded-full cursor-pointer hover:border-purple-400 hover:from-purple-900/80 hover:to-green-900/80 transition-all group"
+        >
+          <span className="text-2xl animate-bounce">🎰</span>
+          <span className="text-white font-heading tracking-wide text-sm">
+            PLAY THE GROCERY RUN
+          </span>
+          <span className="text-green-400 font-bold text-sm">
+            WIN 2 ETH
+          </span>
+          <span className="text-purple-300 group-hover:translate-x-1 transition-transform">→</span>
+        </div>
+
         {/* Stats bar */}
         <div className="mt-12 bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-4 max-w-2xl mx-auto">
           <div className="flex items-center justify-center gap-8 text-sm">

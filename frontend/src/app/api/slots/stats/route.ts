@@ -15,15 +15,15 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
-    // Check if user has an approved application (is on leaderboard)
+    // Check if user has submitted an application (any status - lets them play while waiting)
     const application = await prisma.application.findUnique({
       where: { userId },
       select: { id: true, status: true, username: true },
     });
 
-    if (!application || application.status !== 'approved') {
+    if (!application) {
       return NextResponse.json(
-        { error: 'Must be an approved member to play slots', eligible: false },
+        { error: 'Must submit an application to play slots', eligible: false, needsApplication: true },
         { status: 403 }
       );
     }

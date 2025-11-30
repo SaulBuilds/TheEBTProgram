@@ -156,9 +156,20 @@ export default function DashboardContent() {
               </div>
 
               {application.status === 'pending' && (
-                <p className="text-gray-400 text-sm">
-                  Your application is being reviewed. You&apos;ll be able to mint your EBT Card once approved.
-                </p>
+                <div className="space-y-4">
+                  <p className="text-gray-400 text-sm">
+                    Your application is being reviewed. You&apos;ll be able to mint your EBT Card once approved.
+                  </p>
+                  <p className="text-gray-500 text-sm">
+                    While you wait, play slots for a chance to win <span className="text-green-400 font-bold">2 ETH</span>!
+                  </p>
+                  <Link
+                    href="/slots"
+                    className="inline-block px-8 py-4 bg-gradient-to-r from-purple-600 to-green-600 text-white font-heading tracking-wide rounded-lg hover:from-purple-500 hover:to-green-500 transition-colors"
+                  >
+                    🎰 PLAY SLOTS NOW
+                  </Link>
+                </div>
               )}
 
               {application.status === 'approved' && (

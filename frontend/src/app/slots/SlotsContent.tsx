@@ -50,6 +50,7 @@ export function SlotsContent() {
 
   // Access control state
   const [isEligible, setIsEligible] = useState<boolean | null>(null);
+  const [needsApplication, setNeedsApplication] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [serverStats, setServerStats] = useState<SlotStats | null>(null);
 
@@ -110,6 +111,9 @@ export function SlotsContent() {
           setDisplayGrid(initialGrid);
         } else {
           setIsEligible(false);
+          if (data.needsApplication) {
+            setNeedsApplication(true);
+          }
         }
       } catch (error) {
         console.error('Error checking eligibility:', error);
@@ -633,25 +637,47 @@ export function SlotsContent() {
           <h1 className="text-4xl font-heading text-yellow-400 mb-4">THE GROCERY RUN</h1>
           <div className="bg-gray-800/50 border border-gray-700 rounded-2xl p-8 mb-6">
             <div className="text-6xl mb-4">🎰</div>
-            <h2 className="text-2xl font-heading text-white mb-4">Members Only</h2>
-            <p className="text-gray-400 mb-6">
-              You must be an approved EBT Card holder to play The Grocery Run.
-              Apply now for a chance to win up to <span className="text-green-400 font-bold">2 ETH</span>!
-            </p>
             {!authenticated ? (
-              <Link
-                href="/"
-                className="inline-block px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-lg rounded-xl hover:shadow-xl transition-all"
-              >
-                CONNECT WALLET
-              </Link>
+              <>
+                <h2 className="text-2xl font-heading text-white mb-4">Connect to Play</h2>
+                <p className="text-gray-400 mb-6">
+                  Connect your wallet and submit an application to play The Grocery Run.
+                  Win up to <span className="text-green-400 font-bold">2 ETH</span>!
+                </p>
+                <Link
+                  href="/"
+                  className="inline-block px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-lg rounded-xl hover:shadow-xl transition-all"
+                >
+                  CONNECT WALLET
+                </Link>
+              </>
+            ) : needsApplication ? (
+              <>
+                <h2 className="text-2xl font-heading text-white mb-4">Apply to Play</h2>
+                <p className="text-gray-400 mb-6">
+                  Submit an application to unlock The Grocery Run slots.
+                  Play while you wait for approval and win up to <span className="text-green-400 font-bold">2 ETH</span>!
+                </p>
+                <Link
+                  href="/apply"
+                  className="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-heading text-lg rounded-xl hover:shadow-xl transition-all"
+                >
+                  APPLY NOW
+                </Link>
+              </>
             ) : (
-              <Link
-                href="/apply"
-                className="inline-block px-8 py-4 bg-gradient-to-r from-green-500 to-green-600 text-white font-heading text-lg rounded-xl hover:shadow-xl transition-all"
-              >
-                APPLY NOW
-              </Link>
+              <>
+                <h2 className="text-2xl font-heading text-white mb-4">Something went wrong</h2>
+                <p className="text-gray-400 mb-6">
+                  Unable to verify your eligibility. Please try again.
+                </p>
+                <button
+                  onClick={() => window.location.reload()}
+                  className="inline-block px-8 py-4 bg-gradient-to-r from-yellow-500 to-yellow-600 text-black font-heading text-lg rounded-xl hover:shadow-xl transition-all"
+                >
+                  RETRY
+                </button>
+              </>
             )}
           </div>
           <p className="text-xs text-gray-500">
