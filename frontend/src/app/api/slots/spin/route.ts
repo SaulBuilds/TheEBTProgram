@@ -17,8 +17,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = request.headers.get('x-user-id');
-    if (!userId) {
+    const privyUserId = request.headers.get('x-user-id');
+    if (!privyUserId) {
       return NextResponse.json({ error: 'User ID required' }, { status: 400 });
     }
 
@@ -26,14 +26,18 @@ export async function POST(request: NextRequest) {
     const { winAmount, cascadeCount, triggeredBonus, isGrandWin, spinType } = body;
 
     // Verify user has an application (any status - lets them play while waiting for approval)
-    const application = await prisma.application.findUnique({
-      where: { userId },
-      select: { id: true, status: true },
+    // Look up by privyUserId since that's what Privy auth provides
+    const application = await prisma.application.findFirst({
+      where: { privyUserId },
+      select: { id: true, userId: true, status: true },
     });
 
     if (!application) {
       return NextResponse.json({ error: 'Must submit an application to play' }, { status: 403 });
     }
+
+    // Use the application's userId for slot stats (consistent identifier)
+    const userId = application.userId;
 
     // Get or create stats
     let stats = await prisma.slotStats.findUnique({
