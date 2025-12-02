@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { verifyAdmin, logAdminAction } from '@/lib/auth';
 import { z } from 'zod';
+import { generateCard } from '@/lib/services/cardGenerator';
+import { pinImage, pinMetadata, isNodeAvailable } from '@/lib/services/ipfs';
 
 const approveSchema = z.object({
   applicationId: z.number().int().positive(),
@@ -97,32 +99,112 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Generate metadata URI (in production, this would upload to IPFS)
-    const metadataUri = `ipfs://placeholder-${application.userId}`;
+    // Check if IPFS node is available before proceeding
+    const ipfsAvailable = await isNodeAvailable();
+    if (!ipfsAvailable) {
+      return NextResponse.json(
+        {
+          error: 'IPFS node not available',
+          details: 'Please ensure your IPFS daemon is running. Run: ipfs daemon'
+        },
+        { status: 503 }
+      );
+    }
 
-    // Update application
+    // Generate the card image
+    console.log(`Generating card for ${application.userId}...`);
+    const cardResult = await generateCard({
+      userId: application.userId,
+      username: application.username,
+      avatarUrl: application.profilePicURL || undefined,
+      score,
+      tokenId: application.mintedTokenId || undefined,
+    });
+
+    // Pin image to IPFS
+    console.log(`Pinning image to IPFS for ${application.userId}...`);
+    const imagePin = await pinImage(
+      cardResult.imageBuffer,
+      `ebt-card-${application.userId}.png`
+    );
+    console.log(`Image pinned: ${imagePin.cid}`);
+
+    // Generate metadata
+    const metadata = {
+      name: `EBT Card${application.mintedTokenId ? ` #${application.mintedTokenId}` : ''}`,
+      description: 'Electronic Benefits Transfer Card for the blockchain breadline. Welcome to The Program.',
+      image: imagePin.url,
+      external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://web3welfare.com'}/card/${application.userId}`,
+      attributes: [
+        { trait_type: 'Username', value: application.username },
+        { trait_type: 'Welfare Score', value: score },
+        { trait_type: 'Status', value: 'approved' },
+        ...(application.twitter ? [{ trait_type: 'Twitter', value: `@${application.twitter}` }] : []),
+        ...(application.discord ? [{ trait_type: 'Discord', value: application.discord }] : []),
+      ],
+      background_color: '000000',
+    };
+
+    // Pin metadata to IPFS
+    console.log(`Pinning metadata to IPFS for ${application.userId}...`);
+    const metadataPin = await pinMetadata(
+      metadata,
+      `ebt-card-${application.userId}-metadata.json`
+    );
+    console.log(`Metadata pinned: ${metadataPin.cid}`);
+
+    // Save generated card to database
+    await prisma.generatedCard.upsert({
+      where: { applicationId },
+      update: {
+        imageCid: imagePin.cid,
+        metadataCid: metadataPin.cid,
+        imageUrl: imagePin.url,
+        metadataUrl: metadataPin.url,
+        traits: JSON.stringify(metadata.attributes),
+        generatedAt: new Date(),
+      },
+      create: {
+        applicationId,
+        imageCid: imagePin.cid,
+        metadataCid: metadataPin.cid,
+        imageUrl: imagePin.url,
+        metadataUrl: metadataPin.url,
+        traits: JSON.stringify(metadata.attributes),
+      },
+    });
+
+    // Update application with score and IPFS URIs
     const updatedApplication = await prisma.application.update({
       where: { id: applicationId },
       data: {
         status: 'approved',
         score,
         scoreBreakdown: JSON.stringify(breakdown),
-        metadataURI: metadataUri,
+        imageURI: imagePin.url,
+        metadataURI: metadataPin.url,
         approvedAt: new Date(),
       },
     });
+
+    console.log(`Application ${applicationId} approved with metadata URI: ${metadataPin.url}`);
 
     return NextResponse.json({
       application: updatedApplication,
       score,
       breakdown,
-      metadataUri,
+      metadataUri: metadataPin.url,
+      imageCid: imagePin.cid,
+      metadataCid: metadataPin.cid,
     });
   } catch (error) {
     console.error('Approve application error:', error);
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: 'Validation error', details: error.errors }, { status: 400 });
     }
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
   }
 }
