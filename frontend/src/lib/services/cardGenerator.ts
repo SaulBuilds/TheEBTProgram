@@ -3,11 +3,12 @@
  *
  * Generates EBT Card NFT images using Sharp for image processing.
  * Card dimensions: 1586 x 1000 pixels (credit card ratio 1.586:1)
+ *
+ * Backgrounds are AI-generated based on user's zip code with CRT/dithering effects.
  */
 
 import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs/promises';
+import { getBackgroundForUser } from './backgroundGenerator';
 
 // Card dimensions (credit card ratio)
 const CARD_WIDTH = 1586;
@@ -17,12 +18,9 @@ const CARD_HEIGHT = 1000;
 const AVATAR_SIZE = 200;
 const AVATAR_X = 80;
 const AVATAR_Y = 120;
-const AVATAR_BORDER_RADIUS = 100; // Circular avatar
 
 // Colors
 const GOLD_COLOR = '#D4AF37';
-const RED_COLOR = '#8B0000';
-const BLACK_COLOR = '#000000';
 
 export interface CardGenerationInput {
   userId: string;
@@ -30,8 +28,7 @@ export interface CardGenerationInput {
   avatarUrl?: string;
   score: number;
   tokenId?: number;
-  backgroundUrl?: string;
-  theme?: string;
+  zipCode?: string;
 }
 
 export interface CardGenerationResult {
@@ -66,7 +63,6 @@ async function fetchAvatar(url: string): Promise<Buffer | null> {
  * Generate a placeholder avatar using DiceBear-style pixel art
  */
 async function generatePlaceholderAvatar(username: string): Promise<Buffer> {
-  // Create a simple colored square with initials
   const initial = username.charAt(0).toUpperCase();
 
   // Generate a deterministic color based on username
@@ -93,68 +89,32 @@ async function generatePlaceholderAvatar(username: string): Promise<Buffer> {
 }
 
 /**
- * Generate the base card template with gradient background
+ * Generate the base card with AI background
  */
-async function generateBaseCard(backgroundUrl?: string): Promise<Buffer> {
-  let background: sharp.Sharp;
-
-  if (backgroundUrl) {
-    // Try to fetch background image
-    try {
-      const response = await fetch(backgroundUrl);
-      if (response.ok) {
-        const arrayBuffer = await response.arrayBuffer();
-        background = sharp(Buffer.from(arrayBuffer))
-          .resize(CARD_WIDTH, CARD_HEIGHT, { fit: 'cover' });
-      } else {
-        throw new Error('Failed to fetch background');
-      }
-    } catch {
-      // Fall back to gradient
-      background = await createGradientBackground();
-    }
-  } else {
-    background = await createGradientBackground();
-  }
+async function generateBaseCard(zipCode?: string): Promise<Buffer> {
+  // Get AI-generated background (or fallback)
+  const backgroundBuffer = await getBackgroundForUser(zipCode);
 
   // Add dark overlay for text readability
   const overlay = `
     <svg width="${CARD_WIDTH}" height="${CARD_HEIGHT}">
       <defs>
         <linearGradient id="overlay" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:rgba(0,0,0,0.6)"/>
-          <stop offset="50%" style="stop-color:rgba(0,0,0,0.3)"/>
-          <stop offset="100%" style="stop-color:rgba(0,0,0,0.6)"/>
+          <stop offset="0%" style="stop-color:rgba(0,0,0,0.7)"/>
+          <stop offset="30%" style="stop-color:rgba(0,0,0,0.4)"/>
+          <stop offset="70%" style="stop-color:rgba(0,0,0,0.4)"/>
+          <stop offset="100%" style="stop-color:rgba(0,0,0,0.7)"/>
         </linearGradient>
       </defs>
       <rect width="100%" height="100%" fill="url(#overlay)"/>
     </svg>
   `;
 
-  return await background
+  return await sharp(backgroundBuffer)
+    .resize(CARD_WIDTH, CARD_HEIGHT, { fit: 'cover' })
     .composite([{ input: Buffer.from(overlay), blend: 'over' }])
     .png()
     .toBuffer();
-}
-
-/**
- * Create gradient background
- */
-async function createGradientBackground(): Promise<sharp.Sharp> {
-  const svg = `
-    <svg width="${CARD_WIDTH}" height="${CARD_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
-      <defs>
-        <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" style="stop-color:${GOLD_COLOR}"/>
-          <stop offset="50%" style="stop-color:#1a1a1a"/>
-          <stop offset="100%" style="stop-color:${RED_COLOR}"/>
-        </linearGradient>
-      </defs>
-      <rect width="100%" height="100%" fill="url(#bg)"/>
-    </svg>
-  `;
-
-  return sharp(Buffer.from(svg));
 }
 
 /**
@@ -198,7 +158,7 @@ function createTextOverlay(input: CardGenerationInput): string {
 
       <!-- Bottom Bar -->
       <rect x="0" y="${CARD_HEIGHT - 120}" width="${CARD_WIDTH}" height="120"
-            fill="rgba(0,0,0,0.8)"/>
+            fill="rgba(0,0,0,0.85)"/>
       <text x="80" y="${CARD_HEIGHT - 50}"
             font-family="Arial, sans-serif" font-size="32" fill="${GOLD_COLOR}">
         ELECTRONIC BENEFITS TRANSFER
@@ -242,8 +202,10 @@ function createCircularMask(): string {
  * Generate an EBT Card image
  */
 export async function generateCard(input: CardGenerationInput): Promise<CardGenerationResult> {
-  // 1. Generate base card with background
-  const baseCard = await generateBaseCard(input.backgroundUrl);
+  console.log(`Generating card for ${input.username} (zip: ${input.zipCode || 'none'})...`);
+
+  // 1. Generate base card with AI background
+  const baseCard = await generateBaseCard(input.zipCode);
 
   // 2. Get avatar (fetch or generate placeholder)
   let avatarBuffer: Buffer;

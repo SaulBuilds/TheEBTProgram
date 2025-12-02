@@ -111,14 +111,15 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate the card image
-    console.log(`Generating card for ${application.userId}...`);
+    // Generate the card image with AI background based on zip code
+    console.log(`Generating card for ${application.userId} (zip: ${application.zipCode || 'none'})...`);
     const cardResult = await generateCard({
       userId: application.userId,
       username: application.username,
       avatarUrl: application.profilePicURL || undefined,
       score,
       tokenId: application.mintedTokenId || undefined,
+      zipCode: application.zipCode || undefined,
     });
 
     // Pin image to IPFS
