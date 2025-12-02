@@ -493,42 +493,64 @@ export default function DashboardContent() {
 
           {/* EBT Card Display */}
           <div className="mb-8">
-            <div className="relative p-6 bg-gradient-to-br from-ebt-gold/20 to-welfare-red/20 border border-ebt-gold/50 rounded-xl overflow-hidden">
-              {/* Card background pattern */}
-              <div className="absolute inset-0 opacity-10">
-                <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,215,0,0.1)_10px,rgba(255,215,0,0.1)_20px)]" />
+            {applicationData?.application?.generatedCard?.imageUrl ? (
+              /* Show actual generated card image */
+              <div className="relative">
+                <img
+                  src={applicationData.application.generatedCard.imageUrl.replace('ipfs://', process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://ipfs.io/ipfs/')}
+                  alt={`EBT Card #${tokenId?.toString() ?? '???'}`}
+                  className="w-full max-w-lg mx-auto rounded-xl border-2 border-ebt-gold shadow-2xl"
+                />
+                <div className="mt-4 text-center">
+                  <a
+                    href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].EBTProgram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-400 hover:underline"
+                  >
+                    View Contract on Etherscan
+                  </a>
+                </div>
               </div>
-
-              <div className="relative flex flex-col md:flex-row items-center gap-6">
-                {/* Card Image */}
-                <div className="w-32 h-20 bg-gradient-to-br from-ebt-gold to-welfare-red rounded-lg flex items-center justify-center shadow-lg">
-                  <span className="text-black font-heading text-xl tracking-wide">EBT</span>
+            ) : (
+              /* Fallback gradient card */
+              <div className="relative p-6 bg-gradient-to-br from-ebt-gold/20 to-welfare-red/20 border border-ebt-gold/50 rounded-xl overflow-hidden">
+                {/* Card background pattern */}
+                <div className="absolute inset-0 opacity-10">
+                  <div className="absolute top-0 left-0 w-full h-full bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(255,215,0,0.1)_10px,rgba(255,215,0,0.1)_20px)]" />
                 </div>
 
-                {/* Card Info */}
-                <div className="flex-1 text-center md:text-left">
-                  <h2 className="text-xl font-heading text-white mb-1 tracking-wide">
-                    EBT CARD #{tokenId?.toString() ?? '???'}
-                  </h2>
-                  <p className="text-sm text-gray-400">
-                    Token-Bound Account
-                  </p>
-                  <p className="text-xs text-ebt-gold mt-2 break-all font-mono">
-                    {address}
-                  </p>
-                </div>
+                <div className="relative flex flex-col md:flex-row items-center gap-6">
+                  {/* Card Image Placeholder */}
+                  <div className="w-32 h-20 bg-gradient-to-br from-ebt-gold to-welfare-red rounded-lg flex items-center justify-center shadow-lg">
+                    <span className="text-black font-heading text-xl tracking-wide">EBT</span>
+                  </div>
 
-                {/* View on Etherscan */}
-                <a
-                  href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].EBTProgram}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-sm text-blue-400 hover:underline"
-                >
-                  View Contract
-                </a>
+                  {/* Card Info */}
+                  <div className="flex-1 text-center md:text-left">
+                    <h2 className="text-xl font-heading text-white mb-1 tracking-wide">
+                      EBT CARD #{tokenId?.toString() ?? '???'}
+                    </h2>
+                    <p className="text-sm text-gray-400">
+                      Token-Bound Account
+                    </p>
+                    <p className="text-xs text-ebt-gold mt-2 break-all font-mono">
+                      {address}
+                    </p>
+                  </div>
+
+                  {/* View on Etherscan */}
+                  <a
+                    href={`https://sepolia.etherscan.io/address/${CONTRACT_ADDRESSES[SEPOLIA_CHAIN_ID].EBTProgram}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-sm text-blue-400 hover:underline"
+                  >
+                    View Contract
+                  </a>
+                </div>
               </div>
-            </div>
+            )}
           </div>
 
           {/* TBA Wallet Section */}

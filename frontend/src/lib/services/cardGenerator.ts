@@ -120,36 +120,57 @@ async function generateBaseCard(zipCode?: string, preGeneratedBackground?: Buffe
 
 /**
  * Create text overlay with user info
+ * Uses system fonts with fallbacks that work on most servers
  */
 function createTextOverlay(input: CardGenerationInput): string {
   const { username, score, tokenId } = input;
   const displayTokenId = tokenId !== undefined ? `#${tokenId}` : '#???';
 
+  // Text positions
+  const textX = AVATAR_X + AVATAR_SIZE + 40;
+
   return `
     <svg width="${CARD_WIDTH}" height="${CARD_HEIGHT}" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Text shadow filter for better readability -->
+        <filter id="textShadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="2" dy="2" stdDeviation="3" flood-color="#000000" flood-opacity="0.8"/>
+        </filter>
+      </defs>
+
       <!-- Card Header -->
-      <text x="${AVATAR_X + AVATAR_SIZE + 40}" y="160"
-            font-family="Arial Black, sans-serif" font-size="64" font-weight="bold" fill="${GOLD_COLOR}">
+      <text x="${textX}" y="160"
+            font-family="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
+            font-size="64" font-weight="bold" fill="${GOLD_COLOR}"
+            filter="url(#textShadow)">
         EBT CARD
       </text>
-      <text x="${AVATAR_X + AVATAR_SIZE + 40}" y="210"
-            font-family="Arial, sans-serif" font-size="28" fill="#888888">
+      <text x="${textX}" y="210"
+            font-family="monospace, 'Courier New', Courier"
+            font-size="28" fill="#888888"
+            filter="url(#textShadow)">
         ${displayTokenId}
       </text>
 
       <!-- Username -->
-      <text x="${AVATAR_X + AVATAR_SIZE + 40}" y="280"
-            font-family="Arial, sans-serif" font-size="36" fill="white">
+      <text x="${textX}" y="280"
+            font-family="Helvetica, Arial, sans-serif"
+            font-size="36" fill="white"
+            filter="url(#textShadow)">
         ${escapeXml(username)}
       </text>
 
       <!-- Welfare Score -->
-      <text x="${AVATAR_X + AVATAR_SIZE + 40}" y="340"
-            font-family="Arial, sans-serif" font-size="24" fill="#888888">
+      <text x="${textX}" y="340"
+            font-family="Helvetica, Arial, sans-serif"
+            font-size="24" fill="#888888"
+            filter="url(#textShadow)">
         WELFARE SCORE
       </text>
-      <text x="${AVATAR_X + AVATAR_SIZE + 40}" y="390"
-            font-family="Arial Black, sans-serif" font-size="48" fill="${GOLD_COLOR}">
+      <text x="${textX}" y="400"
+            font-family="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
+            font-size="56" font-weight="bold" fill="${GOLD_COLOR}"
+            filter="url(#textShadow)">
         ${score}
       </text>
 
@@ -159,17 +180,19 @@ function createTextOverlay(input: CardGenerationInput): string {
 
       <!-- Bottom Bar -->
       <rect x="0" y="${CARD_HEIGHT - 120}" width="${CARD_WIDTH}" height="120"
-            fill="rgba(0,0,0,0.85)"/>
+            fill="rgba(0,0,0,0.9)"/>
       <text x="80" y="${CARD_HEIGHT - 50}"
-            font-family="Arial, sans-serif" font-size="32" fill="${GOLD_COLOR}">
+            font-family="Impact, Haettenschweiler, 'Arial Narrow Bold', sans-serif"
+            font-size="32" fill="${GOLD_COLOR}">
         ELECTRONIC BENEFITS TRANSFER
       </text>
       <text x="${CARD_WIDTH - 80}" y="${CARD_HEIGHT - 50}"
-            font-family="Arial, sans-serif" font-size="24" fill="#666666" text-anchor="end">
+            font-family="Helvetica, Arial, sans-serif"
+            font-size="24" fill="#666666" text-anchor="end">
         THE PROGRAM
       </text>
 
-      <!-- Decorative elements -->
+      <!-- Decorative gold line -->
       <line x1="80" y1="${CARD_HEIGHT - 85}" x2="${CARD_WIDTH / 2}" y2="${CARD_HEIGHT - 85}"
             stroke="${GOLD_COLOR}" stroke-width="2" opacity="0.5"/>
     </svg>

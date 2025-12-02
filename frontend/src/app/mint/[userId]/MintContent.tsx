@@ -8,7 +8,7 @@ import { formatEther } from 'viem';
 import { motion } from 'framer-motion';
 import Confetti from 'react-confetti';
 import { Navbar } from '@/components/layout/Navbar';
-import { useMint, useHasMinted, useIsUserApproved, useDoesUserIdExist, useGetUserIdByAddress } from '@/lib/hooks';
+import { useMint, useHasMinted, useIsUserApproved, useDoesUserIdExist, useGetUserIdByAddress, useCurrentTokenId } from '@/lib/hooks';
 import { MIN_MINT_PRICE } from '@/lib/contracts/addresses';
 import { MintChecklist } from '@/components/mint/MintChecklist';
 import { MintSuccess } from '@/components/mint/MintSuccess';
@@ -98,7 +98,11 @@ export default function MintContent() {
 
   const { mint, hash, isPending, isConfirming, isSuccess, error: mintError } = useMint();
 
+  // Get current token ID from contract - after mint, user's token is currentTokenId - 1
+  const { data: currentTokenId, refetch: refetchTokenId } = useCurrentTokenId();
+
   const [profile, setProfile] = useState<Profile | null>(null);
+  const [mintedTokenId, setMintedTokenId] = useState<bigint | undefined>(undefined);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
@@ -156,8 +160,37 @@ export default function MintContent() {
       setTimeout(() => {
         setShowConfetti(false);
       }, 8000);
+
+      // Refetch token ID from contract to get the minted token
+      async function fetchMintedTokenId() {
+        const result = await refetchTokenId();
+        if (result.data) {
+          // User's token is currentTokenId - 1 (since currentTokenId is the NEXT token to mint)
+          const newTokenId = BigInt(result.data) - 1n;
+          setMintedTokenId(newTokenId);
+        }
+      }
+      fetchMintedTokenId();
+
+      // Also refetch profile to get updated data
+      async function refetchProfile() {
+        try {
+          const token = await getAccessToken();
+          const response = await fetch(`/api/profile/${userId}`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            setProfile(data.profile);
+          }
+        } catch (err) {
+          console.error('Failed to refetch profile after mint:', err);
+        }
+      }
+      // Wait a moment for the database to be updated by the mint event listener
+      setTimeout(refetchProfile, 2000);
     }
-  }, [isSuccess]);
+  }, [isSuccess, getAccessToken, userId, refetchTokenId]);
 
   const handleMint = () => {
     if (!userId) return;
@@ -330,7 +363,7 @@ export default function MintContent() {
 
         <div className="max-w-2xl mx-auto px-4 py-12">
           <MintSuccess
-            tokenId={profile.mintedTokenId !== undefined ? BigInt(profile.mintedTokenId) : undefined}
+            tokenId={mintedTokenId ?? (profile.mintedTokenId != null ? BigInt(profile.mintedTokenId) : undefined)}
             txHash={hash}
             cardImageUrl={profile.generatedCard?.imageUrl}
             username={profile.username}
