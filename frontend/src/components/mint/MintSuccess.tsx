@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useTBAData } from '@/lib/hooks';
 import { getEtherscanAddressUrl, getEtherscanTxUrl } from '@/lib/contracts/addresses';
 
@@ -11,11 +12,15 @@ interface MintSuccessProps {
   txHash: string;
   cardImageUrl?: string;
   username: string;
+  autoRedirect?: boolean;
+  redirectDelay?: number;
 }
 
-export function MintSuccess({ tokenId, txHash, cardImageUrl, username }: MintSuccessProps) {
+export function MintSuccess({ tokenId, txHash, cardImageUrl, username, autoRedirect = true, redirectDelay = 10000 }: MintSuccessProps) {
+  const router = useRouter();
   const [isFlipped, setIsFlipped] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [redirectCountdown, setRedirectCountdown] = useState(Math.floor(redirectDelay / 1000));
   const { tbaAddress } = useTBAData(tokenId);
 
   // Auto-flip the card after a short delay
@@ -25,6 +30,24 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username }: MintSuc
     }, 1500);
     return () => clearTimeout(timer);
   }, []);
+
+  // Auto-redirect to dashboard after delay
+  useEffect(() => {
+    if (!autoRedirect || !isFlipped) return;
+
+    const countdownInterval = setInterval(() => {
+      setRedirectCountdown(prev => {
+        if (prev <= 1) {
+          clearInterval(countdownInterval);
+          router.push('/dashboard');
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(countdownInterval);
+  }, [autoRedirect, isFlipped, router]);
 
   const handleCopyTBA = async () => {
     if (tbaAddress) {
@@ -207,13 +230,22 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username }: MintSuc
               </ul>
             </div>
 
+            {/* Redirect Notice */}
+            {autoRedirect && redirectCountdown > 0 && (
+              <div className="p-3 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+                <p className="text-blue-400 text-sm">
+                  Redirecting to dashboard in {redirectCountdown}s...
+                </p>
+              </div>
+            )}
+
             {/* Action Buttons */}
             <div className="flex gap-4">
               <Link
                 href="/dashboard"
                 className="flex-1 py-3 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors text-center"
               >
-                GO TO DASHBOARD
+                GO TO DASHBOARD {autoRedirect && redirectCountdown > 0 ? `(${redirectCountdown}s)` : ''}
               </Link>
               <button
                 onClick={() => {

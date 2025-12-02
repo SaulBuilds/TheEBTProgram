@@ -12,11 +12,54 @@ import {
   useFoodBalance,
   useTokenData,
   useMyApplication,
+  useDoesUserIdExist,
+  useIsUserApproved,
+  useApply4EBT,
+  useCurrentTokenId,
+  useTokenIdToUserID,
 } from '@/lib/hooks';
 import { CONTRACT_ADDRESSES, SEPOLIA_CHAIN_ID, CLAIM_INTERVAL } from '@/lib/contracts/addresses';
 import { TBAWallet } from '@/components/tba/TBAWallet';
 import { InstallmentTimeline } from '@/components/dashboard/InstallmentTimeline';
 import { DashboardLeaderboard } from '@/components/dashboard/DashboardLeaderboard';
+
+// Hook to find tokenId by scanning recent tokens for the user's userId
+function useFindTokenIdByUserId(userId: string | undefined, hasMinted: boolean | undefined) {
+  const { data: currentTokenId } = useCurrentTokenId();
+  const [foundTokenId, setFoundTokenId] = useState<bigint | null>(null);
+
+  // We need to check tokens in reverse order (most recent first)
+  // This is a simplified approach - check last 10 tokens
+  const maxTokenId = currentTokenId ? Number(currentTokenId) : 0;
+
+  // Create an array of token IDs to check (up to last 5)
+  const tokenIdsToCheck: number[] = [];
+  for (let i = maxTokenId - 1; i >= 0 && i >= maxTokenId - 5; i--) {
+    tokenIdsToCheck.push(i);
+  }
+
+  // Check each token's userId - we need separate hooks for each
+  const { data: token0UserId } = useTokenIdToUserID(tokenIdsToCheck[0] !== undefined ? BigInt(tokenIdsToCheck[0]) : undefined);
+  const { data: token1UserId } = useTokenIdToUserID(tokenIdsToCheck[1] !== undefined ? BigInt(tokenIdsToCheck[1]) : undefined);
+  const { data: token2UserId } = useTokenIdToUserID(tokenIdsToCheck[2] !== undefined ? BigInt(tokenIdsToCheck[2]) : undefined);
+  const { data: token3UserId } = useTokenIdToUserID(tokenIdsToCheck[3] !== undefined ? BigInt(tokenIdsToCheck[3]) : undefined);
+  const { data: token4UserId } = useTokenIdToUserID(tokenIdsToCheck[4] !== undefined ? BigInt(tokenIdsToCheck[4]) : undefined);
+
+  useEffect(() => {
+    if (!userId || !hasMinted) return;
+
+    // Check each token's userId
+    const userIds = [token0UserId, token1UserId, token2UserId, token3UserId, token4UserId];
+    for (let i = 0; i < userIds.length && i < tokenIdsToCheck.length; i++) {
+      if (userIds[i] === userId) {
+        setFoundTokenId(BigInt(tokenIdsToCheck[i]));
+        return;
+      }
+    }
+  }, [userId, hasMinted, token0UserId, token1UserId, token2UserId, token3UserId, token4UserId, tokenIdsToCheck]);
+
+  return { foundTokenId };
+}
 
 export default function DashboardContent() {
   const { authenticated, login } = usePrivy();
@@ -26,10 +69,26 @@ export default function DashboardContent() {
   // Use authenticated endpoint to find application by userId (works even if wallet changed)
   const { data: applicationData, isLoading: isLoadingApplication } = useMyApplication();
 
-  // Get tokenId from mint data if available, otherwise default to 0
+  // On-chain registration status
+  const userId = applicationData?.application?.userId;
+  const { data: userExistsOnChainData, isLoading: isCheckingOnChain } = useDoesUserIdExist(userId || '');
+  const { data: isApprovedOnChainData } = useIsUserApproved(userId || '');
+  const userExistsOnChain = userExistsOnChainData as boolean | undefined;
+  const isApprovedOnChain = isApprovedOnChainData as boolean | undefined;
+
+  // Hook to register on-chain if needed
+  const { apply: registerOnChain, isPending: isRegistering, isConfirming: isRegisterConfirming, isSuccess: registerSuccess, error: registerError } = useApply4EBT();
+
+  // Try to find tokenId from chain if not in database
+  const { foundTokenId } = useFindTokenIdByUserId(userId, hasMinted as boolean | undefined);
+
+  // Get tokenId from mint data if available, fallback to chain lookup, otherwise undefined
   const tokenId = applicationData?.mint?.tokenId !== undefined
     ? BigInt(applicationData.mint.tokenId)
-    : BigInt(0);
+    : foundTokenId !== null
+    ? foundTokenId
+    : hasMinted ? BigInt(0) : undefined; // Only use 0 as last resort if user has minted
+
   const { data: foodBalanceData } = useFoodBalance(address);
   const foodBalance = foodBalanceData as bigint | undefined;
 
@@ -160,6 +219,42 @@ export default function DashboardContent() {
                   <p className="text-gray-400 text-sm">
                     Your application is being reviewed. You&apos;ll be able to mint your EBT Card once approved.
                   </p>
+
+                  {/* On-Chain Registration Status */}
+                  {!isCheckingOnChain && !userExistsOnChain && (
+                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg">
+                      <p className="text-yellow-400 text-sm mb-3">
+                        Complete your on-chain registration to be eligible for minting
+                      </p>
+                      <button
+                        onClick={() => registerOnChain(
+                          application.username,
+                          application.profilePicURL || '',
+                          application.twitter || '',
+                          BigInt(0),
+                          application.userId
+                        )}
+                        disabled={isRegistering || isRegisterConfirming}
+                        className="px-6 py-3 bg-yellow-500 text-black font-heading tracking-wide rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-50"
+                      >
+                        {isRegistering ? 'CONFIRM IN WALLET...' : isRegisterConfirming ? 'REGISTERING...' : 'REGISTER ON-CHAIN'}
+                      </button>
+                      {registerError && (
+                        <p className="text-red-400 text-xs mt-2">{registerError.message}</p>
+                      )}
+                    </div>
+                  )}
+                  {userExistsOnChain && (
+                    <div className="p-3 bg-green-500/10 border border-green-500/30 rounded-lg">
+                      <p className="text-green-400 text-sm flex items-center gap-2">
+                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                        Registered on-chain
+                      </p>
+                    </div>
+                  )}
+
                   <p className="text-gray-500 text-sm">
                     While you wait, play slots for a chance to win <span className="text-green-400 font-bold">2 ETH</span>!
                   </p>
@@ -177,10 +272,45 @@ export default function DashboardContent() {
                   <p className="text-gray-400 text-sm mb-4">
                     Your application has been approved! You can now mint your EBT Card.
                   </p>
+
+                  {/* On-Chain Registration Required */}
+                  {!isCheckingOnChain && !userExistsOnChain && (
+                    <div className="p-4 bg-yellow-500/10 border border-yellow-500/30 rounded-lg mb-4">
+                      <p className="text-yellow-400 text-sm mb-3">
+                        First, complete your on-chain registration to mint
+                      </p>
+                      <button
+                        onClick={() => registerOnChain(
+                          application.username,
+                          application.profilePicURL || '',
+                          application.twitter || '',
+                          BigInt(0),
+                          application.userId
+                        )}
+                        disabled={isRegistering || isRegisterConfirming}
+                        className="px-6 py-3 bg-yellow-500 text-black font-heading tracking-wide rounded-lg hover:bg-yellow-400 transition-colors disabled:opacity-50"
+                      >
+                        {isRegistering ? 'CONFIRM IN WALLET...' : isRegisterConfirming ? 'REGISTERING...' : 'REGISTER ON-CHAIN'}
+                      </button>
+                      {registerError && (
+                        <p className="text-red-400 text-xs mt-2">{registerError.message}</p>
+                      )}
+                    </div>
+                  )}
+
                   <div className="flex flex-col sm:flex-row gap-3 justify-center">
                     <Link
                       href={`/mint/${application.userId}`}
-                      className="inline-block px-8 py-4 bg-ebt-gold text-black font-heading tracking-wide rounded-lg hover:bg-ebt-gold/90 transition-colors"
+                      className={`inline-block px-8 py-4 font-heading tracking-wide rounded-lg transition-colors ${
+                        userExistsOnChain && isApprovedOnChain
+                          ? 'bg-ebt-gold text-black hover:bg-ebt-gold/90'
+                          : 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                      }`}
+                      onClick={(e) => {
+                        if (!userExistsOnChain || !isApprovedOnChain) {
+                          e.preventDefault();
+                        }
+                      }}
                     >
                       MINT YOUR EBT CARD
                     </Link>
@@ -293,7 +423,7 @@ export default function DashboardContent() {
       const response = await fetch('/api/claims/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tokenId: tokenId.toString() }),
+        body: JSON.stringify({ tokenId: tokenId?.toString() ?? '0' }),
       });
 
       if (!response.ok) {
@@ -378,7 +508,7 @@ export default function DashboardContent() {
                 {/* Card Info */}
                 <div className="flex-1 text-center md:text-left">
                   <h2 className="text-xl font-heading text-white mb-1 tracking-wide">
-                    EBT CARD #{tokenId.toString()}
+                    EBT CARD #{tokenId?.toString() ?? '???'}
                   </h2>
                   <p className="text-sm text-gray-400">
                     Token-Bound Account
@@ -402,7 +532,7 @@ export default function DashboardContent() {
           </div>
 
           {/* TBA Wallet Section */}
-          {address && hasMinted && (
+          {address && hasMinted && tokenId !== undefined && (
             <div className="mb-8">
               <TBAWallet tokenId={tokenId} userAddress={address} />
             </div>
