@@ -120,21 +120,26 @@ export async function POST(request: NextRequest) {
 
     console.log(`Generating assets for ${application.userId} (zip: ${application.zipCode || 'none'})...`);
 
-    // Step 1: Generate AI background and pin it separately (for HTML card to reference)
+    // Step 1: Generate AI background ONCE (used by both static card and HTML card)
+    let backgroundBuffer: Buffer | null = null;
     let backgroundCid: string | undefined;
     try {
       console.log('Generating AI background...');
-      const backgroundBuffer = await generateAIBackground(application.zipCode || undefined);
+      backgroundBuffer = await generateAIBackground(application.zipCode || undefined);
       if (backgroundBuffer) {
+        // Pin background to IPFS (for HTML card to reference)
         const bgPin = await pinToIPFS(backgroundBuffer, { name: `ebt-bg-${application.userId}.png` });
         backgroundCid = bgPin.cid;
         console.log(`Background pinned: ${backgroundCid}`);
+      } else {
+        console.warn('AI background generation returned null - using fallback gradient');
       }
     } catch (err) {
       console.warn('Background generation failed, will use fallback:', err);
     }
 
     // Step 2: Generate static card image (for OpenSea thumbnail/preview)
+    // Pass the pre-generated background to avoid a second API call
     console.log('Generating static card image...');
     const cardResult = await generateCard({
       userId: application.userId,
@@ -143,6 +148,7 @@ export async function POST(request: NextRequest) {
       score,
       tokenId: application.mintedTokenId || undefined,
       zipCode: application.zipCode || undefined,
+      backgroundBuffer: backgroundBuffer || undefined, // Pass pre-generated background
     });
 
     // Pin static image to IPFS

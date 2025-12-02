@@ -29,6 +29,7 @@ export interface CardGenerationInput {
   score: number;
   tokenId?: number;
   zipCode?: string;
+  backgroundBuffer?: Buffer; // Pre-generated background to avoid double API calls
 }
 
 export interface CardGenerationResult {
@@ -91,9 +92,9 @@ async function generatePlaceholderAvatar(username: string): Promise<Buffer> {
 /**
  * Generate the base card with AI background
  */
-async function generateBaseCard(zipCode?: string): Promise<Buffer> {
-  // Get AI-generated background (or fallback)
-  const backgroundBuffer = await getBackgroundForUser(zipCode);
+async function generateBaseCard(zipCode?: string, preGeneratedBackground?: Buffer): Promise<Buffer> {
+  // Use pre-generated background if provided, otherwise generate new one
+  const backgroundBuffer = preGeneratedBackground || await getBackgroundForUser(zipCode);
 
   // Add dark overlay for text readability
   const overlay = `
@@ -204,8 +205,8 @@ function createCircularMask(): string {
 export async function generateCard(input: CardGenerationInput): Promise<CardGenerationResult> {
   console.log(`Generating card for ${input.username} (zip: ${input.zipCode || 'none'})...`);
 
-  // 1. Generate base card with AI background
-  const baseCard = await generateBaseCard(input.zipCode);
+  // 1. Generate base card with AI background (use pre-generated if provided)
+  const baseCard = await generateBaseCard(input.zipCode, input.backgroundBuffer);
 
   // 2. Get avatar (fetch or generate placeholder)
   let avatarBuffer: Buffer;

@@ -68,9 +68,12 @@ function getNeighborhoodFromZip(zipCode?: string): string {
  */
 export async function generateAIBackground(zipCode?: string): Promise<Buffer | null> {
   if (!OPENAI_API_KEY) {
-    console.warn('OpenAI API key not configured, using fallback background');
+    console.error('❌ OPENAI_API_KEY is not set! AI backgrounds will not be generated.');
+    console.error('   Set OPENAI_API_KEY in your .env.local or Vercel environment variables.');
     return null;
   }
+
+  console.log('✓ OPENAI_API_KEY is configured, generating AI background...');
 
   const neighborhood = getNeighborhoodFromZip(zipCode);
 
@@ -111,22 +114,45 @@ Style requirements:
 
     if (!response.ok) {
       const error = await response.text();
-      console.error('OpenAI API error:', error);
+      console.error('❌ OpenAI API error:', response.status, error);
       return null;
     }
 
     const result = await response.json();
+    console.log('✓ OpenAI API response received');
 
     // GPT-4o returns b64_json by default
+    if (!result.data || !result.data[0]) {
+      console.error('❌ OpenAI response missing data:', JSON.stringify(result).substring(0, 200));
+      return null;
+    }
+
     const base64Image = result.data[0].b64_json;
+    if (!base64Image) {
+      // Check if it returned a URL instead
+      if (result.data[0].url) {
+        console.log('OpenAI returned URL instead of b64_json, fetching image...');
+        const imgResponse = await fetch(result.data[0].url);
+        if (imgResponse.ok) {
+          const arrayBuffer = await imgResponse.arrayBuffer();
+          const imageBuffer = Buffer.from(arrayBuffer);
+          const processedImage = await applyRetroEffects(imageBuffer);
+          console.log('✓ Background generated successfully from URL');
+          return processedImage;
+        }
+      }
+      console.error('❌ No image data in OpenAI response');
+      return null;
+    }
     const imageBuffer = Buffer.from(base64Image, 'base64');
 
     // Apply additional CRT/dithering effects with Sharp
     const processedImage = await applyRetroEffects(imageBuffer);
+    console.log('✓ Background generated and processed successfully');
 
     return processedImage;
   } catch (error) {
-    console.error('Failed to generate AI background:', error);
+    console.error('❌ Failed to generate AI background:', error);
     return null;
   }
 }
