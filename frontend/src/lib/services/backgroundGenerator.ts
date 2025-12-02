@@ -64,7 +64,7 @@ function getNeighborhoodFromZip(zipCode?: string): string {
 }
 
 /**
- * Generate background image using OpenAI DALL-E
+ * Generate background image using GPT-4o image generation
  */
 export async function generateAIBackground(zipCode?: string): Promise<Buffer | null> {
   if (!OPENAI_API_KEY) {
@@ -74,17 +74,25 @@ export async function generateAIBackground(zipCode?: string): Promise<Buffer | n
 
   const neighborhood = getNeighborhoodFromZip(zipCode);
 
-  const prompt = `Urban street photography of ${neighborhood} inner city neighborhood.
-Gritty documentary style, overcast sky, worn buildings, corner stores, chain link fences.
-Heavy CRT monitor effect with visible scanlines.
-Extreme dithering effect like a 1990s video game screenshot.
-Muted colors, high contrast, grainy texture.
-8-bit aesthetic, pixelated edges.
-No people visible, empty streets, desolate atmosphere.
-Landscape orientation, wide shot.`;
+  const prompt = `Generate a gritty urban street photograph of ${neighborhood} inner city neighborhood.
+
+Style requirements:
+- Documentary photography aesthetic, raw and unfiltered
+- Overcast grey sky, flat lighting
+- Worn down buildings, boarded windows, graffiti
+- Corner stores, check cashing places, liquor stores
+- Chain link fences, barbed wire, concrete
+- Cracked sidewalks, potholes, litter
+- Heavy CRT monitor effect with visible horizontal scanlines
+- Extreme dithering/posterization like a 1990s video game or early digital camera
+- Muted desaturated colors, high contrast shadows
+- 8-bit retro aesthetic, slightly pixelated edges
+- NO people visible, empty desolate streets
+- Wide landscape shot, establishing shot feel
+- Aspect ratio 16:10 horizontal`;
 
   try {
-    console.log(`Generating AI background for: ${neighborhood}`);
+    console.log(`Generating GPT-4o background for: ${neighborhood}`);
 
     const response = await fetch('https://api.openai.com/v1/images/generations', {
       method: 'POST',
@@ -93,12 +101,11 @@ Landscape orientation, wide shot.`;
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'dall-e-3',
+        model: 'gpt-image-1',
         prompt,
         n: 1,
-        size: '1792x1024', // Closest to our card ratio
-        quality: 'standard',
-        response_format: 'b64_json',
+        size: '1536x1024', // Landscape, close to card ratio
+        quality: 'high',
       }),
     });
 
@@ -109,6 +116,8 @@ Landscape orientation, wide shot.`;
     }
 
     const result = await response.json();
+
+    // GPT-4o returns b64_json by default
     const base64Image = result.data[0].b64_json;
     const imageBuffer = Buffer.from(base64Image, 'base64');
 
