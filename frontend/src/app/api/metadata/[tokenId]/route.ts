@@ -1,66 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
-import { z } from 'zod';
-
-/**
- * ERC-721 Metadata JSON Schema
- * Validates that metadata conforms to the NFT metadata standard
- */
-const nftMetadataSchema = z.object({
-  name: z.string().max(200),
-  description: z.string().max(5000).optional(),
-  image: z.string().url().optional().or(z.string().startsWith('ipfs://')),
-  external_url: z.string().url().optional(),
-  animation_url: z.string().url().optional().or(z.string().startsWith('ipfs://')),
-  attributes: z.array(
-    z.object({
-      trait_type: z.string().max(100),
-      value: z.union([z.string().max(500), z.number()]),
-      display_type: z.string().max(50).optional(),
-    })
-  ).optional(),
-  properties: z.record(z.unknown()).optional(),
-}).passthrough(); // Allow additional fields
-
-/**
- * Sanitize string to prevent XSS
- * Removes potentially dangerous HTML/script content
- */
-function sanitizeString(str: string): string {
-  return str
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/javascript:/gi, '') // Remove javascript: protocol
-    .replace(/on\w+=/gi, '') // Remove event handlers
-    .trim();
-}
-
-/**
- * Recursively sanitize all string values in an object
- */
-function sanitizeMetadata(obj: unknown): unknown {
-  if (typeof obj === 'string') {
-    return sanitizeString(obj);
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(sanitizeMetadata);
-  }
-  if (obj && typeof obj === 'object') {
-    const result: Record<string, unknown> = {};
-    for (const [key, value] of Object.entries(obj)) {
-      result[sanitizeString(key)] = sanitizeMetadata(value);
-    }
-    return result;
-  }
-  return obj;
-}
 
 /**
  * NFT Metadata Endpoint
  *
  * Returns ERC-721 compliant metadata for a given tokenId.
- * - Validates JSON structure against NFT metadata standard
- * - Sanitizes user-provided fields to prevent XSS
- * - Returns structured errors for malformed data
+ * This endpoint is called by OpenSea and other marketplaces.
+ *
+ * Priority:
+ * 1. Generated card from database (with IPFS image)
+ * 2. Application data (fallback)
+ * 3. 404 if token not found
  */
 export async function GET(
   request: NextRequest,
@@ -77,66 +27,93 @@ export async function GET(
       );
     }
 
-    const mint = await prisma.mint.findUnique({ where: { tokenId } });
+    // First, try to find mint record
+    const mint = await prisma.mint.findUnique({
+      where: { tokenId },
+      include: {
+        application: {
+          include: {
+            generatedCard: true,
+          },
+        },
+      },
+    });
 
-    if (!mint) {
+    // If no mint record, try to find application by mintedTokenId
+    let application = mint?.application;
+    if (!application) {
+      const foundApplication = await prisma.application.findFirst({
+        where: { mintedTokenId: tokenId },
+        include: { generatedCard: true },
+      });
+      if (foundApplication) {
+        application = foundApplication;
+      }
+    }
+
+    if (!application) {
       return NextResponse.json(
         { error: 'Not found', message: `No token found with tokenId ${tokenId}` },
         { status: 404 }
       );
     }
 
-    let metadata: unknown = null;
-    let metadataValid = true;
-    let metadataError: string | null = null;
+    // Build ERC-721 compliant metadata
+    const generatedCard = application.generatedCard;
+    const imageUrl = generatedCard?.imageUrl || application.imageURI;
 
-    if (mint.metadata) {
+    // Convert ipfs:// to gateway URL for compatibility
+    const gatewayUrl = imageUrl
+      ? imageUrl.replace('ipfs://', process.env.NEXT_PUBLIC_IPFS_GATEWAY || 'https://ipfs.io/ipfs/')
+      : null;
+
+    // Build attributes array
+    const attributes: Array<{ trait_type: string; value: string | number; display_type?: string }> = [
+      { trait_type: 'Username', value: application.username },
+      { trait_type: 'Welfare Score', value: application.score },
+      { trait_type: 'Status', value: application.status },
+    ];
+
+    if (application.twitter) {
+      attributes.push({ trait_type: 'Twitter', value: `@${application.twitter}` });
+    }
+    if (application.discord) {
+      attributes.push({ trait_type: 'Discord', value: application.discord });
+    }
+    if (application.zipCode) {
+      attributes.push({ trait_type: 'Region', value: application.zipCode.substring(0, 3) + 'XX' });
+    }
+    if (application.appliedAt) {
+      attributes.push({
+        trait_type: 'Applied',
+        value: application.appliedAt.toISOString().split('T')[0],
+      });
+    }
+
+    // If we have parsed traits from generated card, include those
+    if (generatedCard?.traits) {
       try {
-        // Parse JSON
-        const parsed = JSON.parse(mint.metadata);
-
-        // Validate structure
-        const validationResult = nftMetadataSchema.safeParse(parsed);
-
-        if (validationResult.success) {
-          // Sanitize all string values
-          metadata = sanitizeMetadata(validationResult.data);
-        } else {
-          // Return metadata but flag as invalid
-          metadataValid = false;
-          metadataError = 'Metadata does not conform to NFT standard';
-          // Still sanitize and return the raw parsed data
-          metadata = sanitizeMetadata(parsed);
-        }
-      } catch (parseError) {
-        // JSON parse failed
-        metadataValid = false;
-        metadataError = 'Invalid JSON in metadata field';
-        // Return raw string (sanitized)
-        metadata = sanitizeString(mint.metadata);
+        const parsedTraits = JSON.parse(generatedCard.traits);
+        // Merge with existing, preferring generated card traits
+        // (but we already have the main ones above)
+      } catch {
+        // Ignore parse errors
       }
     }
 
-    // Build response
-    const response: Record<string, unknown> = {
-      tokenId,
-      userId: mint.userId,
-      metadataURI: mint.metadataURI,
-      accountAddress: mint.accountAddress,
+    const metadata = {
+      name: `EBT Card #${tokenId}`,
+      description: `Electronic Benefits Transfer Card for the blockchain breadline. Welcome to The Program.\n\nHolder: ${application.username}\nWelfare Score: ${application.score}`,
+      image: gatewayUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://ebtcard.xyz'}/api/cards/generate/${application.userId}?preview=true`,
+      external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://ebtcard.xyz'}/profile/${application.userId}`,
+      attributes,
+      background_color: '000000',
     };
 
-    // Add metadata if present
-    if (metadata !== null) {
-      response.metadata = metadata;
-      if (!metadataValid) {
-        response.metadataWarning = metadataError;
-      }
-    }
-
     // Add cache headers for CDN
-    return NextResponse.json(response, {
+    return NextResponse.json(metadata, {
       headers: {
-        'Cache-Control': 'public, max-age=60, s-maxage=300',
+        'Cache-Control': 'public, max-age=300, s-maxage=3600',
         'Content-Type': 'application/json',
       },
     });
