@@ -3,11 +3,18 @@ import { prisma } from '@/lib/prisma';
 import { verifyAdmin, logAdminAction } from '@/lib/auth';
 import { z } from 'zod';
 import { generateCard } from '@/lib/services/cardGenerator';
-import { pinImage, pinMetadata, isNodeAvailable } from '@/lib/services/ipfs';
+import { generateAndPinHTMLCard } from '@/lib/services/htmlCardGenerator';
+import { pinImage, pinMetadata, isNodeAvailable, pinToIPFS } from '@/lib/services/ipfs';
+import { generateAIBackground } from '@/lib/services/backgroundGenerator';
 
 const approveSchema = z.object({
   applicationId: z.number().int().positive(),
 });
+
+// Contract addresses for HTML card
+const EBT_PROGRAM_ADDRESS = process.env.NEXT_PUBLIC_EBT_PROGRAM_ADDRESS || '0xB225F65B6a297dfe3A11BAD6e19E6f2f5D4AB247';
+const CHAIN_ID = 11155111; // Sepolia
+const RPC_URL = process.env.NEXT_PUBLIC_RPC_URL || 'https://ethereum-sepolia-rpc.publicnode.com';
 
 export async function POST(request: NextRequest) {
   try {
@@ -111,8 +118,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Generate the card image with AI background based on zip code
-    console.log(`Generating card for ${application.userId} (zip: ${application.zipCode || 'none'})...`);
+    console.log(`Generating assets for ${application.userId} (zip: ${application.zipCode || 'none'})...`);
+
+    // Step 1: Generate AI background and pin it separately (for HTML card to reference)
+    let backgroundCid: string | undefined;
+    try {
+      console.log('Generating AI background...');
+      const backgroundBuffer = await generateAIBackground(application.zipCode || undefined);
+      if (backgroundBuffer) {
+        const bgPin = await pinToIPFS(backgroundBuffer, { name: `ebt-bg-${application.userId}.png` });
+        backgroundCid = bgPin.cid;
+        console.log(`Background pinned: ${backgroundCid}`);
+      }
+    } catch (err) {
+      console.warn('Background generation failed, will use fallback:', err);
+    }
+
+    // Step 2: Generate static card image (for OpenSea thumbnail/preview)
+    console.log('Generating static card image...');
     const cardResult = await generateCard({
       userId: application.userId,
       username: application.username,
@@ -122,19 +145,35 @@ export async function POST(request: NextRequest) {
       zipCode: application.zipCode || undefined,
     });
 
-    // Pin image to IPFS
-    console.log(`Pinning image to IPFS for ${application.userId}...`);
+    // Pin static image to IPFS
+    console.log(`Pinning static image to IPFS...`);
     const imagePin = await pinImage(
       cardResult.imageBuffer,
       `ebt-card-${application.userId}.png`
     );
-    console.log(`Image pinned: ${imagePin.cid}`);
+    console.log(`Static image pinned: ${imagePin.cid}`);
 
-    // Generate metadata
+    // Step 3: Generate and pin HTML animation card
+    console.log('Generating HTML animation card...');
+    const htmlCard = await generateAndPinHTMLCard({
+      tokenId: application.mintedTokenId || 0,
+      userId: application.userId,
+      username: application.username,
+      avatarUrl: application.profilePicURL || undefined,
+      score,
+      backgroundImageCid: backgroundCid,
+      contractAddress: EBT_PROGRAM_ADDRESS,
+      chainId: CHAIN_ID,
+      rpcUrl: RPC_URL,
+    });
+    console.log(`HTML card pinned: ${htmlCard.htmlCid}`);
+
+    // Step 4: Generate ERC-721 metadata with animation_url
     const metadata = {
       name: `EBT Card${application.mintedTokenId ? ` #${application.mintedTokenId}` : ''}`,
-      description: 'Electronic Benefits Transfer Card for the blockchain breadline. Welcome to The Program.',
-      image: imagePin.url,
+      description: 'Electronic Benefits Transfer Card for the blockchain breadline. Welcome to The Program. This interactive NFT displays live on-chain data.',
+      image: imagePin.url, // Static image for thumbnail
+      animation_url: htmlCard.htmlUrl, // HTML animation
       external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://web3welfare.com'}/card/${application.userId}`,
       attributes: [
         { trait_type: 'Username', value: application.username },
@@ -142,12 +181,13 @@ export async function POST(request: NextRequest) {
         { trait_type: 'Status', value: 'approved' },
         ...(application.twitter ? [{ trait_type: 'Twitter', value: `@${application.twitter}` }] : []),
         ...(application.discord ? [{ trait_type: 'Discord', value: application.discord }] : []),
+        ...(application.zipCode ? [{ trait_type: 'Region', value: application.zipCode.substring(0, 3) + 'XX' }] : []),
       ],
       background_color: '000000',
     };
 
     // Pin metadata to IPFS
-    console.log(`Pinning metadata to IPFS for ${application.userId}...`);
+    console.log(`Pinning metadata to IPFS...`);
     const metadataPin = await pinMetadata(
       metadata,
       `ebt-card-${application.userId}-metadata.json`
@@ -188,7 +228,10 @@ export async function POST(request: NextRequest) {
       },
     });
 
-    console.log(`Application ${applicationId} approved with metadata URI: ${metadataPin.url}`);
+    console.log(`Application ${applicationId} approved successfully!`);
+    console.log(`  - Image: ${imagePin.url}`);
+    console.log(`  - Animation: ${htmlCard.htmlUrl}`);
+    console.log(`  - Metadata: ${metadataPin.url}`);
 
     return NextResponse.json({
       application: updatedApplication,
@@ -197,6 +240,8 @@ export async function POST(request: NextRequest) {
       metadataUri: metadataPin.url,
       imageCid: imagePin.cid,
       metadataCid: metadataPin.cid,
+      animationCid: htmlCard.htmlCid,
+      backgroundCid,
     });
   } catch (error) {
     console.error('Approve application error:', error);

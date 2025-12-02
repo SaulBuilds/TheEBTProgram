@@ -405,7 +405,7 @@ export function useMint() {
       functionName: 'mint',
       args: [userId],
       value: mintPrice,
-      gas: BigInt(500000), // Reasonable gas limit for mint + ERC6551 account creation
+      gas: BigInt(800000), // Higher gas limit for mint + ERC6551 account creation
     });
   };
 
