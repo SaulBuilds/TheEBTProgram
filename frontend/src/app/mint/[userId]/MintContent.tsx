@@ -99,7 +99,7 @@ export default function MintContent() {
   const { mint, hash, isPending, isConfirming, isSuccess, error: mintError } = useMint();
 
   // Get current token ID from contract - after mint, user's token is currentTokenId - 1
-  const { data: currentTokenId, refetch: refetchTokenId } = useCurrentTokenId();
+  const { refetch: refetchTokenId } = useCurrentTokenId();
 
   const [profile, setProfile] = useState<Profile | null>(null);
   const [mintedTokenId, setMintedTokenId] = useState<bigint | undefined>(undefined);
@@ -162,18 +162,18 @@ export default function MintContent() {
       }, 8000);
 
       // Refetch token ID from contract to get the minted token
-      async function fetchMintedTokenId() {
+      const fetchMintedTokenId = async () => {
         const result = await refetchTokenId();
-        if (result.data) {
+        if (result.data != null) {
           // User's token is currentTokenId - 1 (since currentTokenId is the NEXT token to mint)
-          const newTokenId = BigInt(result.data) - 1n;
+          const newTokenId = BigInt(result.data as bigint) - 1n;
           setMintedTokenId(newTokenId);
         }
-      }
+      };
       fetchMintedTokenId();
 
       // Also refetch profile to get updated data
-      async function refetchProfile() {
+      const refetchProfile = async () => {
         try {
           const token = await getAccessToken();
           const response = await fetch(`/api/profile/${userId}`, {
@@ -186,7 +186,7 @@ export default function MintContent() {
         } catch (err) {
           console.error('Failed to refetch profile after mint:', err);
         }
-      }
+      };
       // Wait a moment for the database to be updated by the mint event listener
       setTimeout(refetchProfile, 2000);
     }
