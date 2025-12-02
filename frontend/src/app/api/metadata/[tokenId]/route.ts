@@ -104,8 +104,8 @@ export async function GET(
     const metadata = {
       name: `EBT Card #${tokenId}`,
       description: `Electronic Benefits Transfer Card for the blockchain breadline. Welcome to The Program.\n\nHolder: ${application.username}\nWelfare Score: ${application.score}`,
-      image: gatewayUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://ebtcard.xyz'}/api/cards/generate/${application.userId}?preview=true`,
-      external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://ebtcard.xyz'}/profile/${application.userId}`,
+      image: gatewayUrl || `${process.env.NEXT_PUBLIC_APP_URL || 'https://web3welfare.com'}/api/cards/generate/${application.userId}?preview=true`,
+      external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://web3welfare.com'}/profile/${application.userId}`,
       attributes,
       background_color: '000000',
     };

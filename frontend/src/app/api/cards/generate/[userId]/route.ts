@@ -104,7 +104,7 @@ export async function POST(
       name: `EBT Card${application.mintedTokenId ? ` #${application.mintedTokenId}` : ''}`,
       description: 'Electronic Benefits Transfer Card for the blockchain breadline. Welcome to The Program.',
       image: imagePin.url,
-      external_url: `https://ebtcard.xyz/card/${userId}`,
+      external_url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://web3welfare.com'}/card/${userId}`,
       attributes: [
         { trait_type: 'Username', value: application.username },
         { trait_type: 'Welfare Score', value: application.score },
