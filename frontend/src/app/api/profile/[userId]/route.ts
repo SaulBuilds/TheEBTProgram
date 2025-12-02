@@ -130,11 +130,12 @@ export async function GET(
 
     const { userId } = await params;
 
-    // Fetch application with mint data
+    // Fetch application with mint data and generated card
     const application = await prisma.application.findFirst({
       where: { userId },
       include: {
         mints: true,
+        generatedCard: true,
       },
     });
 
@@ -179,13 +180,23 @@ export async function GET(
       walletAddress: application.walletAddress,
       createdAt: application.createdAt.toISOString(),
       approvedAt: application.approvedAt?.toISOString(),
-      mintedTokenId: mint?.tokenId,
-      generatedCard: mint
+      mintedTokenId: mint?.tokenId || application.mintedTokenId,
+      // Use actual GeneratedCard data from database, not the mint record
+      generatedCard: application.generatedCard
         ? {
-            imageCid: mint.metadataURI?.replace('ipfs://', '') || '',
-            metadataCid: mint.metadataURI?.replace('ipfs://', '') || '',
-            imageUrl: mint.metadataURI || '',
-            metadataUrl: mint.metadataURI || '',
+            imageCid: application.generatedCard.imageCid,
+            metadataCid: application.generatedCard.metadataCid,
+            imageUrl: application.generatedCard.imageUrl,
+            metadataUrl: application.generatedCard.metadataUrl,
+            theme: application.generatedCard.theme,
+          }
+        : // Fallback to application imageURI if generatedCard doesn't exist
+          application.imageURI
+        ? {
+            imageCid: application.imageURI.replace('ipfs://', '').replace('https://ipfs.io/ipfs/', ''),
+            metadataCid: application.metadataURI?.replace('ipfs://', '').replace('https://ipfs.io/ipfs/', '') || '',
+            imageUrl: application.imageURI,
+            metadataUrl: application.metadataURI || '',
           }
         : undefined,
     };
