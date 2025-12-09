@@ -1,9 +1,15 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import OpenAI from 'openai';
 import { prisma } from './prisma';
 
-// Initialize Gemini client for image generation
-// Note: OpenAI removed due to TOS restrictions on meme content
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Initialize OpenAI client for image generation
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY || '',
+});
+
+// Model to use for image generation
+// gpt-image-1: Latest model (April 2025) - best quality, text rendering, prompt following
+// dall-e-3: Previous generation, still available
+const IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'gpt-image-1';
 
 // Retry helper for rate limit errors
 async function withRetry<T>(
@@ -21,13 +27,8 @@ async function withRetry<T>(
       const errorMessage = lastError.message || '';
 
       // Check if it's a rate limit error (429)
-      if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate')) {
-        // Extract retry delay from error if available, otherwise use exponential backoff
-        const retryMatch = errorMessage.match(/retry in (\d+)/i);
-        const delay = retryMatch
-          ? parseInt(retryMatch[1]) * 1000 + 1000 // Add 1 second buffer
-          : baseDelay * Math.pow(2, attempt);
-
+      if (errorMessage.includes('429') || errorMessage.includes('rate_limit') || errorMessage.includes('Rate limit')) {
+        const delay = baseDelay * Math.pow(2, attempt);
         console.log(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
         await new Promise(resolve => setTimeout(resolve, delay));
       } else {
@@ -39,11 +40,6 @@ async function withRetry<T>(
 
   throw lastError || new Error('Max retries exceeded');
 }
-
-// Model to use for image generation
-// Supported models for image output: gemini-2.0-flash-exp, imagen-3.0-generate-002
-// Note: gemini-3-pro-image-preview does NOT support image generation
-const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.0-flash-exp';
 
 // ==================== SYSTEM PROMPTS ====================
 
@@ -364,47 +360,40 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
       // Continue without tracking if database fails
     }
 
-    // Use Gemini for image generation with retry logic for rate limits
-    // Note: Image generation requires specific models like gemini-2.0-flash-exp or imagen-3.0-generate-002
-    const model = genAI.getGenerativeModel({ model: IMAGE_MODEL });
+    // Determine image size based on aspect ratio
+    let size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024';
+    if (options.aspectRatio === '16:9') {
+      size = '1792x1024';
+    } else if (options.aspectRatio === '9:16') {
+      size = '1024x1792';
+    }
 
-    const result = await withRetry(async () => {
-      return await model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              {
-                text: `Generate an image based on the following prompt. Return ONLY the image, no text explanation.\n\n${fullPrompt}`,
-              },
-            ],
-          },
-        ],
-        generationConfig: {
-          // @ts-expect-error - Gemini supports image generation but types may not be updated
-          responseModalities: ['image', 'text'],
-        },
+    // Use OpenAI DALL-E for image generation with retry logic
+    const response = await withRetry(async () => {
+      return await openai.images.generate({
+        model: IMAGE_MODEL,
+        prompt: fullPrompt,
+        n: 1,
+        size: size,
+        quality: 'hd',
+        response_format: 'b64_json',
       });
     });
 
-    const response = result.response;
     const processingTime = Date.now() - startTime;
 
     // Extract image from response
-    let imageBase64: string | undefined;
-    let imageUrl: string | undefined;
-
-    for (const part of response.candidates?.[0]?.content?.parts || []) {
-      if (part.inlineData) {
-        imageBase64 = part.inlineData.data;
-        imageUrl = `data:${part.inlineData.mimeType};base64,${imageBase64}`;
-        break;
-      }
-    }
-
-    if (!imageBase64) {
+    if (!response.data || response.data.length === 0) {
       throw new Error('No image generated in response');
     }
+
+    const imageData = response.data[0];
+    if (!imageData.b64_json) {
+      throw new Error('No image data in response');
+    }
+
+    const imageBase64 = imageData.b64_json;
+    const imageUrl = `data:image/png;base64,${imageBase64}`;
 
     // Update generation record
     if (generationId) {
