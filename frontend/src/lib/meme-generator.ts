@@ -5,6 +5,41 @@ import { prisma } from './prisma';
 // Note: OpenAI removed due to TOS restrictions on meme content
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
+// Retry helper for rate limit errors
+async function withRetry<T>(
+  fn: () => Promise<T>,
+  maxRetries: number = 3,
+  baseDelay: number = 5000
+): Promise<T> {
+  let lastError: Error | null = null;
+
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await fn();
+    } catch (error) {
+      lastError = error as Error;
+      const errorMessage = lastError.message || '';
+
+      // Check if it's a rate limit error (429)
+      if (errorMessage.includes('429') || errorMessage.includes('quota') || errorMessage.includes('rate')) {
+        // Extract retry delay from error if available, otherwise use exponential backoff
+        const retryMatch = errorMessage.match(/retry in (\d+)/i);
+        const delay = retryMatch
+          ? parseInt(retryMatch[1]) * 1000 + 1000 // Add 1 second buffer
+          : baseDelay * Math.pow(2, attempt);
+
+        console.log(`Rate limited, retrying in ${delay}ms (attempt ${attempt + 1}/${maxRetries})`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        // Not a rate limit error, throw immediately
+        throw error;
+      }
+    }
+  }
+
+  throw lastError || new Error('Max retries exceeded');
+}
+
 // Model to use for image generation
 // Supported models for image output: gemini-2.0-flash-exp, imagen-3.0-generate-002
 // Note: gemini-3-pro-image-preview does NOT support image generation
@@ -329,25 +364,27 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
       // Continue without tracking if database fails
     }
 
-    // Use Gemini for image generation
+    // Use Gemini for image generation with retry logic for rate limits
     // Note: Image generation requires specific models like gemini-2.0-flash-exp or imagen-3.0-generate-002
     const model = genAI.getGenerativeModel({ model: IMAGE_MODEL });
 
-    const result = await model.generateContent({
-      contents: [
-        {
-          role: 'user',
-          parts: [
-            {
-              text: `Generate an image based on the following prompt. Return ONLY the image, no text explanation.\n\n${fullPrompt}`,
-            },
-          ],
+    const result = await withRetry(async () => {
+      return await model.generateContent({
+        contents: [
+          {
+            role: 'user',
+            parts: [
+              {
+                text: `Generate an image based on the following prompt. Return ONLY the image, no text explanation.\n\n${fullPrompt}`,
+              },
+            ],
+          },
+        ],
+        generationConfig: {
+          // @ts-expect-error - Gemini supports image generation but types may not be updated
+          responseModalities: ['image', 'text'],
         },
-      ],
-      generationConfig: {
-        // @ts-expect-error - Gemini supports image generation but types may not be updated
-        responseModalities: ['image', 'text'],
-      },
+      });
     });
 
     const response = result.response;
