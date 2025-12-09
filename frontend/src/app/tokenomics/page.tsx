@@ -9,7 +9,7 @@ import Link from 'next/link';
 export default function TokenomicsPage() {
   return (
     <div className="min-h-screen bg-transparent text-white overflow-x-hidden">
-      <DitheredVideoBackground />
+      <DitheredVideoBackground videoSrc="/backgrounds/Pixelated_Pie_Video_With_Sunrise.mp4" />
       <Navbar />
 
       <div className="relative z-10 pt-24 pb-16">

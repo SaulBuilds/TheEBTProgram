@@ -13,6 +13,7 @@ import { StepSubmit } from './components/StepSubmit';
 import { StepRegisterOnChain } from './components/StepRegisterOnChain';
 import { StepSuccess } from './components/StepSuccess';
 import { Navbar } from '@/components/layout/Navbar';
+import { DitheredVideoBackground } from '@/components/ui/DitheredVideoBackground';
 
 const STORAGE_KEY = 'ebt_application_state';
 
@@ -265,8 +266,8 @@ export default function ApplyContent() {
 
   return (
     <div className="min-h-screen bg-black">
-      <div className="fixed top-0 left-0 w-full h-full bg-fridge-animation bg-cover bg-center" />
-      <div className="relative z-10 bg-black bg-opacity-50">
+      <DitheredVideoBackground videoSrc="/backgrounds/Fridge_Animation_Corrections_Provided.mp4" />
+      <div className="relative z-10">
         <Navbar />
 
         <div className="max-w-4xl mx-auto px-4 py-12">

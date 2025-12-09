@@ -16,6 +16,12 @@ interface MousePosition {
   normalizedY: number;
 }
 
+interface DitheredVideoBackgroundProps {
+  videoSrc?: string;
+  className?: string;
+  fixed?: boolean;
+}
+
 // Detect mobile/touch devices
 function useIsMobile() {
   const [isMobile, setIsMobile] = useState(false);
@@ -35,7 +41,11 @@ function useIsMobile() {
   return isMobile;
 }
 
-export function DitheredVideoBackground() {
+export function DitheredVideoBackground({
+  videoSrc = '/ebt-video.mp4',
+  className = '',
+  fixed = true,
+}: DitheredVideoBackgroundProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
@@ -166,12 +176,12 @@ export function DitheredVideoBackground() {
   return (
     <div
       ref={containerRef}
-      className="fixed inset-0 w-full h-full overflow-hidden pointer-events-none z-0"
+      className={`${fixed ? 'fixed' : 'absolute'} inset-0 w-full h-full overflow-hidden pointer-events-none z-0 ${className}`}
     >
       {/* Video element with CSS-based dithering */}
       <video
         ref={videoRef}
-        src="/ebt-video.mp4"
+        src={videoSrc}
         className="absolute inset-0 w-full h-full object-cover"
         style={{
           ...getFilterStyles(),
