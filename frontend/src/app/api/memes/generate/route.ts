@@ -74,12 +74,13 @@ export async function POST(request: NextRequest) {
         result = await generateReferralMeme(twitterAvatar, referralCode, userId, walletAddress);
         break;
 
-      case 'application_fomo':
+      case 'application_fomo': {
         // Extract username from userInput if provided
         const usernameMatch = userInput?.match(/username is "([^"]+)"/);
         const username = usernameMatch ? usernameMatch[1] : undefined;
         result = await generateApplicationMeme(userId, walletAddress, username);
         break;
+      }
 
       default:
         return NextResponse.json(

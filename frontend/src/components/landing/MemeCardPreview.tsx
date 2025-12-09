@@ -25,7 +25,6 @@ export function MemeCardPreview({ onConnectClick }: MemeCardPreviewProps) {
   const [generatedMeme, setGeneratedMeme] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showMeme, setShowMeme] = useState(false);
 
   // Cycle through static memes when not showing generated meme
   useEffect(() => {
@@ -61,7 +60,6 @@ export function MemeCardPreview({ onConnectClick }: MemeCardPreviewProps) {
 
       if (response.ok && data.success) {
         setGeneratedMeme(data.imageUrl);
-        setShowMeme(true);
       } else {
         setError(data.error || 'Generation failed');
       }

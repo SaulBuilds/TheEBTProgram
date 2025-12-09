@@ -3,10 +3,27 @@
 import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { GlitchText } from '@/components/ui/GlitchText';
 import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
-import { MemeCardPreview } from './MemeCardPreview';
+
+// Dynamically import MemeCardPreview to avoid SSR issues with wagmi hooks
+const MemeCardPreview = dynamic(
+  () => import('./MemeCardPreview').then((mod) => mod.MemeCardPreview),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="relative mx-auto w-full max-w-2xl mb-12">
+        <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/30 rounded-2xl p-2">
+          <div className="w-full aspect-[3/2] bg-gradient-to-br from-gray-800 to-gray-900 rounded-xl shadow-2xl flex items-center justify-center">
+            <div className="w-8 h-8 border-2 border-ebt-gold border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+      </div>
+    ),
+  }
+);
 
 const headlines = [
   "THEY PRINTED $6 TRILLION. WE PRINTED THE CARD.",
