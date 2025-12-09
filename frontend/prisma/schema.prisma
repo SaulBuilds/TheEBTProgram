@@ -247,3 +247,75 @@ model SlotSpin {
 
   spunAt          DateTime  @default(now())
 }
+
+// ==================== MEME GENERATION PIPELINE ====================
+
+// System prompts configurable from admin panel
+model MemePrompt {
+  id              Int       @id @default(autoincrement())
+  name            String    @unique  // e.g., "global_style", "card_background", "referral_fomo"
+  promptType      String    // "global", "card_background", "referral", "public_meme"
+  systemPrompt    String    @db.Text  // The actual prompt text
+  description     String?   // Admin description of what this prompt does
+  enabled         Boolean   @default(true)
+  priority        Int       @default(0)  // Higher priority prompts used first
+
+  // Generation settings
+  model           String    @default("gemini-2.0-flash-exp")  // AI model to use
+  aspectRatio     String    @default("16:9")  // Image aspect ratio
+  negativePrompt  String?   @db.Text  // What to avoid
+
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Relation to generated images
+  generations     MemeGeneration[]
+}
+
+// Track all generated memes (for rate limiting and history)
+model MemeGeneration {
+  id              Int       @id @default(autoincrement())
+
+  // User tracking (can be null for anonymous)
+  userId          String?   // Application.userId if logged in
+  walletAddress   String?   // Wallet that generated
+  ipAddress       String?   // For anonymous rate limiting
+
+  // Generation details
+  promptId        Int?      // Which system prompt was used
+  prompt          MemePrompt? @relation(fields: [promptId], references: [id])
+
+  generationType  String    // "public_meme", "card_background", "referral"
+  userInput       String?   // Any user-provided input/topic
+  fullPrompt      String?   @db.Text  // Complete prompt sent to API
+
+  // Result
+  imageUrl        String?   // URL to generated image
+  imageCid        String?   // IPFS CID if stored on IPFS
+  status          String    @default("pending")  // pending, completed, failed
+  errorMessage    String?   // If failed
+
+  // Referral-specific fields
+  twitterAvatar   String?   // Twitter avatar URL if used
+  referralCode    String?   // Referral link included
+
+  // Metadata
+  generatedAt     DateTime  @default(now())
+  processingTime  Int?      // Milliseconds to generate
+}
+
+// Daily usage tracking for rate limiting
+model MemeUsage {
+  id              Int       @id @default(autoincrement())
+
+  // Identifier (userId, walletAddress, or ipAddress)
+  identifier      String
+  identifierType  String    // "user", "wallet", "ip"
+
+  // Daily counts
+  date            DateTime  @db.Date
+  generationCount Int       @default(0)
+
+  // Compound unique constraint for daily tracking
+  @@unique([identifier, identifierType, date])
+}

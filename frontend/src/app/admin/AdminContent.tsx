@@ -48,13 +48,27 @@ interface Application {
   };
 }
 
-type TabType = 'applications' | 'contracts' | 'blacklist';
+type TabType = 'applications' | 'contracts' | 'blacklist' | 'memes';
 
 interface PendingOnChainApproval {
   userId: string;
   metadataUri: string;
   applicationId: number;
   score: number;
+}
+
+interface MemePromptData {
+  id?: number;
+  name: string;
+  promptType: string;
+  systemPrompt: string;
+  description?: string;
+  enabled: boolean;
+  priority: number;
+  model: string;
+  aspectRatio: string;
+  negativePrompt?: string;
+  isDefault?: boolean;
 }
 
 export default function AdminContent() {
@@ -68,6 +82,14 @@ export default function AdminContent() {
 
   // On-chain approval modal state
   const [pendingOnChainApproval, setPendingOnChainApproval] = useState<PendingOnChainApproval | null>(null);
+
+  // Meme prompts state
+  const [memePrompts, setMemePrompts] = useState<MemePromptData[]>([]);
+  const [defaultPrompts, setDefaultPrompts] = useState<MemePromptData[]>([]);
+  const [editingPrompt, setEditingPrompt] = useState<MemePromptData | null>(null);
+  const [memeLoading, setMemeLoading] = useState(false);
+  const [testGenerating, setTestGenerating] = useState(false);
+  const [testImage, setTestImage] = useState<string | null>(null);
 
   // Contract state inputs
   const [blacklistAddress, setBlacklistAddress] = useState('');
@@ -369,6 +391,92 @@ export default function AdminContent() {
     setBlacklistStatus([blacklistAddress as `0x${string}`], addToBlacklist);
   };
 
+  // Meme prompt functions
+  const fetchMemePrompts = useCallback(async () => {
+    if (!adminToken) return;
+    setMemeLoading(true);
+    try {
+      const response = await fetch('/api/memes/prompts', {
+        headers: { 'x-admin-token': adminToken },
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setMemePrompts(data.prompts || []);
+        setDefaultPrompts(data.defaults || []);
+      }
+    } catch (err) {
+      console.error('Failed to fetch meme prompts:', err);
+    } finally {
+      setMemeLoading(false);
+    }
+  }, [adminToken]);
+
+  const saveMemePrompt = async (prompt: MemePromptData) => {
+    try {
+      const response = await fetch('/api/memes/prompts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-token': adminToken,
+        },
+        body: JSON.stringify(prompt),
+      });
+      if (response.ok) {
+        setEditingPrompt(null);
+        fetchMemePrompts();
+      } else {
+        const data = await response.json();
+        alert(data.error || 'Failed to save prompt');
+      }
+    } catch (err) {
+      alert('Failed to save prompt');
+    }
+  };
+
+  const deleteMemePrompt = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this prompt?')) return;
+    try {
+      const response = await fetch(`/api/memes/prompts?id=${id}`, {
+        method: 'DELETE',
+        headers: { 'x-admin-token': adminToken },
+      });
+      if (response.ok) {
+        fetchMemePrompts();
+      }
+    } catch (err) {
+      alert('Failed to delete prompt');
+    }
+  };
+
+  const testMemeGeneration = async (promptType: string) => {
+    setTestGenerating(true);
+    setTestImage(null);
+    try {
+      const response = await fetch('/api/memes/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: promptType }),
+      });
+      const data = await response.json();
+      if (data.success && data.imageUrl) {
+        setTestImage(data.imageUrl);
+      } else {
+        alert(data.error || 'Generation failed');
+      }
+    } catch (err) {
+      alert('Failed to generate test image');
+    } finally {
+      setTestGenerating(false);
+    }
+  };
+
+  // Fetch meme prompts when switching to memes tab
+  useEffect(() => {
+    if (activeTab === 'memes' && isAuthenticated) {
+      fetchMemePrompts();
+    }
+  }, [activeTab, isAuthenticated, fetchMemePrompts]);
+
   const handleSetCaps = () => {
     if (!newSoftCap || !newHardCap) {
       alert('Please enter both soft and hard caps');
@@ -479,6 +587,16 @@ export default function AdminContent() {
             }`}
           >
             Blacklist
+          </button>
+          <button
+            onClick={() => setActiveTab('memes')}
+            className={`px-4 py-2 font-mono rounded-lg transition-colors ${
+              activeTab === 'memes'
+                ? 'bg-ebt-gold text-black'
+                : 'bg-gray-800 text-white hover:bg-gray-700'
+            }`}
+          >
+            Meme Prompts
           </button>
         </div>
 
@@ -976,6 +1094,290 @@ export default function AdminContent() {
                   Connect with the contract owner wallet to manage the blacklist.
                 </p>
               </div>
+            )}
+          </div>
+        )}
+
+        {/* Meme Prompts Tab */}
+        {activeTab === 'memes' && (
+          <div className="space-y-6">
+            {/* Header */}
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-mono font-bold text-white">Meme Generation Prompts</h2>
+                <p className="text-sm text-gray-500 font-mono">Configure system prompts for meme generation</p>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => fetchMemePrompts()}
+                  disabled={memeLoading}
+                  className="px-4 py-2 bg-gray-800 text-white font-mono text-sm rounded-lg hover:bg-gray-700"
+                >
+                  {memeLoading ? 'Loading...' : 'Refresh'}
+                </button>
+                <button
+                  onClick={() => setEditingPrompt({
+                    name: '',
+                    promptType: 'public_meme',
+                    systemPrompt: '',
+                    description: '',
+                    enabled: true,
+                    priority: 0,
+                    model: 'gemini-2.0-flash-exp',
+                    aspectRatio: '16:9',
+                  })}
+                  className="px-4 py-2 bg-ebt-gold text-black font-mono text-sm font-bold rounded-lg hover:bg-ebt-gold/90"
+                >
+                  + New Prompt
+                </button>
+              </div>
+            </div>
+
+            {/* Default Prompts Info */}
+            <div className="p-4 bg-blue-500/10 border border-blue-500/30 rounded-lg">
+              <p className="text-blue-400 font-mono text-sm">
+                <strong>Note:</strong> Default prompts are used when no custom prompt exists for a type.
+                Create custom prompts to override the defaults.
+              </p>
+            </div>
+
+            {/* Prompt Type Legend */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              {['public_meme', 'card_background', 'referral_fomo', 'global'].map((type) => (
+                <div key={type} className="p-3 bg-gray-900 border border-gray-800 rounded-lg">
+                  <p className="text-xs text-gray-500 font-mono">Type</p>
+                  <p className="text-sm text-white font-mono">{type}</p>
+                </div>
+              ))}
+            </div>
+
+            {/* Custom Prompts List */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-mono font-bold text-ebt-gold">Custom Prompts</h3>
+              {memePrompts.length === 0 ? (
+                <div className="p-6 bg-gray-900 border border-gray-800 rounded-lg text-center">
+                  <p className="text-gray-500 font-mono">No custom prompts yet. Using defaults.</p>
+                </div>
+              ) : (
+                memePrompts.map((prompt) => (
+                  <div key={prompt.id} className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-mono font-bold text-white">{prompt.name}</h4>
+                          <span className={`px-2 py-0.5 text-xs rounded ${prompt.enabled ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                            {prompt.enabled ? 'Active' : 'Disabled'}
+                          </span>
+                          <span className="px-2 py-0.5 text-xs bg-blue-500/20 text-blue-400 rounded">
+                            {prompt.promptType}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-400 font-mono mb-2">{prompt.description || 'No description'}</p>
+                        <p className="text-xs text-gray-600 font-mono truncate">{prompt.systemPrompt.slice(0, 100)}...</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => testMemeGeneration(prompt.promptType)}
+                          disabled={testGenerating}
+                          className="px-3 py-1 bg-purple-600 text-white font-mono text-xs rounded hover:bg-purple-500 disabled:opacity-50"
+                        >
+                          Test
+                        </button>
+                        <button
+                          onClick={() => setEditingPrompt(prompt)}
+                          className="px-3 py-1 bg-blue-600 text-white font-mono text-xs rounded hover:bg-blue-500"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => prompt.id && deleteMemePrompt(prompt.id)}
+                          className="px-3 py-1 bg-welfare-red text-white font-mono text-xs rounded hover:bg-red-600"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+
+            {/* Default Prompts (Read-only) */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-mono font-bold text-gray-500">Default Prompts (Built-in)</h3>
+              {defaultPrompts.map((prompt) => (
+                <div key={prompt.name} className="p-4 bg-gray-900/50 border border-gray-800/50 rounded-lg">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-2">
+                        <h4 className="font-mono font-bold text-gray-400">{prompt.name}</h4>
+                        <span className="px-2 py-0.5 text-xs bg-gray-700 text-gray-400 rounded">default</span>
+                      </div>
+                      <p className="text-xs text-gray-600 font-mono">{prompt.systemPrompt.slice(0, 150)}...</p>
+                    </div>
+                    <button
+                      onClick={() => setEditingPrompt({
+                        ...prompt,
+                        name: `${prompt.name}_custom`,
+                        description: `Custom override for ${prompt.name}`,
+                        enabled: true,
+                        priority: 10,
+                        model: 'gemini-2.0-flash-exp',
+                        aspectRatio: '16:9',
+                      })}
+                      className="px-3 py-1 bg-gray-700 text-white font-mono text-xs rounded hover:bg-gray-600"
+                    >
+                      Clone & Edit
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Test Image Preview */}
+            {testImage && (
+              <div className="p-4 bg-gray-900 border border-gray-800 rounded-lg">
+                <h3 className="text-lg font-mono font-bold text-white mb-4">Test Generation Result</h3>
+                <img src={testImage} alt="Generated meme" className="max-w-full h-auto rounded-lg" />
+                <button
+                  onClick={() => setTestImage(null)}
+                  className="mt-4 px-4 py-2 bg-gray-800 text-white font-mono text-sm rounded-lg"
+                >
+                  Close Preview
+                </button>
+              </div>
+            )}
+
+            {/* Edit Modal */}
+            {editingPrompt && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto"
+              >
+                <motion.div
+                  initial={{ scale: 0.95 }}
+                  animate={{ scale: 1 }}
+                  className="bg-gray-900 border border-gray-800 rounded-lg p-6 w-full max-w-2xl my-8"
+                >
+                  <h3 className="text-xl font-mono font-bold text-ebt-gold mb-6">
+                    {editingPrompt.id ? 'Edit Prompt' : 'Create New Prompt'}
+                  </h3>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-mono text-gray-400 mb-2">Name *</label>
+                        <input
+                          type="text"
+                          value={editingPrompt.name}
+                          onChange={(e) => setEditingPrompt({ ...editingPrompt, name: e.target.value })}
+                          className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm focus:ring-2 focus:ring-ebt-gold"
+                          placeholder="my_custom_prompt"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-mono text-gray-400 mb-2">Type *</label>
+                        <select
+                          value={editingPrompt.promptType}
+                          onChange={(e) => setEditingPrompt({ ...editingPrompt, promptType: e.target.value })}
+                          className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm focus:ring-2 focus:ring-ebt-gold"
+                        >
+                          <option value="public_meme">public_meme</option>
+                          <option value="card_background">card_background</option>
+                          <option value="referral_fomo">referral_fomo</option>
+                          <option value="global">global</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-mono text-gray-400 mb-2">Description</label>
+                      <input
+                        type="text"
+                        value={editingPrompt.description || ''}
+                        onChange={(e) => setEditingPrompt({ ...editingPrompt, description: e.target.value })}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm focus:ring-2 focus:ring-ebt-gold"
+                        placeholder="What this prompt does..."
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-mono text-gray-400 mb-2">System Prompt *</label>
+                      <textarea
+                        value={editingPrompt.systemPrompt}
+                        onChange={(e) => setEditingPrompt({ ...editingPrompt, systemPrompt: e.target.value })}
+                        rows={10}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm focus:ring-2 focus:ring-ebt-gold"
+                        placeholder="Enter the system prompt for image generation..."
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-3 gap-4">
+                      <div>
+                        <label className="block text-sm font-mono text-gray-400 mb-2">Priority</label>
+                        <input
+                          type="number"
+                          value={editingPrompt.priority}
+                          onChange={(e) => setEditingPrompt({ ...editingPrompt, priority: parseInt(e.target.value) || 0 })}
+                          className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-mono text-gray-400 mb-2">Aspect Ratio</label>
+                        <select
+                          value={editingPrompt.aspectRatio}
+                          onChange={(e) => setEditingPrompt({ ...editingPrompt, aspectRatio: e.target.value })}
+                          className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm"
+                        >
+                          <option value="16:9">16:9</option>
+                          <option value="1:1">1:1</option>
+                          <option value="4:3">4:3</option>
+                          <option value="3:2">3:2</option>
+                        </select>
+                      </div>
+                      <div className="flex items-end">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={editingPrompt.enabled}
+                            onChange={(e) => setEditingPrompt({ ...editingPrompt, enabled: e.target.checked })}
+                            className="w-4 h-4"
+                          />
+                          <span className="font-mono text-sm text-gray-400">Enabled</span>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-mono text-gray-400 mb-2">Negative Prompt (optional)</label>
+                      <textarea
+                        value={editingPrompt.negativePrompt || ''}
+                        onChange={(e) => setEditingPrompt({ ...editingPrompt, negativePrompt: e.target.value })}
+                        rows={3}
+                        className="w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg font-mono text-sm"
+                        placeholder="Things to avoid in generation..."
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex gap-3 mt-6">
+                    <button
+                      onClick={() => saveMemePrompt(editingPrompt)}
+                      disabled={!editingPrompt.name || !editingPrompt.systemPrompt}
+                      className="flex-1 py-3 bg-ebt-gold text-black font-mono font-bold rounded-lg hover:bg-ebt-gold/90 disabled:opacity-50"
+                    >
+                      Save Prompt
+                    </button>
+                    <button
+                      onClick={() => setEditingPrompt(null)}
+                      className="px-6 py-3 bg-gray-800 text-gray-400 font-mono rounded-lg hover:bg-gray-700"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </motion.div>
+              </motion.div>
             )}
           </div>
         )}

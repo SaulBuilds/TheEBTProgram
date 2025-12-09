@@ -5,7 +5,7 @@ import { z } from 'zod';
 import { generateCard } from '@/lib/services/cardGenerator';
 import { generateAndPinHTMLCard } from '@/lib/services/htmlCardGenerator';
 import { pinImage, pinMetadata, isNodeAvailable, pinToIPFS } from '@/lib/services/ipfs';
-import { generateAIBackground } from '@/lib/services/backgroundGenerator';
+import { getBackgroundForUser } from '@/lib/services/backgroundGenerator';
 
 const approveSchema = z.object({
   applicationId: z.number().int().positive(),
@@ -120,12 +120,12 @@ export async function POST(request: NextRequest) {
 
     console.log(`Generating assets for ${application.userId} (zip: ${application.zipCode || 'none'})...`);
 
-    // Step 1: Generate AI background ONCE (used by both static card and HTML card)
+    // Step 1: Generate AI background ONCE using Gemini (used by both static card and HTML card)
     let backgroundBuffer: Buffer | null = null;
     let backgroundCid: string | undefined;
     try {
-      console.log('Generating AI background...');
-      backgroundBuffer = await generateAIBackground(application.zipCode || undefined);
+      console.log('Generating AI background via Gemini...');
+      backgroundBuffer = await getBackgroundForUser(application.zipCode || undefined);
       if (backgroundBuffer) {
         // Pin background to IPFS (for HTML card to reference)
         const bgPin = await pinToIPFS(backgroundBuffer, { name: `ebt-bg-${application.userId}.png` });

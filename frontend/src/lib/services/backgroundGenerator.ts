@@ -1,13 +1,14 @@
 /**
  * AI Background Generator
  *
- * Generates CRT/dithered urban backgrounds using OpenAI DALL-E.
- * Falls back to default slum imagery if zip code lookup fails.
+ * Generates CRT/dithered urban backgrounds using Gemini (Nano Banana API).
+ * OpenAI has been removed due to TOS restrictions on meme content.
  */
 
 import sharp from 'sharp';
+import { generateCardBackground } from '../meme-generator';
 
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const GEMINI_API_KEY = process.env.GEMINI_API_KEY;
 const CARD_WIDTH = 1586;
 const CARD_HEIGHT = 1000;
 
@@ -63,99 +64,8 @@ function getNeighborhoodFromZip(zipCode?: string): string {
   return ZIP_TO_CITY[prefix] || ZIP_TO_CITY['default'];
 }
 
-/**
- * Generate background image using GPT-4o image generation
- */
-export async function generateAIBackground(zipCode?: string): Promise<Buffer | null> {
-  if (!OPENAI_API_KEY) {
-    console.error('❌ OPENAI_API_KEY is not set! AI backgrounds will not be generated.');
-    console.error('   Set OPENAI_API_KEY in your .env.local or Vercel environment variables.');
-    return null;
-  }
-
-  console.log('✓ OPENAI_API_KEY is configured, generating AI background...');
-
-  const neighborhood = getNeighborhoodFromZip(zipCode);
-
-  const prompt = `Generate a gritty urban street photograph of ${neighborhood} inner city neighborhood.
-
-Style requirements:
-- Documentary photography aesthetic, raw and unfiltered
-- Overcast grey sky, flat lighting
-- Worn down buildings, boarded windows, graffiti
-- Corner stores, check cashing places, liquor stores
-- Chain link fences, barbed wire, concrete
-- Cracked sidewalks, potholes, litter
-- Heavy CRT monitor effect with visible horizontal scanlines
-- Extreme dithering/posterization like a 1990s video game or early digital camera
-- Muted desaturated colors, high contrast shadows
-- 8-bit retro aesthetic, slightly pixelated edges
-- NO people visible, empty desolate streets
-- Wide landscape shot, establishing shot feel
-- Aspect ratio 16:10 horizontal`;
-
-  try {
-    console.log(`Generating GPT-4o background for: ${neighborhood}`);
-
-    const response = await fetch('https://api.openai.com/v1/images/generations', {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        model: 'gpt-image-1',
-        prompt,
-        n: 1,
-        size: '1536x1024', // Landscape, close to card ratio
-        quality: 'high',
-      }),
-    });
-
-    if (!response.ok) {
-      const error = await response.text();
-      console.error('❌ OpenAI API error:', response.status, error);
-      return null;
-    }
-
-    const result = await response.json();
-    console.log('✓ OpenAI API response received');
-
-    // GPT-4o returns b64_json by default
-    if (!result.data || !result.data[0]) {
-      console.error('❌ OpenAI response missing data:', JSON.stringify(result).substring(0, 200));
-      return null;
-    }
-
-    const base64Image = result.data[0].b64_json;
-    if (!base64Image) {
-      // Check if it returned a URL instead
-      if (result.data[0].url) {
-        console.log('OpenAI returned URL instead of b64_json, fetching image...');
-        const imgResponse = await fetch(result.data[0].url);
-        if (imgResponse.ok) {
-          const arrayBuffer = await imgResponse.arrayBuffer();
-          const imageBuffer = Buffer.from(arrayBuffer);
-          const processedImage = await applyRetroEffects(imageBuffer);
-          console.log('✓ Background generated successfully from URL');
-          return processedImage;
-        }
-      }
-      console.error('❌ No image data in OpenAI response');
-      return null;
-    }
-    const imageBuffer = Buffer.from(base64Image, 'base64');
-
-    // Apply additional CRT/dithering effects with Sharp
-    const processedImage = await applyRetroEffects(imageBuffer);
-    console.log('✓ Background generated and processed successfully');
-
-    return processedImage;
-  } catch (error) {
-    console.error('❌ Failed to generate AI background:', error);
-    return null;
-  }
-}
+// NOTE: OpenAI generateAIBackground function was removed due to TOS restrictions.
+// All image generation now uses Gemini via generateGeminiBackground().
 
 /**
  * Apply CRT scanlines and dithering effects using Sharp
@@ -270,16 +180,48 @@ export async function generateFallbackBackground(): Promise<Buffer> {
 }
 
 /**
- * Get or generate background for a user
+ * Generate background using Gemini API with meme system prompts
  */
-export async function getBackgroundForUser(zipCode?: string): Promise<Buffer> {
-  // Try AI generation first
-  const aiBackground = await generateAIBackground(zipCode);
-  if (aiBackground) {
-    return aiBackground;
+export async function generateGeminiBackground(): Promise<Buffer | null> {
+  if (!GEMINI_API_KEY) {
+    console.log('GEMINI_API_KEY not set, skipping Gemini background generation');
+    return null;
+  }
+
+  try {
+    console.log('Generating background using Gemini...');
+    const result = await generateCardBackground();
+
+    if (result.success && result.imageBase64) {
+      console.log('✓ Gemini background generated successfully');
+      const imageBuffer = Buffer.from(result.imageBase64, 'base64');
+
+      // Apply retro effects
+      const processedImage = await applyRetroEffects(imageBuffer);
+      return processedImage;
+    }
+
+    console.log('Gemini generation failed:', result.error);
+    return null;
+  } catch (error) {
+    console.error('Failed to generate Gemini background:', error);
+    return null;
+  }
+}
+
+/**
+ * Get or generate background for a user
+ * Uses Gemini as the primary generator (OpenAI removed due to TOS restrictions)
+ * @param _zipCode - Currently unused, kept for API compatibility. Previously used for location-based themes.
+ */
+export async function getBackgroundForUser(_zipCode?: string): Promise<Buffer> {
+  // Try Gemini generation first (primary)
+  const geminiBackground = await generateGeminiBackground();
+  if (geminiBackground) {
+    return geminiBackground;
   }
 
   // Fall back to gradient with CRT effect
-  console.log('Using fallback background');
+  console.log('Using fallback background (Gemini unavailable)');
   return await generateFallbackBackground();
 }
