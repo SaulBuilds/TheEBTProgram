@@ -5,6 +5,7 @@ import { motion } from 'framer-motion';
 import Link from 'next/link';
 import Confetti from 'react-confetti';
 import type { ApplicationData } from '../ApplyContent';
+import { ShareModal } from './ShareModal';
 
 interface StepSuccessProps {
   data: ApplicationData;
@@ -16,6 +17,7 @@ const STORAGE_KEY = 'ebt_application_state';
 export function StepSuccess({ data, achievements }: StepSuccessProps) {
   const [showConfetti, setShowConfetti] = useState(true);
   const [windowSize, setWindowSize] = useState({ width: 0, height: 0 });
+  const [showModal, setShowModal] = useState(true);
 
   useEffect(() => {
     setWindowSize({ width: window.innerWidth, height: window.innerHeight });
@@ -33,6 +35,10 @@ export function StepSuccess({ data, achievements }: StepSuccessProps) {
 
     return () => clearTimeout(timer);
   }, []);
+
+  if (showModal) {
+    return <ShareModal data={data} onClose={() => setShowModal(false)} />;
+  }
 
   return (
     <div className="max-w-md mx-auto text-center">
@@ -192,18 +198,6 @@ export function StepSuccess({ data, achievements }: StepSuccessProps) {
         >
           View Your Profile
         </Link>
-        <button
-          onClick={() => {
-            const text = `I just applied for my EBT card on the blockchain!\n\nFood stamps for everyone, even the rich.\n\n#EBTCard #DeFi #Breadline`;
-            window.open(
-              `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
-              '_blank'
-            );
-          }}
-          className="w-full py-4 bg-gray-900 border border-gray-800 text-white font-mono font-bold rounded-lg hover:bg-gray-800 transition-colors"
-        >
-          Share on Twitter
-        </button>
       </motion.div>
     </div>
   );

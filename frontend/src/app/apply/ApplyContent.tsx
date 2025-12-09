@@ -265,129 +265,132 @@ export default function ApplyContent() {
 
   return (
     <div className="min-h-screen bg-black">
-      <Navbar />
+      <div className="fixed top-0 left-0 w-full h-full bg-fridge-animation bg-cover bg-center" />
+      <div className="relative z-10 bg-black bg-opacity-50">
+        <Navbar />
 
-      <div className="max-w-4xl mx-auto px-4 py-12">
-        {/* Step Wizard Progress */}
-        <StepWizard
-          steps={steps}
-          currentStep={currentStep}
-          unlockedAchievements={unlockedAchievements}
-        />
+        <div className="max-w-4xl mx-auto px-4 py-12">
+          {/* Step Wizard Progress */}
+          <StepWizard
+            steps={steps}
+            currentStep={currentStep}
+            unlockedAchievements={unlockedAchievements}
+          />
 
-        {/* Step Content */}
-        <div className="mt-12">
-          <AnimatePresence mode="wait">
-            {currentStep === 0 && (
-              <motion.div
-                key="identity"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <StepIdentity
-                  data={applicationData}
-                  onNext={handleNext}
-                  walletAddress={address}
-                />
-              </motion.div>
-            )}
+          {/* Step Content */}
+          <div className="mt-12">
+            <AnimatePresence mode="wait">
+              {currentStep === 0 && (
+                <motion.div
+                  key="identity"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <StepIdentity
+                    data={applicationData}
+                    onNext={handleNext}
+                    walletAddress={address}
+                  />
+                </motion.div>
+              )}
 
-            {currentStep === 1 && (
-              <motion.div
-                key="social"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <StepSocial
-                  data={applicationData}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              </motion.div>
-            )}
+              {currentStep === 1 && (
+                <motion.div
+                  key="social"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <StepSocial
+                    data={applicationData}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                </motion.div>
+              )}
 
-            {currentStep === 2 && (
-              <motion.div
-                key="hunger"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <StepHunger
-                  data={applicationData}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              </motion.div>
-            )}
+              {currentStep === 2 && (
+                <motion.div
+                  key="hunger"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <StepHunger
+                    data={applicationData}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                </motion.div>
+              )}
 
-            {currentStep === 3 && (
-              <motion.div
-                key="oath"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <StepOath
-                  data={applicationData}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              </motion.div>
-            )}
+              {currentStep === 3 && (
+                <motion.div
+                  key="oath"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <StepOath
+                    data={applicationData}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                </motion.div>
+              )}
 
-            {currentStep === 4 && (
-              <motion.div
-                key="submit"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <StepSubmit
-                  data={applicationData}
-                  onNext={handleNext}
-                  onBack={handleBack}
-                />
-              </motion.div>
-            )}
+              {currentStep === 4 && (
+                <motion.div
+                  key="submit"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <StepSubmit
+                    data={applicationData}
+                    onNext={handleNext}
+                    onBack={handleBack}
+                  />
+                </motion.div>
+              )}
 
-            {currentStep === 5 && (
-              <motion.div
-                key="register"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-              >
-                <StepRegisterOnChain
-                  data={applicationData}
-                  onNext={() => {
-                    const achievement = steps[currentStep].achievement;
-                    const newAchievements = unlockedAchievements.includes(achievement)
-                      ? unlockedAchievements
-                      : [...unlockedAchievements, achievement];
-                    setUnlockedAchievements(newAchievements);
-                    setCurrentStep(6);
-                  }}
-                  onSkip={() => setCurrentStep(6)}
-                />
-              </motion.div>
-            )}
+              {currentStep === 5 && (
+                <motion.div
+                  key="register"
+                  initial={{ opacity: 0, x: 20 }}
+                  animate={{ opacity: 1, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                >
+                  <StepRegisterOnChain
+                    data={applicationData}
+                    onNext={() => {
+                      const achievement = steps[currentStep].achievement;
+                      const newAchievements = unlockedAchievements.includes(achievement)
+                        ? unlockedAchievements
+                        : [...unlockedAchievements, achievement];
+                      setUnlockedAchievements(newAchievements);
+                      setCurrentStep(6);
+                    }}
+                    onSkip={() => setCurrentStep(6)}
+                  />
+                </motion.div>
+              )}
 
-            {currentStep === 6 && (
-              <motion.div
-                key="success"
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-              >
-                <StepSuccess
-                  data={applicationData}
-                  achievements={unlockedAchievements}
-                />
-              </motion.div>
-            )}
-          </AnimatePresence>
+              {currentStep === 6 && (
+                <motion.div
+                  key="success"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                >
+                  <StepSuccess
+                    data={applicationData}
+                    achievements={unlockedAchievements}
+                  />
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
         </div>
       </div>
     </div>

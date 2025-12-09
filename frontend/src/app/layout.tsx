@@ -4,7 +4,6 @@ import { Bebas_Neue, League_Spartan } from 'next/font/google';
 import './globals.css';
 import { Providers } from './providers';
 import { Toaster } from 'react-hot-toast';
-import { DitheredVideoBackground } from '@/components/ui/DitheredVideoBackground';
 
 const bebasNeue = Bebas_Neue({
   weight: '400',
@@ -42,10 +41,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className={`${bebasNeue.variable} ${leagueSpartan.variable} font-sans bg-black text-white`}>
-        <DitheredVideoBackground />
+      <body className={`${bebasNeue.variable} ${leagueSpartan.variable} font-sans bg-gg-canned-goods text-white`}>
         <Providers>
-          <div className="relative z-10">
+          <div className="relative">
             {children}
           </div>
           <Toaster
