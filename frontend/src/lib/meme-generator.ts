@@ -66,6 +66,21 @@ Create a satirical meme that generates humorous FOMO (fear of missing out) for s
 **Branding:** A massive, floating, 3D Hyper-Chrome block letter logo in the upper frame: "The EBT Program."
 
 **Caption Style:** Bold, humorous text at the bottom in a mix of government form typography and impact font. The caption should be satirical commentary on economics, crypto, welfare, or the absurdity of modern financial systems.`,
+
+  application_fomo: `**[Style: Application FOMO Meme]**
+
+Create a satirical meme about someone who just secured their spot in "The EBT Program" before others. The tone should create subtle FOMO without being aggressive or salesy.
+
+**Visual Elements:**
+1. A grainy, photorealistic 35mm film photograph from the 1980s of a government office, welfare line, or food bank. Kodak Gold color science with warm yellows and hazy light.
+2. One flat, hand-drawn 2D meme character (Pepe or Wojak) in the foreground looking smugly satisfied, perhaps holding paperwork or a card. They retain their MS Paint aesthetic but cast realistic shadows.
+3. In the background, other flat 2D meme characters waiting in a long line, looking envious, desperate, or confused.
+4. Heavy datamoshing and glitch effects corrupting the boundary between the 2D characters and 3D environment.
+5. "The EBT Program" chrome logo floating subtly in the upper portion of the frame.
+
+**Mood:** Self-aware ironic humor about being early. The viewer should subconsciously think "wait, should I be doing this too?" without feeling manipulated.
+
+**Important:** Do NOT include any text captions or words in the image itself. The meme should be purely visual. Text will be added separately when sharing.`,
 };
 
 // Meme topics for random generation
@@ -89,14 +104,37 @@ export const MEME_TOPICS = [
 
 // ==================== CORE GENERATION FUNCTIONS ====================
 
+// Aspect ratio options
+export const ASPECT_RATIOS = {
+  '1:1': { label: 'Square (1:1)', description: 'Instagram/Profile' },
+  '16:9': { label: 'Landscape (16:9)', description: 'Twitter/YouTube' },
+  '9:16': { label: 'Portrait (9:16)', description: 'Stories/TikTok' },
+  '4:3': { label: 'Classic (4:3)', description: 'Traditional' },
+} as const;
+
+export type AspectRatio = keyof typeof ASPECT_RATIOS;
+
+// Style intensity levels
+export const STYLE_INTENSITIES = {
+  1: { label: 'Minimal', description: 'Clean photo, light effects' },
+  2: { label: 'Light', description: 'Subtle glitch touches' },
+  3: { label: 'Medium', description: 'Balanced datamoshing (default)' },
+  4: { label: 'Heavy', description: 'Strong corruption effects' },
+  5: { label: 'Chaos', description: 'Maximum glitch mayhem' },
+} as const;
+
+export type StyleIntensity = keyof typeof STYLE_INTENSITIES;
+
 export interface GenerationOptions {
-  promptType: 'global_style' | 'card_background' | 'referral_fomo' | 'public_meme';
+  promptType: 'global_style' | 'card_background' | 'referral_fomo' | 'public_meme' | 'application_fomo';
   userInput?: string;
   twitterAvatar?: string;
   referralCode?: string;
   userId?: string;
   walletAddress?: string;
   ipAddress?: string;
+  aspectRatio?: AspectRatio;
+  styleIntensity?: StyleIntensity;
 }
 
 export interface GenerationResult {
@@ -245,6 +283,29 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
       }
     }
 
+    // Add aspect ratio instruction
+    if (options.aspectRatio) {
+      const aspectRatioText = {
+        '1:1': 'Generate a square image (1:1 aspect ratio).',
+        '16:9': 'Generate a landscape/widescreen image (16:9 aspect ratio).',
+        '9:16': 'Generate a portrait/vertical image (9:16 aspect ratio).',
+        '4:3': 'Generate a classic 4:3 aspect ratio image.',
+      }[options.aspectRatio];
+      fullPrompt += `\n\n**Format:** ${aspectRatioText}`;
+    }
+
+    // Add style intensity modifier
+    if (options.styleIntensity) {
+      const intensityModifier = {
+        1: 'Keep the glitch and datamoshing effects very minimal. The image should be mostly clean and photorealistic with only subtle digital artifacts.',
+        2: 'Apply light glitch effects. Subtle pixel sorting and minor compression artifacts. The base image should remain clearly visible.',
+        3: 'Use moderate datamoshing and glitch effects. A balanced mix between clean imagery and digital corruption.',
+        4: 'Apply heavy glitch effects. Significant datamoshing, pixel sorting streaks, and compression artifacts should be prominent.',
+        5: 'MAXIMUM CHAOS. Extreme datamoshing, heavy corruption, aggressive pixel sorting. The image should look like it is actively breaking apart.',
+      }[options.styleIntensity];
+      fullPrompt += `\n\n**Glitch Intensity:** ${intensityModifier}`;
+    }
+
     // Create generation record
     let generationId: number | undefined;
     try {
@@ -382,7 +443,9 @@ export async function generatePublicMeme(
   userInput?: string,
   userId?: string,
   walletAddress?: string,
-  ipAddress?: string
+  ipAddress?: string,
+  aspectRatio?: AspectRatio,
+  styleIntensity?: StyleIntensity
 ): Promise<GenerationResult> {
   return generateMeme({
     promptType: 'public_meme',
@@ -390,5 +453,23 @@ export async function generatePublicMeme(
     userId,
     walletAddress,
     ipAddress,
+    aspectRatio,
+    styleIntensity,
+  });
+}
+
+/**
+ * Generate an application completion meme (FOMO style)
+ */
+export async function generateApplicationMeme(
+  userId?: string,
+  walletAddress?: string,
+  username?: string
+): Promise<GenerationResult> {
+  return generateMeme({
+    promptType: 'application_fomo',
+    userId,
+    walletAddress,
+    userInput: username ? `The applicant's username is "${username}"` : undefined,
   });
 }

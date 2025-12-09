@@ -3,6 +3,7 @@ import {
   generatePublicMeme,
   generateCardBackground,
   generateReferralMeme,
+  generateApplicationMeme,
   checkRateLimit,
   incrementUsage,
   MEME_TOPICS,
@@ -20,8 +21,8 @@ const DAILY_LIMIT = 10;
  * Generate a meme based on type and optional user input
  *
  * Body:
- * - type: 'public_meme' | 'card_background' | 'referral'
- * - userInput?: string (optional topic/prompt for public memes)
+ * - type: 'public_meme' | 'card_background' | 'referral' | 'application_fomo'
+ * - userInput?: string (optional topic/prompt for public memes, or username for application)
  * - twitterAvatar?: string (for referral memes)
  * - referralCode?: string (for referral memes)
  * - userId?: string (for authenticated users)
@@ -30,7 +31,7 @@ const DAILY_LIMIT = 10;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, userInput, twitterAvatar, referralCode, userId, walletAddress } = body;
+    const { type, userInput, twitterAvatar, referralCode, userId, walletAddress, aspectRatio, styleIntensity } = body;
 
     // Get client IP for rate limiting
     const forwarded = request.headers.get('x-forwarded-for');
@@ -62,7 +63,7 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'public_meme':
-        result = await generatePublicMeme(userInput, userId, walletAddress, ipAddress);
+        result = await generatePublicMeme(userInput, userId, walletAddress, ipAddress, aspectRatio, styleIntensity);
         break;
 
       case 'card_background':
@@ -73,9 +74,16 @@ export async function POST(request: NextRequest) {
         result = await generateReferralMeme(twitterAvatar, referralCode, userId, walletAddress);
         break;
 
+      case 'application_fomo':
+        // Extract username from userInput if provided
+        const usernameMatch = userInput?.match(/username is "([^"]+)"/);
+        const username = usernameMatch ? usernameMatch[1] : undefined;
+        result = await generateApplicationMeme(userId, walletAddress, username);
+        break;
+
       default:
         return NextResponse.json(
-          { error: 'Invalid generation type. Must be: public_meme, card_background, or referral' },
+          { error: 'Invalid generation type. Must be: public_meme, card_background, referral, or application_fomo' },
           { status: 400 }
         );
     }

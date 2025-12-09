@@ -6,6 +6,8 @@ import { Navbar } from '@/components/layout/Navbar';
 import { DitheredVideoBackground } from '@/components/ui/DitheredVideoBackground';
 import { usePrivy } from '@privy-io/react-auth';
 import { useAccount } from 'wagmi';
+import { ASPECT_RATIOS, STYLE_INTENSITIES, AspectRatio, StyleIntensity } from '@/lib/meme-generator';
+import { getRandomTweet } from '@/lib/tweet-generator';
 
 interface MemeInfo {
   topics: string[];
@@ -25,6 +27,8 @@ export default function MemeGeneratorContent() {
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recentMemes, setRecentMemes] = useState<string[]>([]);
+  const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
+  const [styleIntensity, setStyleIntensity] = useState<StyleIntensity>(3);
 
   const fetchMemeInfo = useCallback(async () => {
     try {
@@ -66,6 +70,8 @@ export default function MemeGeneratorContent() {
           type: 'public_meme',
           userInput: topic || undefined,
           walletAddress: address,
+          aspectRatio,
+          styleIntensity,
         }),
       });
 
@@ -121,8 +127,9 @@ export default function MemeGeneratorContent() {
         navigator.clipboard.writeText('Check out The EBT Program: https://theebtprogram.com');
       }
     } else {
+      const tweetText = getRandomTweet('meme_share');
       window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent('Made this meme on The EBT Program 🍞')}&url=${encodeURIComponent('https://theebtprogram.com/memes')}`,
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://theebtprogram.com/memes')}`,
         '_blank'
       );
     }
@@ -225,6 +232,54 @@ export default function MemeGeneratorContent() {
               placeholder="e.g., Pepe explaining blockchain to boomers"
               className="w-full px-4 py-3 bg-gray-900 border border-gray-800 rounded-lg font-mono text-sm focus:outline-none focus:ring-2 focus:ring-ebt-gold"
             />
+          </div>
+
+          {/* Aspect Ratio Selector */}
+          <div className="mt-6">
+            <label className="block text-sm font-mono text-gray-400 mb-3">
+              Aspect Ratio:
+            </label>
+            <div className="grid grid-cols-4 gap-2">
+              {(Object.entries(ASPECT_RATIOS) as [AspectRatio, typeof ASPECT_RATIOS['1:1']][]).map(([ratio, info]) => (
+                <button
+                  key={ratio}
+                  onClick={() => setAspectRatio(ratio)}
+                  className={`p-2 text-xs font-mono rounded-lg transition-all ${
+                    aspectRatio === ratio
+                      ? 'bg-ebt-gold text-black'
+                      : 'bg-gray-800 text-gray-400 hover:bg-gray-700'
+                  }`}
+                  title={info.description}
+                >
+                  {ratio}
+                </button>
+              ))}
+            </div>
+            <p className="text-xs text-gray-500 mt-1 font-mono">
+              {ASPECT_RATIOS[aspectRatio].description}
+            </p>
+          </div>
+
+          {/* Style Intensity Slider */}
+          <div className="mt-6">
+            <label className="block text-sm font-mono text-gray-400 mb-3">
+              Glitch Intensity: <span className="text-ebt-gold">{STYLE_INTENSITIES[styleIntensity].label}</span>
+            </label>
+            <input
+              type="range"
+              min="1"
+              max="5"
+              value={styleIntensity}
+              onChange={(e) => setStyleIntensity(parseInt(e.target.value) as StyleIntensity)}
+              className="w-full h-2 bg-gray-800 rounded-lg appearance-none cursor-pointer accent-ebt-gold"
+            />
+            <div className="flex justify-between text-xs text-gray-500 font-mono mt-1">
+              <span>Clean</span>
+              <span>Chaos</span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1 font-mono">
+              {STYLE_INTENSITIES[styleIntensity].description}
+            </p>
           </div>
 
           {/* Generate Button */}

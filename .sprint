@@ -1,0 +1,420 @@
+# EBT Meme Pipeline Sprint Plan
+## Version 1.0 - Comprehensive Meme Integration
+
+---
+
+## EXECUTIVE SUMMARY
+
+This sprint addresses critical issues with the meme generation pipeline and implements enhancements to make the system production-ready, user-friendly, and highly shareable. The core problems are:
+
+1. **ShareModal calls wrong API** - Uses hardcoded `api.nanobanana.com` instead of our `/api/memes/generate`
+2. **No real meme generation on application submit** - Falls back to static image
+3. **Hero section uses static card mockup** - Should showcase dynamic meme generation
+4. **Tweet text has emojis/hashtags** - User requested clean, organic-sounding tweets
+
+---
+
+## PHASE 1: CRITICAL FIXES (Must Do First)
+
+### 1.1 Fix ShareModal API Integration
+**File:** `frontend/src/app/apply/components/ShareModal.tsx`
+
+**Current Problem:**
+```javascript
+// BROKEN - calls external API that doesn't exist
+const response = await fetch('https://api.nanobanana.com/generate', {...});
+```
+
+**Fix:**
+- Replace with call to `/api/memes/generate`
+- Use type: 'referral' for application completion memes
+- Pass user's Twitter avatar if connected
+- Pass username for personalization
+- Handle loading/error states properly
+
+**Tweet Text Changes:**
+- Remove all emojis
+- Remove all hashtags
+- Remove long dashes
+- Make it sound organic and create curiosity
+- Example: "just applied for my ebt card on the blockchain. if you know you know"
+
+---
+
+### 1.2 Update Meme Generator for Application Context
+**File:** `frontend/src/lib/meme-generator.ts`
+
+**Add New Prompt Type:** `application_fomo`
+
+**Prompt Goals:**
+- Creates FOMO about being "ahead in line"
+- Plays on scarcity and early adopter status
+- Ironic tone about welfare/crypto intersection
+- No text in image (text added via tweet)
+
+**New Prompt:**
+```
+**[Style: Application FOMO Meme]**
+
+Create a satirical meme about someone who just secured their spot in "The EBT Program"
+before others. The tone should create subtle FOMO without being aggressive.
+
+Visual Elements:
+- 1980s Kodak film photograph of a government office or food bank line
+- One flat 2D meme character (Pepe or Wojak) looking smugly satisfied
+- Others in line looking envious or desperate
+- Heavy datamoshing and glitch effects
+- "The EBT Program" chrome logo floating subtly
+
+Mood: Self-aware humor about being early. The viewer should think "wait, should I be doing this too?"
+```
+
+---
+
+### 1.3 Create Application-Specific Meme API Route
+**File:** `frontend/src/app/api/memes/application/route.ts` (NEW)
+
+**Purpose:** Dedicated endpoint for application completion memes
+
+**Features:**
+- No rate limiting (one per application)
+- Stores meme CID with application record
+- Returns shareable image URL
+- Generates clean tweet text (no emojis/hashtags)
+
+**Response:**
+```typescript
+{
+  success: true,
+  imageUrl: string,      // Data URL or IPFS URL
+  imageBase64: string,   // For direct display
+  tweetText: string,     // Clean, organic text
+  shareUrl: string       // Direct link to share
+}
+```
+
+---
+
+## PHASE 2: HERO SECTION MEME MACHINE
+
+### 2.1 Transform Hero Card into Meme Machine
+**File:** `frontend/src/components/landing/Hero.tsx`
+
+**Current State:** Static HTML/CSS card mockup
+
+**New Design:**
+- The EBT Card in hero becomes an interactive "Meme Machine"
+- Background of card shows rotating generated memes
+- Users can click to generate their own meme
+- Connects wallet/social to unlock generation
+
+**Implementation:**
+1. Replace static card with `MemeCardPreview` component
+2. Fetch random meme from gallery on load
+3. Add "Generate Your Meme" CTA button
+4. Show wallet connection prompt if not connected
+5. After connection, enable generation
+
+---
+
+### 2.2 Create MemeCardPreview Component
+**File:** `frontend/src/components/landing/MemeCardPreview.tsx` (NEW)
+
+**Features:**
+- Displays meme as card background
+- Smooth crossfade between memes
+- "Generate" button overlay
+- Loading shimmer during generation
+- Click to download/share
+
+**Props:**
+```typescript
+interface MemeCardPreviewProps {
+  initialMemeUrl?: string;
+  onGenerate?: () => void;
+  isConnected: boolean;
+  isGenerating: boolean;
+}
+```
+
+---
+
+### 2.3 Meme Gallery Background
+**File:** `frontend/src/components/landing/MemeGallery.tsx` (NEW)
+
+**Purpose:** Show rotating memes behind the card
+
+**Features:**
+- Fetches recent community memes from database
+- Falls back to static memes from `/EBT_MEMES/`
+- Smooth Ken Burns effect on images
+- Low opacity so card text remains readable
+
+---
+
+## PHASE 3: ENHANCED MEME GENERATION
+
+### 3.1 Prompt Enhancement Pipeline
+**File:** `frontend/src/lib/prompt-enhancer.ts` (NEW)
+
+**Purpose:** Expand simple user inputs into rich, detailed prompts
+
+**How it works:**
+1. User enters: "Pepe at grocery store"
+2. System expands to full narrative prompt
+3. Adds consistent style elements automatically
+4. Sends enhanced prompt to Gemini
+
+**Enhancement Template:**
+```
+Base Style: [global_style prompt]
+Scene: [user input expanded to 2-3 sentences]
+Characters: [auto-detect and describe meme characters]
+Mood: [infer from context]
+Technical: [aspect ratio, resolution, glitch level]
+```
+
+---
+
+### 3.2 Aspect Ratio Selection
+**Files:**
+- `frontend/src/lib/meme-generator.ts`
+- `frontend/src/app/memes/MemeGeneratorContent.tsx`
+
+**Add Options:**
+- 1:1 (Instagram/Profile)
+- 16:9 (Twitter/YouTube)
+- 9:16 (Stories/TikTok)
+- 4:3 (Classic)
+
+**UI:** Radio button group below topic selection
+
+---
+
+### 3.3 Style Intensity Slider
+**File:** `frontend/src/app/memes/MemeGeneratorContent.tsx`
+
+**Control:** Slider from 1-5
+
+**Affects:**
+- Level 1: Minimal glitch, clean photo
+- Level 3: Moderate datamoshing (default)
+- Level 5: Heavy corruption, maximum chaos
+
+**Implementation:** Append intensity modifier to prompt
+
+---
+
+### 3.4 Batch Variations
+**File:** `frontend/src/lib/meme-generator.ts`
+
+**Feature:** Generate 2-4 variations at once
+
+**Implementation:**
+- Single API call with multiple prompt variations
+- Same scene, different characters
+- Same concept, different glitch levels
+- User picks favorite
+
+**UI:** "Generate Variations" toggle
+
+---
+
+## PHASE 4: CARD BACKGROUND INTEGRATION
+
+### 4.1 Use Memes as Card Backgrounds
+**File:** `frontend/src/lib/services/cardGenerator.ts`
+
+**Current:** Calls `getBackgroundForUser()` which generates abstract background
+
+**New Option:** Allow user's favorite meme as card background
+
+**Implementation:**
+1. Add `memeBackgroundUrl` option to `CardGenerationInput`
+2. If provided, fetch and process meme image
+3. Apply same CRT/dithering effects
+4. Composite with card overlay
+
+---
+
+### 4.2 Card Preview with Meme Background
+**File:** `frontend/src/app/apply/components/StepSubmit.tsx`
+
+**Enhancement:** Show preview of their card with meme background
+
+**Flow:**
+1. User generates meme during application
+2. Meme automatically becomes card background preview
+3. "Use as card background" checkbox (default: true)
+4. Preview updates in real-time
+
+---
+
+## PHASE 5: SOCIAL SHARING IMPROVEMENTS
+
+### 5.1 Clean Tweet Text Generator
+**File:** `frontend/src/lib/tweet-generator.ts` (NEW)
+
+**Rules:**
+- No emojis
+- No hashtags
+- No long dashes (em/en dashes)
+- Conversational, lowercase preferred
+- Creates curiosity without being salesy
+- Under 200 characters
+
+**Templates (randomly selected):**
+```
+"just applied for my ebt card on the blockchain. if you know you know"
+"apparently you can get food stamps on ethereum now. wild times"
+"secured my spot in the program before the line gets long"
+"filled out the strangest application of my life. no regrets"
+"blockchain welfare is real and i just signed up"
+"the future of food stamps is here and it looks weird"
+```
+
+---
+
+### 5.2 Image-Attached Twitter Sharing
+**File:** `frontend/src/app/apply/components/ShareModal.tsx`
+
+**Current:** Text-only tweet via intent URL
+
+**Enhancement:**
+1. Generate Open Graph image URL
+2. Create shareable page with meta tags
+3. Twitter will auto-attach image preview
+
+**Implementation:**
+- Create `/share/[memeId]` dynamic route
+- Add proper og:image meta tags
+- Tweet links to this page instead of direct site
+
+---
+
+### 5.3 Download with Watermark Option
+**File:** `frontend/src/components/meme/MemeActions.tsx` (NEW)
+
+**Features:**
+- Download original (no watermark)
+- Download with subtle "theebtprogram.com" watermark
+- Copy to clipboard
+- Share to Twitter/Discord/Telegram
+
+---
+
+## PHASE 6: DATABASE & TRACKING
+
+### 6.1 Application Meme Association
+**File:** `frontend/prisma/schema.prisma`
+
+**Add to Application model:**
+```prisma
+model Application {
+  // ... existing fields
+  applicationMemeId    Int?
+  applicationMeme      MemeGeneration? @relation(fields: [applicationMemeId], references: [id])
+}
+```
+
+---
+
+### 6.2 Meme Analytics
+**File:** `frontend/src/app/api/memes/stats/route.ts` (NEW)
+
+**Track:**
+- Total generations by type
+- Most popular topics
+- Average processing time
+- Share conversion rate
+
+---
+
+## IMPLEMENTATION ORDER
+
+### Sprint 1: Critical Fixes (2-3 hours)
+1. [ ] Fix ShareModal API call
+2. [ ] Update tweet text (no emojis/hashtags)
+3. [ ] Add application_fomo prompt type
+4. [ ] Test end-to-end application flow
+
+### Sprint 2: Hero Meme Machine (3-4 hours)
+1. [ ] Create MemeCardPreview component
+2. [ ] Integrate into Hero section
+3. [ ] Add wallet connection check
+4. [ ] Add generation button and loading states
+
+### Sprint 3: Enhanced Generation (2-3 hours)
+1. [ ] Add aspect ratio selector
+2. [ ] Add style intensity slider
+3. [ ] Create prompt enhancer utility
+4. [ ] Update meme generator page UI
+
+### Sprint 4: Card Integration (2-3 hours)
+1. [ ] Add meme background option to card generator
+2. [ ] Create card preview in application flow
+3. [ ] Link meme selection to card generation
+
+### Sprint 5: Social Polish (2-3 hours)
+1. [ ] Create tweet text generator
+2. [ ] Build shareable meme pages
+3. [ ] Add Open Graph meta tags
+4. [ ] Create download/share action buttons
+
+---
+
+## ENVIRONMENT VARIABLES REQUIRED
+
+```env
+# Already configured
+GEMINI_API_KEY=xxx
+GEMINI_IMAGE_MODEL=gemini-2.0-flash-exp
+
+# May need to add
+NEXT_PUBLIC_APP_URL=https://theebtprogram.com  # For share URLs
+```
+
+---
+
+## FILES TO CREATE
+
+1. `frontend/src/app/api/memes/application/route.ts`
+2. `frontend/src/components/landing/MemeCardPreview.tsx`
+3. `frontend/src/components/landing/MemeGallery.tsx`
+4. `frontend/src/lib/prompt-enhancer.ts`
+5. `frontend/src/lib/tweet-generator.ts`
+6. `frontend/src/components/meme/MemeActions.tsx`
+7. `frontend/src/app/share/[memeId]/page.tsx`
+8. `frontend/src/app/api/memes/stats/route.ts`
+
+---
+
+## FILES TO MODIFY
+
+1. `frontend/src/app/apply/components/ShareModal.tsx` - **CRITICAL**
+2. `frontend/src/lib/meme-generator.ts` - Add new prompt types
+3. `frontend/src/components/landing/Hero.tsx` - Meme machine integration
+4. `frontend/src/app/memes/MemeGeneratorContent.tsx` - New UI options
+5. `frontend/src/lib/services/cardGenerator.ts` - Meme background option
+6. `frontend/prisma/schema.prisma` - Application meme relation
+
+---
+
+## SUCCESS CRITERIA
+
+1. [ ] User completes application and sees generated meme (not fallback image)
+2. [ ] Tweet text is clean (no emojis, hashtags, or dashes)
+3. [ ] Hero section shows interactive meme card
+4. [ ] Users can generate memes from homepage with connected wallet
+5. [ ] Aspect ratio options work correctly
+6. [ ] Card backgrounds can use generated memes
+7. [ ] Share links show image preview on Twitter
+
+---
+
+## NOTES
+
+- Gemini model being used: `gemini-2.0-flash-exp` or `gemini-3-pro-image-preview`
+- Rate limit: 10 free generations per day per user
+- All images stored as base64 data URLs (can add IPFS pinning later)
+- Meme generation typically takes 5-15 seconds

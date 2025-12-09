@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import { ApplicationData } from '../ApplyContent';
+import { getRandomTweet } from '@/lib/tweet-generator';
 
 interface ShareModalProps {
   data: ApplicationData;
@@ -12,25 +13,37 @@ interface ShareModalProps {
 export function ShareModal({ data, onClose }: ShareModalProps) {
   const [memeUrl, setMemeUrl] = useState('');
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Fetch the meme from the "nano banana api"
     const generateMeme = async () => {
       try {
-        // I'll need to get the actual API endpoint and prompt from the user
-        const response = await fetch('https://api.nanobanana.com/generate', {
+        const response = await fetch('/api/memes/generate', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            prompt: `A meme about applying for foodstamps. Include the username ${data.username}.`,
+            type: 'application_fomo',
+            userInput: data.username ? `The applicant's username is "${data.username}"` : undefined,
+            walletAddress: data.lockedWalletAddress,
+            userId: data.userId,
           }),
         });
+
         const result = await response.json();
-        setMemeUrl(result.url);
-      } catch (error) {
-        console.error('Error generating meme:', error);
+
+        if (response.ok && result.success && result.imageUrl) {
+          setMemeUrl(result.imageUrl);
+        } else {
+          console.error('Meme generation failed:', result.error || result.message);
+          setError(result.error || 'Generation failed');
+          // Fallback to a default meme
+          setMemeUrl('/EBT_MEMES/we accept ebt.jpeg');
+        }
+      } catch (err) {
+        console.error('Error generating meme:', err);
+        setError('Network error');
         // Fallback to a default meme
         setMemeUrl('/EBT_MEMES/we accept ebt.jpeg');
       } finally {
@@ -39,9 +52,9 @@ export function ShareModal({ data, onClose }: ShareModalProps) {
     };
 
     generateMeme();
-  }, [data.username]);
+  }, [data.username, data.lockedWalletAddress, data.userId]);
 
-  const referralLink = `https://ebtcard.io/apply?ref=${data.userId}`;
+  const referralLink = `https://theebtprogram.com/apply?ref=${data.userId}`;
 
   return (
     <motion.div
@@ -57,9 +70,31 @@ export function ShareModal({ data, onClose }: ShareModalProps) {
         </p>
 
         {loading ? (
-          <div className="animate-pulse text-ebt-gold font-mono">Generating your meme...</div>
+          <div className="flex flex-col items-center gap-4 py-8">
+            <div className="w-12 h-12 border-4 border-ebt-gold border-t-transparent rounded-full animate-spin" />
+            <div className="text-ebt-gold font-mono">Generating your meme...</div>
+            <div className="text-gray-500 font-mono text-sm">This may take 5-15 seconds</div>
+          </div>
         ) : (
-          <img src={memeUrl} alt="Generated Meme" className="w-full h-auto rounded-lg mb-8" />
+          <div className="relative">
+            <img src={memeUrl} alt="Generated Meme" className="w-full h-auto rounded-lg mb-4" />
+            {error && (
+              <div className="text-yellow-500 font-mono text-sm mb-4">
+                Using fallback image (generation temporarily unavailable)
+              </div>
+            )}
+            <button
+              onClick={() => {
+                const link = document.createElement('a');
+                link.href = memeUrl;
+                link.download = `ebt-meme-${Date.now()}.png`;
+                link.click();
+              }}
+              className="w-full py-2 bg-gray-800 text-gray-300 font-mono text-sm rounded-lg hover:bg-gray-700 transition-colors mb-4"
+            >
+              Download Meme
+            </button>
+          </div>
         )}
 
         <div className="bg-gray-800 p-4 rounded-lg mb-8">
@@ -75,7 +110,8 @@ export function ShareModal({ data, onClose }: ShareModalProps) {
         <div className="flex flex-col gap-3">
           <button
             onClick={() => {
-              const text = `I just applied for my EBT card on the blockchain!\n\n${referralLink}\n\n#EBTCard #DeFi #Breadline`;
+              const tweetText = getRandomTweet('application');
+              const text = `${tweetText}\n\n${referralLink}`;
               window.open(
                 `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
                 '_blank'

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import { GlitchText } from '@/components/ui/GlitchText';
 import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
+import { MemeCardPreview } from './MemeCardPreview';
 
 const headlines = [
   "THEY PRINTED $6 TRILLION. WE PRINTED THE CARD.",
@@ -55,27 +56,8 @@ export function Hero() {
           />
         </div>
 
-        {/* EBT Card Preview */}
-        <div className="relative mx-auto w-full max-w-2xl mb-12">
-          <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/30 rounded-2xl p-2">
-            <div className="w-full aspect-[3/2] bg-gradient-to-br from-ebt-gold to-yellow-600 rounded-xl shadow-2xl p-8 flex flex-col justify-between">
-              <div>
-                <h3 className="text-4xl font-heading text-black tracking-wider">EBT CARD</h3>
-                <p className="text-lg font-sans text-gray-800 mt-2">SUPPLEMENTAL NUTRITION ASSISTANCE</p>
-              </div>
-              <div className="flex items-end justify-between">
-                <div>
-                  <div className="w-16 h-12 bg-gray-700 rounded mb-4"></div>
-                  <p className="font-mono text-black text-xl tracking-wider">XXXX XXXX XXXX 0420</p>
-                </div>
-                <p className="font-heading text-black text-xl tracking-wide">CASE FILE #0001</p>
-              </div>
-            </div>
-            <div className="absolute -top-3 -right-3 bg-welfare-red text-white px-3 py-1 rotate-12 font-heading text-sm tracking-wide">
-              BENEFITS ACTIVE
-            </div>
-          </div>
-        </div>
+        {/* EBT Card Meme Machine */}
+        <MemeCardPreview onConnectClick={login} />
 
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
