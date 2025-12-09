@@ -1,11 +1,13 @@
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { prisma } from './prisma';
 
-// Initialize Gemini client (uses Nano Banana API / Gemini for image generation)
+// Initialize Gemini client for image generation
 // Note: OpenAI removed due to TOS restrictions on meme content
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
-// Model to use for image generation - gemini-2.0-flash-exp supports image output
+// Model to use for image generation
+// Supported models for image output: gemini-2.0-flash-exp, imagen-3.0-generate-002
+// Note: gemini-3-pro-image-preview does NOT support image generation
 const IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || 'gemini-2.0-flash-exp';
 
 // ==================== SYSTEM PROMPTS ====================
@@ -327,7 +329,8 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
       // Continue without tracking if database fails
     }
 
-    // Use Gemini for image generation (via Nano Banana API)
+    // Use Gemini for image generation
+    // Note: Image generation requires specific models like gemini-2.0-flash-exp or imagen-3.0-generate-002
     const model = genAI.getGenerativeModel({ model: IMAGE_MODEL });
 
     const result = await model.generateContent({
@@ -344,7 +347,6 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
       generationConfig: {
         // @ts-expect-error - Gemini supports image generation but types may not be updated
         responseModalities: ['image', 'text'],
-        responseMimeType: 'image/png',
       },
     });
 
