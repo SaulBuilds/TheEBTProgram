@@ -361,22 +361,23 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
     }
 
     // Determine image size based on aspect ratio
-    let size: '1024x1024' | '1792x1024' | '1024x1792' = '1024x1024';
+    // gpt-image-1 supports: 1024x1024, 1536x1024 (landscape), 1024x1536 (portrait), or 'auto'
+    let size: '1024x1024' | '1536x1024' | '1024x1536' | 'auto' = '1024x1024';
     if (options.aspectRatio === '16:9') {
-      size = '1792x1024';
+      size = '1536x1024';
     } else if (options.aspectRatio === '9:16') {
-      size = '1024x1792';
+      size = '1024x1536';
     }
 
-    // Use OpenAI DALL-E for image generation with retry logic
+    // Use OpenAI gpt-image-1 for image generation with retry logic
+    // Note: gpt-image-1 always returns base64, no response_format needed
     const response = await withRetry(async () => {
       return await openai.images.generate({
         model: IMAGE_MODEL,
         prompt: fullPrompt,
         n: 1,
         size: size,
-        quality: 'hd',
-        response_format: 'b64_json',
+        quality: 'high',
       });
     });
 
@@ -388,12 +389,19 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
     }
 
     const imageData = response.data[0];
-    if (!imageData.b64_json) {
+
+    // gpt-image-1 returns b64_json by default, but handle url fallback for other models
+    let imageBase64: string | undefined;
+    let imageUrl: string;
+
+    if (imageData.b64_json) {
+      imageBase64 = imageData.b64_json;
+      imageUrl = `data:image/png;base64,${imageBase64}`;
+    } else if (imageData.url) {
+      imageUrl = imageData.url;
+    } else {
       throw new Error('No image data in response');
     }
-
-    const imageBase64 = imageData.b64_json;
-    const imageUrl = `data:image/png;base64,${imageBase64}`;
 
     // Update generation record
     if (generationId) {
