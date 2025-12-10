@@ -25,6 +25,7 @@ export default function MemeGeneratorContent() {
   const [customTopic, setCustomTopic] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
+  const [currentShareUrl, setCurrentShareUrl] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [recentMemes, setRecentMemes] = useState<string[]>([]);
   const [aspectRatio, setAspectRatio] = useState<AspectRatio>('1:1');
@@ -79,6 +80,7 @@ export default function MemeGeneratorContent() {
 
       if (response.ok && data.success) {
         setGeneratedImage(data.imageUrl);
+        setCurrentShareUrl(data.shareUrl || null);
         setRecentMemes((prev) => [data.imageUrl, ...prev].slice(0, 6));
 
         // Update remaining count
@@ -128,8 +130,10 @@ export default function MemeGeneratorContent() {
       }
     } else {
       const tweetText = getRandomTweet('meme_share');
+      // Use share URL if available for image preview, otherwise fall back to memes page
+      const urlToShare = currentShareUrl || 'https://web3welfare.com/memes';
       window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://web3welfare.com/memes')}`,
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent(urlToShare)}`,
         '_blank'
       );
     }

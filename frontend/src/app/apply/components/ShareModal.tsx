@@ -12,6 +12,7 @@ interface ShareModalProps {
 
 export function ShareModal({ data, onClose }: ShareModalProps) {
   const [memeUrl, setMemeUrl] = useState('');
+  const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -35,6 +36,10 @@ export function ShareModal({ data, onClose }: ShareModalProps) {
 
         if (response.ok && result.success && result.imageUrl) {
           setMemeUrl(result.imageUrl);
+          // Store the share URL for Twitter sharing with image preview
+          if (result.shareUrl) {
+            setShareUrl(result.shareUrl);
+          }
         } else {
           console.error('Meme generation failed:', result.error || result.message);
           setError(result.error || 'Generation failed');
@@ -111,15 +116,17 @@ export function ShareModal({ data, onClose }: ShareModalProps) {
           <button
             onClick={() => {
               const tweetText = getRandomTweet('application');
-              const text = `${tweetText}\n\n${referralLink}`;
+              // Use shareUrl if available (includes image preview), otherwise use referral link
+              const urlToShare = shareUrl || referralLink;
+              const text = `${tweetText}`;
               window.open(
-                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`,
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(urlToShare)}`,
                 '_blank'
               );
             }}
             className="w-full py-4 bg-blue-500 text-white font-mono font-bold rounded-lg hover:bg-blue-600 transition-colors"
           >
-            Share on Twitter
+            Share on Twitter {shareUrl ? '(with image)' : ''}
           </button>
           <button
             onClick={onClose}

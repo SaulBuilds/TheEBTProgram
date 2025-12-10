@@ -96,6 +96,11 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Build share URL if we have a generation ID
+    const shareUrl = result.generationId
+      ? `https://web3welfare.com/share/${result.generationId}`
+      : undefined;
+
     // Increment usage counter for public memes
     if (type === 'public_meme') {
       await incrementUsage(identifier, identifierType);
@@ -107,6 +112,7 @@ export async function POST(request: NextRequest) {
         success: true,
         imageUrl: result.imageUrl,
         generationId: result.generationId,
+        shareUrl,
         processingTime: result.processingTime,
         remaining: updatedLimit.remaining,
         resetAt: updatedLimit.resetAt.toISOString(),
@@ -118,6 +124,7 @@ export async function POST(request: NextRequest) {
       imageUrl: result.imageUrl,
       imageBase64: result.imageBase64,
       generationId: result.generationId,
+      shareUrl,
       processingTime: result.processingTime,
     });
   } catch (error) {
