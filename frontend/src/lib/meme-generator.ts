@@ -168,6 +168,7 @@ export interface GenerationOptions {
   ipAddress?: string;
   aspectRatio?: AspectRatio;
   styleIntensity?: StyleIntensity;
+  baseImage?: string; // Base64 image for editing/remixing
 }
 
 export interface GenerationResult {
@@ -369,17 +370,48 @@ export async function generateMeme(options: GenerationOptions): Promise<Generati
       size = '1024x1536';
     }
 
-    // Use OpenAI gpt-image-1 for image generation with retry logic
-    // Note: gpt-image-1 always returns base64, no response_format needed
-    const response = await withRetry(async () => {
-      return await openai.images.generate({
-        model: IMAGE_MODEL,
-        prompt: fullPrompt,
-        n: 1,
-        size: size,
-        quality: 'high',
+    let response;
+
+    // If base image is provided, use image editing
+    if (options.baseImage) {
+      // Extract base64 data from data URL if present
+      const base64Data = options.baseImage.includes(',')
+        ? options.baseImage.split(',')[1]
+        : options.baseImage;
+
+      // Convert base64 to Buffer for OpenAI API
+      const imageBuffer = Buffer.from(base64Data, 'base64');
+
+      // Create a File-like object for the API
+      // OpenAI expects the image as a File or Blob
+      const imageFile = new File([imageBuffer], 'image.png', { type: 'image/png' });
+
+      // Modify prompt to focus on editing/remixing
+      const editPrompt = options.userInput
+        ? `Transform this image in the style of The EBT Program memes: ${fullPrompt}\n\nSpecific modification: ${options.userInput}`
+        : `Transform this image into an EBT Program style meme: ${fullPrompt}`;
+
+      response = await withRetry(async () => {
+        return await openai.images.edit({
+          model: IMAGE_MODEL,
+          image: imageFile,
+          prompt: editPrompt,
+          n: 1,
+          size: size === '1536x1024' || size === '1024x1536' ? size : '1024x1024',
+        });
       });
-    });
+    } else {
+      // Standard generation without base image
+      response = await withRetry(async () => {
+        return await openai.images.generate({
+          model: IMAGE_MODEL,
+          prompt: fullPrompt,
+          n: 1,
+          size: size,
+          quality: 'high',
+        });
+      });
+    }
 
     const processingTime = Date.now() - startTime;
 
@@ -481,7 +513,8 @@ export async function generatePublicMeme(
   walletAddress?: string,
   ipAddress?: string,
   aspectRatio?: AspectRatio,
-  styleIntensity?: StyleIntensity
+  styleIntensity?: StyleIntensity,
+  baseImage?: string
 ): Promise<GenerationResult> {
   return generateMeme({
     promptType: 'public_meme',
@@ -491,6 +524,7 @@ export async function generatePublicMeme(
     ipAddress,
     aspectRatio,
     styleIntensity,
+    baseImage,
   });
 }
 

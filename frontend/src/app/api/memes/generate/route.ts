@@ -23,6 +23,7 @@ const DAILY_LIMIT = 10;
  * Body:
  * - type: 'public_meme' | 'card_background' | 'referral' | 'application_fomo'
  * - userInput?: string (optional topic/prompt for public memes, or username for application)
+ * - baseImage?: string (base64 image for editing/remixing)
  * - twitterAvatar?: string (for referral memes)
  * - referralCode?: string (for referral memes)
  * - userId?: string (for authenticated users)
@@ -31,7 +32,7 @@ const DAILY_LIMIT = 10;
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { type, userInput, twitterAvatar, referralCode, userId, walletAddress, aspectRatio, styleIntensity } = body;
+    const { type, userInput, twitterAvatar, referralCode, userId, walletAddress, aspectRatio, styleIntensity, baseImage } = body;
 
     // Get client IP for rate limiting
     const forwarded = request.headers.get('x-forwarded-for');
@@ -63,7 +64,7 @@ export async function POST(request: NextRequest) {
 
     switch (type) {
       case 'public_meme':
-        result = await generatePublicMeme(userInput, userId, walletAddress, ipAddress, aspectRatio, styleIntensity);
+        result = await generatePublicMeme(userInput, userId, walletAddress, ipAddress, aspectRatio, styleIntensity, baseImage);
         break;
 
       case 'card_background':

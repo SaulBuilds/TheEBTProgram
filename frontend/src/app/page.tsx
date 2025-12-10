@@ -3,6 +3,7 @@
 import { Hero } from '@/components/landing/Hero';
 import { Stats } from '@/components/landing/Stats';
 import { Features } from '@/components/landing/Features';
+import { MemeGallery } from '@/components/landing/MemeGallery';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { Tokenomics } from '@/components/landing/Tokenomics';
 import { Footer } from '@/components/landing/Footer';
@@ -27,6 +28,7 @@ export default function HomePage() {
         <section className="relative bg-black">
           <Stats />
           <Features />
+          <MemeGallery />
           <HowItWorks />
         </section>
 
