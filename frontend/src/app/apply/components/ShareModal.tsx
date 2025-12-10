@@ -54,7 +54,7 @@ export function ShareModal({ data, onClose }: ShareModalProps) {
     generateMeme();
   }, [data.username, data.lockedWalletAddress, data.userId]);
 
-  const referralLink = `https://theebtprogram.com/apply?ref=${data.userId}`;
+  const referralLink = `https://web3welfare.com/apply?ref=${data.userId}`;
 
   return (
     <motion.div

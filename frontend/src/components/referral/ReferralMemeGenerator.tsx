@@ -61,8 +61,8 @@ export function ReferralMemeGenerator({
 
   const shareToTwitter = () => {
     const referralUrl = referralCode
-      ? `https://theebtprogram.com/?ref=${referralCode}`
-      : 'https://theebtprogram.com';
+      ? `https://web3welfare.com/?ref=${referralCode}`
+      : 'https://web3welfare.com';
 
     const tweetText = encodeURIComponent(
       `I'm on The EBT Program. Join the blockchain breadline, anon. 🍞\n\n${referralUrl}`
@@ -180,13 +180,13 @@ export function ReferralMemeGenerator({
                   <input
                     type="text"
                     readOnly
-                    value={`https://theebtprogram.com/?ref=${referralCode}`}
+                    value={`https://web3welfare.com/?ref=${referralCode}`}
                     className="flex-1 px-3 py-2 bg-black border border-gray-800 rounded font-mono text-xs text-gray-300"
                   />
                   <button
                     onClick={() => {
                       navigator.clipboard.writeText(
-                        `https://theebtprogram.com/?ref=${referralCode}`
+                        `https://web3welfare.com/?ref=${referralCode}`
                       );
                     }}
                     className="px-3 py-2 bg-gray-800 text-gray-400 font-mono text-xs rounded hover:bg-gray-700"

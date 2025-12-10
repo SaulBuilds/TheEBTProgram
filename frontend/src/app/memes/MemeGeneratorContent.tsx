@@ -124,12 +124,12 @@ export default function MemeGeneratorContent() {
         });
       } catch {
         // Fallback to copying to clipboard
-        navigator.clipboard.writeText('Check out The EBT Program: https://theebtprogram.com');
+        navigator.clipboard.writeText('Check out The EBT Program: https://web3welfare.com');
       }
     } else {
       const tweetText = getRandomTweet('meme_share');
       window.open(
-        `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://theebtprogram.com/memes')}`,
+        `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}&url=${encodeURIComponent('https://web3welfare.com/memes')}`,
         '_blank'
       );
     }

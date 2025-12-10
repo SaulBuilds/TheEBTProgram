@@ -80,7 +80,7 @@ export function MemeCardPreview({ onConnectClick }: MemeCardPreviewProps) {
 
   const shareToTwitter = () => {
     const text = getRandomTweet('meme_share');
-    const url = 'https://theebtprogram.com/memes';
+    const url = 'https://web3welfare.com/memes';
     window.open(
       `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
       '_blank'
