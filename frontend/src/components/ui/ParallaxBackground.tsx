@@ -65,8 +65,8 @@ interface ParallaxElement {
 // Depth layer configurations
 const DEPTH_CONFIG: Record<DepthLayer, { size: number; speed: number; opacity: number; zIndex: number }> = {
   foreground: { size: 180, speed: 1.5, opacity: 1, zIndex: 5 },
-  middleground: { size: 120, speed: 1.0, opacity: 0.85, zIndex: 3 },
-  background: { size: 70, speed: 0.5, opacity: 0.6, zIndex: 1 },
+  middleground: { size: 120, speed: 1.0, opacity: 1, zIndex: 3 },
+  background: { size: 70, speed: 0.5, opacity: 1, zIndex: 1 },
 };
 
 // Track configurations - how each type moves
