@@ -78,6 +78,7 @@ interface CardCharacterProps {
 }
 
 // Get CSS position based on anchor
+// offsetX and offsetY are now percentages for responsive scaling
 function getPositionStyles(
   anchor: AnchorPosition,
   offsetX: number,
@@ -88,13 +89,14 @@ function getPositionStyles(
   };
 
   switch (anchor) {
-    // Top edge positions - translateY(-85%) so bottom 15% (paws/hands) hangs over the edge
+    // Top edge positions - character sits at top edge with paws hanging over
+    // offsetY as percentage moves it up (negative) or down (positive) relative to card height
     case 'top-left':
-      return { ...baseStyles, top: offsetY, left: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
+      return { ...baseStyles, top: `${offsetY}%`, left: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
     case 'top-center':
-      return { ...baseStyles, top: offsetY, left: '50%', transform: 'translate(-50%, -85%)' };
+      return { ...baseStyles, top: `${offsetY}%`, left: '50%', transform: 'translate(-50%, -85%)' };
     case 'top-right':
-      return { ...baseStyles, top: offsetY, right: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
+      return { ...baseStyles, top: `${offsetY}%`, right: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
 
     // Bottom edge positions
     case 'bottom-left':
