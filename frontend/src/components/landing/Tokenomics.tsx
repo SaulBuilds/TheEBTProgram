@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from 'recharts';
+import { CardCharacter } from '@/components/ui/CardCharacter';
 
 const tokenData = [
   { name: 'Community Distribution (60%)', value: 60, color: '#FFD700' },
@@ -40,8 +41,20 @@ export function Tokenomics() {
             whileInView={{ opacity: 1, scale: 1 }}
             transition={{ duration: 0.5 }}
             viewport={{ once: true }}
-            className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6"
+            className="relative bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6"
+            style={{ overflow: 'visible' }}
           >
+            {/* Apu searching near the chart */}
+            <CardCharacter
+              character="apuSearching"
+              anchor="bottom-left"
+              animation="slide-in"
+              size={25}
+              offsetY={-25}
+              offsetX={-5}
+              animationDelay={0.4}
+              zIndex={20}
+            />
             <h3 className="text-2xl font-heading text-ebt-gold mb-6 tracking-wide">TOKEN ALLOCATION</h3>
             <ResponsiveContainer width="100%" height={300}>
               <PieChart>
@@ -113,8 +126,20 @@ export function Tokenomics() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
           viewport={{ once: true }}
-          className="mt-12 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8"
+          className="relative mt-12 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8"
+          style={{ overflow: 'visible' }}
         >
+          {/* Cope looking at distribution */}
+          <CardCharacter
+            character="copeLooking"
+            anchor="top-right"
+            animation="pop-up"
+            size={12}
+            offsetX={5}
+            offsetY={5}
+            animationDelay={0.5}
+            zIndex={20}
+          />
           <h3 className="text-2xl font-heading text-ebt-gold mb-6 tracking-wide">
             DISTRIBUTION MODEL
           </h3>
@@ -179,8 +204,20 @@ export function Tokenomics() {
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
           viewport={{ once: true }}
-          className="mt-8 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8"
+          className="relative mt-8 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-8"
+          style={{ overflow: 'visible' }}
         >
+          {/* Dat boi riding past */}
+          <CardCharacter
+            character="frogRiding"
+            anchor="bottom-right"
+            animation="bounce"
+            size={15}
+            offsetX={-15}
+            offsetY={-35}
+            animationDelay={0.7}
+            zIndex={20}
+          />
           <h3 className="text-2xl font-heading text-ebt-gold mb-6 tracking-wide">
             NFT SALE ALLOCATION
           </h3>

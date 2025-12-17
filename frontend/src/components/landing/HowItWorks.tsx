@@ -1,6 +1,48 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { CardCharacter, type CharacterKey, type AnchorPosition, type AnimationType } from '@/components/ui/CardCharacter';
+
+// Character assignments for specific step cards
+const stepCharacters: Record<number, {
+  character: CharacterKey;
+  anchor: AnchorPosition;
+  animation: AnimationType;
+  size: number;
+  offsetX?: number;
+  offsetY?: number;
+  flipX?: boolean;
+}> = {
+  0: { // Accept the L - Doomer from manhole
+    character: 'doomerManhole',
+    anchor: 'bottom-center',
+    animation: 'pop-up',
+    size: 35,
+    offsetY: -15,
+  },
+  1: { // Secure the Card - Pikachu peek
+    character: 'pikaPeeking',
+    anchor: 'top-center',
+    animation: 'peek',
+    size: 28,
+    offsetY: 5,
+  },
+  2: { // Collect the Bag - Pepe chill
+    character: 'pepeChill',
+    anchor: 'top-center',
+    animation: 'pop-up',
+    size: 35,
+    offsetY: 5,
+  },
+  3: { // Hold the Line - Luffy peeking
+    character: 'onePeek',
+    anchor: 'top-left',
+    animation: 'slide-in',
+    size: 40,
+    offsetX: -5,
+    offsetY: 5,
+  },
+};
 
 const steps = [
   {
@@ -39,33 +81,52 @@ export function HowItWorks() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {steps.map((step, index) => (
-            <motion.div
-              key={step.number}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="relative"
-            >
-              {/* Connector line */}
-              {index < steps.length - 1 && (
-                <div className="hidden lg:block absolute top-12 left-full w-full h-px bg-gradient-to-r from-ebt-gold/50 to-transparent z-0" />
-              )}
+          {steps.map((step, index) => {
+            const characterConfig = stepCharacters[index];
+            return (
+              <motion.div
+                key={step.number}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="relative"
+                style={{ overflow: 'visible' }}
+              >
+                {/* Connector line */}
+                {index < steps.length - 1 && (
+                  <div className="hidden lg:block absolute top-12 left-full w-full h-px bg-gradient-to-r from-ebt-gold/50 to-transparent z-0" />
+                )}
 
-              <div className="relative z-10 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 h-full">
-                <div className="text-5xl font-heading text-ebt-gold/30 mb-4">
-                  {step.number}
+                {/* Character attachment */}
+                {characterConfig && (
+                  <CardCharacter
+                    character={characterConfig.character}
+                    anchor={characterConfig.anchor}
+                    animation={characterConfig.animation}
+                    size={characterConfig.size}
+                    offsetX={characterConfig.offsetX}
+                    offsetY={characterConfig.offsetY}
+                    flipX={characterConfig.flipX}
+                    animationDelay={index * 0.15 + 0.3}
+                    zIndex={20}
+                  />
+                )}
+
+                <div className="relative z-10 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 h-full">
+                  <div className="text-5xl font-heading text-ebt-gold/30 mb-4">
+                    {step.number}
+                  </div>
+                  <h3 className="text-xl font-heading text-white mb-2 tracking-wide">
+                    {step.title}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {step.description}
+                  </p>
                 </div>
-                <h3 className="text-xl font-heading text-white mb-2 tracking-wide">
-                  {step.title}
-                </h3>
-                <p className="text-sm text-gray-400">
-                  {step.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+              </motion.div>
+            );
+          })}
         </div>
 
         {/* Disclaimer */}
@@ -76,7 +137,16 @@ export function HowItWorks() {
           viewport={{ once: true }}
           className="text-center mt-16"
         >
-          <div className="bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6 max-w-3xl mx-auto">
+          <div className="relative bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6 max-w-3xl mx-auto" style={{ overflow: 'visible' }}>
+            {/* Boomer peeking from the side of disclaimer */}
+            <CardCharacter
+              character="boomerLooking"
+              anchor="right-center"
+              animation="slide-in"
+              size={18}
+              animationDelay={0.7}
+              zIndex={20}
+            />
             <p className="text-lg font-heading text-welfare-red mb-4 tracking-wide">
               THE FINE PRINT
             </p>

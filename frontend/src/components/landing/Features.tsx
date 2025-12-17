@@ -1,6 +1,41 @@
 'use client';
 
 import { motion } from 'framer-motion';
+import { CardCharacter, type CharacterKey, type AnchorPosition, type AnimationType } from '@/components/ui/CardCharacter';
+
+// Character assignments for specific feature cards
+const featureCharacters: Record<number, {
+  character: CharacterKey;
+  anchor: AnchorPosition;
+  animation: AnimationType;
+  size: number;
+  offsetX?: number;
+  offsetY?: number;
+  flipX?: boolean;
+}> = {
+  0: { // The Card - Doge peeking
+    character: 'dogePeeking',
+    anchor: 'top-center',
+    animation: 'pop-up',
+    size: 35,
+    offsetY: 5,
+  },
+  2: { // The Cliff - Pepe climbing
+    character: 'pepeClimbing',
+    anchor: 'corner-top-right',
+    animation: 'slide-in',
+    size: 35,
+    offsetX: -15,
+    offsetY: 10,
+  },
+  4: { // The Score - Chad peeking
+    character: 'chadPeaking',
+    anchor: 'top-center',
+    animation: 'pop-up',
+    size: 30,
+    offsetY: 5,
+  },
+};
 
 const features = [
   {
@@ -73,26 +108,44 @@ export function Features() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {features.map((feature, index) => (
-            <motion.div
-              key={feature.title}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-              viewport={{ once: true }}
-              className="group"
-            >
-              <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 h-full hover:border-ebt-gold/50 transition-all duration-300">
-                <div className="text-ebt-gold mb-4">{feature.icon}</div>
-                <h3 className="text-xl font-heading text-ebt-gold mb-2 tracking-wide">
-                  {feature.title}
-                </h3>
-                <p className="text-sm text-gray-400">
-                  {feature.description}
-                </p>
-              </div>
-            </motion.div>
-          ))}
+          {features.map((feature, index) => {
+            const characterConfig = featureCharacters[index];
+            return (
+              <motion.div
+                key={feature.title}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+                viewport={{ once: true }}
+                className="group relative"
+                style={{ overflow: 'visible' }}
+              >
+                {/* Character attachment - positioned relative to card */}
+                {characterConfig && (
+                  <CardCharacter
+                    character={characterConfig.character}
+                    anchor={characterConfig.anchor}
+                    animation={characterConfig.animation}
+                    size={characterConfig.size}
+                    offsetX={characterConfig.offsetX}
+                    offsetY={characterConfig.offsetY}
+                    flipX={characterConfig.flipX}
+                    animationDelay={index * 0.1 + 0.2}
+                    zIndex={20}
+                  />
+                )}
+                <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 h-full hover:border-ebt-gold/50 transition-all duration-300 relative z-10">
+                  <div className="text-ebt-gold mb-4">{feature.icon}</div>
+                  <h3 className="text-xl font-heading text-ebt-gold mb-2 tracking-wide">
+                    {feature.title}
+                  </h3>
+                  <p className="text-sm text-gray-400">
+                    {feature.description}
+                  </p>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </div>
     </section>
