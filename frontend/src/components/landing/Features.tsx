@@ -18,7 +18,7 @@ const featureCharacters: Record<number, {
     anchor: 'top-center',
     animation: 'pop-up',
     size: 35,
-    offsetY: 0,
+    offsetY: -300,
   },
   2: { // The Cliff - Pepe climbing
     character: 'pepeClimbing',
