@@ -13,12 +13,12 @@ const featureCharacters: Record<number, {
   offsetY?: number;
   flipX?: boolean;
 }> = {
-  0: { // The Card - Doge peeking
+  0: { // The Card - Doge peeking over top edge with paws hanging over
     character: 'dogePeeking',
     anchor: 'top-center',
     animation: 'pop-up',
     size: 35,
-    offsetY: 5,
+    offsetY: 0,
   },
   2: { // The Cliff - Pepe climbing
     character: 'pepeClimbing',

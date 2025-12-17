@@ -88,13 +88,13 @@ function getPositionStyles(
   };
 
   switch (anchor) {
-    // Top edge positions
+    // Top edge positions - translateY(-85%) so bottom 15% (paws/hands) hangs over the edge
     case 'top-left':
-      return { ...baseStyles, top: offsetY, left: `${10 + offsetX}%`, transform: 'translateY(-100%)' };
+      return { ...baseStyles, top: offsetY, left: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
     case 'top-center':
-      return { ...baseStyles, top: offsetY, left: '50%', transform: 'translate(-50%, -100%)' };
+      return { ...baseStyles, top: offsetY, left: '50%', transform: 'translate(-50%, -85%)' };
     case 'top-right':
-      return { ...baseStyles, top: offsetY, right: `${10 + offsetX}%`, transform: 'translateY(-100%)' };
+      return { ...baseStyles, top: offsetY, right: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
 
     // Bottom edge positions
     case 'bottom-left':
