@@ -13,34 +13,35 @@ const stepCharacters: Record<number, {
   offsetY?: number;
   flipX?: boolean;
 }> = {
-  0: { // Accept the L - Doomer from manhole
+  0: { // Accept the L - Doomer/Wojack (right 25%, up 30%)
     character: 'doomerManhole',
     anchor: 'bottom-center',
     animation: 'pop-up',
     size: 35,
-    offsetY: -15,
+    offsetX: 25,
+    offsetY: -30,
   },
-  1: { // Secure the Card - Pikachu peek
+  1: { // Secure the Card - Pikachu peek (down 17%)
     character: 'pikaPeeking',
     anchor: 'top-center',
     animation: 'peek',
     size: 28,
-    offsetY: 5,
+    offsetY: 22,
   },
-  2: { // Collect the Bag - Pepe chill
+  2: { // Collect the Bag - Pepe chill (down 19%)
     character: 'pepeChill',
     anchor: 'top-center',
     animation: 'pop-up',
     size: 35,
-    offsetY: 5,
+    offsetY: 24,
   },
-  3: { // Hold the Line - Luffy peeking
+  3: { // Hold the Line - Luffy peeking (down 14%)
     character: 'onePeek',
     anchor: 'top-left',
     animation: 'slide-in',
     size: 40,
     offsetX: -5,
-    offsetY: 5,
+    offsetY: 19,
   },
 };
 
@@ -63,7 +64,7 @@ const steps = [
   {
     number: '04',
     title: 'Hold the Line',
-    description: 'When the normies arrive, we feast. You are early. They are exit liquidity. Or we all go to zero together.',
+    description: 'If your early we feast, protocol handles the exit liquidity provisioning so losers can leave whenever and we stay liquid and well fed.',
   },
 ];
 
@@ -138,12 +139,13 @@ export function HowItWorks() {
           className="text-center mt-16"
         >
           <div className="relative bg-black/80 backdrop-blur-sm border border-welfare-red/30 rounded-xl p-6 max-w-3xl mx-auto" style={{ overflow: 'visible' }}>
-            {/* Boomer peeking from the side of disclaimer */}
+            {/* Boomer peeking from the side of disclaimer (left 5%) */}
             <CardCharacter
               character="boomerLooking"
               anchor="right-center"
               animation="slide-in"
               size={18}
+              offsetX={-5}
               animationDelay={0.7}
               zIndex={20}
             />
@@ -152,7 +154,7 @@ export function HowItWorks() {
             </p>
             <p className="text-sm text-gray-500">
               This is not financial advice. This is financial destiny. If you lose money, you simply lacked the vision.
-              We are not a government agency. We are barely a functional protocol. NFA. DYOR. Touch grass occasionally.
+              We are not a government agency. We are a functional protocol...Barely. So yada yada yada... NFA. DYOR. Touch grass and all that jazz.
             </p>
           </div>
         </motion.div>

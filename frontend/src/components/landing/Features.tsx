@@ -18,15 +18,15 @@ const featureCharacters: Record<number, {
     anchor: 'top-center',
     animation: 'pop-up',
     size: 35,
-    offsetY: -48,
+    offsetY: 16,
   },
-  2: { // The Cliff - Pepe climbing
+  2: { // The Cliff - Pepe climbing (left 50% from right margin)
     character: 'pepeClimbing',
     anchor: 'corner-top-right',
     animation: 'slide-in',
     size: 35,
-    offsetX: -15,
-    offsetY: 10,
+    offsetX: 50,
+    offsetY: 13,
   },
   4: { // The Score - Chad peeking
     character: 'chadPeaking',
@@ -67,7 +67,7 @@ const features = [
   },
   {
     title: 'The Burn',
-    description: 'We burn supply because deflation is religion. Every transaction is a sacrifice to the green candle.',
+    description: 'We burn supply because we learn from our elders mistakes. Fiat foodstamps are the past. Imagine if you sold your foodstamps from the US government for 10x... Burning tokens every season will help us achieve this maximal goal.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M17.657 18.657A8 8 0 016.343 7.343S7 9 9 10c0-2 .5-5 2.986-7C14 5 16.09 5.777 17.656 7.343A7.975 7.975 0 0120 13a7.975 7.975 0 01-2.343 5.657z" />

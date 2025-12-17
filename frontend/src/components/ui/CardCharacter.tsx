@@ -89,48 +89,49 @@ function getPositionStyles(
   };
 
   switch (anchor) {
-    // Top edge positions - character sits at top edge with paws hanging over
-    // offsetY as percentage moves it up (negative) or down (positive) relative to card height
+    // Top edge positions - locked to top: 0 (the card border)
+    // offsetY adjusts translateY percentage (relative to character's own height, not card height)
+    // This keeps the character locked to the card border at all screen sizes
     case 'top-left':
-      return { ...baseStyles, top: `${offsetY}%`, left: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
+      return { ...baseStyles, top: 0, left: `${10 + offsetX}%`, transform: `translateY(${-85 + offsetY}%)` };
     case 'top-center':
-      return { ...baseStyles, top: `${offsetY}%`, left: '50%', transform: 'translate(-50%, -85%)' };
+      return { ...baseStyles, top: 0, left: '50%', transform: `translate(-50%, ${-85 + offsetY}%)` };
     case 'top-right':
-      return { ...baseStyles, top: `${offsetY}%`, right: `${10 + offsetX}%`, transform: 'translateY(-85%)' };
+      return { ...baseStyles, top: 0, right: `${10 + offsetX}%`, transform: `translateY(${-85 + offsetY}%)` };
 
-    // Bottom edge positions
+    // Bottom edge positions - locked to bottom: 0, offsetX shifts horizontally, offsetY adjusts vertical
     case 'bottom-left':
-      return { ...baseStyles, bottom: offsetY, left: `${10 + offsetX}%`, transform: 'translateY(50%)' };
+      return { ...baseStyles, bottom: 0, left: `${10 + offsetX}%`, transform: `translateY(${85 + offsetY}%)` };
     case 'bottom-center':
-      return { ...baseStyles, bottom: offsetY, left: '50%', transform: 'translate(-50%, 50%)' };
+      return { ...baseStyles, bottom: 0, left: `${50 + offsetX}%`, transform: `translate(-50%, ${85 + offsetY}%)` };
     case 'bottom-right':
-      return { ...baseStyles, bottom: offsetY, right: `${10 + offsetX}%`, transform: 'translateY(50%)' };
+      return { ...baseStyles, bottom: 0, right: `${10 - offsetX}%`, transform: `translateY(${85 + offsetY}%)` };
 
-    // Left edge positions
+    // Left edge positions - percentage based
     case 'left-top':
-      return { ...baseStyles, top: `${10 + offsetY}%`, left: offsetX, transform: 'translateX(-80%)' };
+      return { ...baseStyles, top: `${10 + offsetY}%`, left: 0, transform: `translateX(${-80 + offsetX}%)` };
     case 'left-center':
-      return { ...baseStyles, top: '50%', left: offsetX, transform: 'translate(-80%, -50%)' };
+      return { ...baseStyles, top: '50%', left: 0, transform: `translate(${-80 + offsetX}%, -50%)` };
     case 'left-bottom':
-      return { ...baseStyles, bottom: `${10 + offsetY}%`, left: offsetX, transform: 'translateX(-80%)' };
+      return { ...baseStyles, bottom: `${10 - offsetY}%`, left: 0, transform: `translateX(${-80 + offsetX}%)` };
 
-    // Right edge positions
+    // Right edge positions - percentage based
     case 'right-top':
-      return { ...baseStyles, top: `${10 + offsetY}%`, right: offsetX, transform: 'translateX(80%)' };
+      return { ...baseStyles, top: `${10 + offsetY}%`, right: 0, transform: `translateX(${80 + offsetX}%)` };
     case 'right-center':
-      return { ...baseStyles, top: '50%', right: offsetX, transform: 'translate(80%, -50%)' };
+      return { ...baseStyles, top: '50%', right: 0, transform: `translate(${80 + offsetX}%, -50%)` };
     case 'right-bottom':
-      return { ...baseStyles, bottom: `${10 + offsetY}%`, right: offsetX, transform: 'translateX(80%)' };
+      return { ...baseStyles, bottom: `${10 - offsetY}%`, right: 0, transform: `translateX(${80 + offsetX}%)` };
 
-    // Corner positions (for climbing characters)
+    // Corner positions (for climbing characters) - percentage based
     case 'corner-top-right':
-      return { ...baseStyles, top: offsetY, right: offsetX, transform: 'translate(30%, -70%)' };
+      return { ...baseStyles, top: 0, right: `${offsetX}%`, transform: `translate(30%, ${-70 + offsetY}%)` };
     case 'corner-top-left':
-      return { ...baseStyles, top: offsetY, left: offsetX, transform: 'translate(-30%, -70%)' };
+      return { ...baseStyles, top: 0, left: `${offsetX}%`, transform: `translate(-30%, ${-70 + offsetY}%)` };
     case 'corner-bottom-right':
-      return { ...baseStyles, bottom: offsetY, right: offsetX, transform: 'translate(30%, 70%)' };
+      return { ...baseStyles, bottom: 0, right: `${offsetX}%`, transform: `translate(30%, ${70 + offsetY}%)` };
     case 'corner-bottom-left':
-      return { ...baseStyles, bottom: offsetY, left: offsetX, transform: 'translate(-30%, 70%)' };
+      return { ...baseStyles, bottom: 0, left: `${offsetX}%`, transform: `translate(-30%, ${70 + offsetY}%)` };
 
     default:
       return baseStyles;
@@ -187,7 +188,7 @@ function getAnimationConfig(animation: AnimationType, delay: number) {
 export function CardCharacter({
   character,
   anchor,
-  animation = 'pop-up',
+  animation = 'none', // Default to no animation - static placement
   size = 20,
   offsetX = 0,
   offsetY = 0,
@@ -195,12 +196,17 @@ export function CardCharacter({
   flipX = false,
   className = '',
   animationDelay = 0,
-  scrollTrigger = true,
+  scrollTrigger = false, // Default to no scroll trigger
 }: CardCharacterProps) {
   const characterRef = useRef<HTMLDivElement>(null);
 
+  // TODO: Add frame-based peeking animations later
+  // The characters are now statically positioned at their correct locations
+  // Frame animations can be added to create peeking effects without GSAP scroll interference
+
   useEffect(() => {
-    if (!characterRef.current || animation === 'none') return;
+    // Skip all GSAP animations - keep characters static
+    if (!characterRef.current || animation === 'none' || !scrollTrigger) return;
 
     const element = characterRef.current;
     const initialState = getInitialState(animation, anchor);

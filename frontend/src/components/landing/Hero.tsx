@@ -79,10 +79,20 @@ export function Hero() {
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
           <p className="text-xl md:text-2xl mb-2 font-heading text-ebt-green tracking-wide">
-            The safety net they promised. Deployed on the only infrastructure that works.
+            Getting Foodstamps every month never felt better.
           </p>
           <p className="text-lg md:text-xl text-gray-400">
-            PPP got $800B. Linda got 8 years. You get an NFT. Fair is fair.
+            Apply for foodstamps on ethereum today.
+          </p>
+        </div>
+
+        {/* Mission statement */}
+        <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-3xl mx-auto mb-8">
+          <p className="text-lg md:text-xl mb-4 text-gray-300">
+            EBT Card is the safety net they promised, deployed on the only infrastructure that works. Your benefits card is an NFT. It owns a wallet. The tokens inside are yours. No means testing. No caseworker. The only paperwork is a signature.
+          </p>
+          <p className="text-lg md:text-xl text-ebt-gold font-heading tracking-wide">
+            The goal is simple, flip foodstamps and create the new UBI for ourselves...easy no... worth it...Yes.
           </p>
         </div>
 
@@ -141,10 +151,13 @@ export function Hero() {
             </div>
             <div className="w-px h-4 bg-gray-700" />
             <div>
-              <span className="text-ebt-gold font-heading text-lg">$8,000</span>
-              <span className="text-gray-500 ml-2">LINDA&apos;S CONVICTION</span>
+              <span className="text-ebt-gold font-heading text-lg">$40T+</span>
+              <span className="text-gray-500 ml-2">DEBT CONSOLIDATION COMING SOON</span>
             </div>
           </div>
+          <p className="text-center text-ebt-gold font-heading text-xl mt-4 tracking-wide">
+            LETS EAT
+          </p>
         </div>
       </div>
     </section>
