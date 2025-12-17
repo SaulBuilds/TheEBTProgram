@@ -62,11 +62,11 @@ interface ParallaxElement {
   flipX?: boolean;
 }
 
-// Depth layer configurations
+// Depth layer configurations - zIndex 15-19 to be above CRT effects (z-0) but below content (z-10+)
 const DEPTH_CONFIG: Record<DepthLayer, { size: number; speed: number; opacity: number; zIndex: number }> = {
-  foreground: { size: 180, speed: 1.5, opacity: 1, zIndex: 5 },
-  middleground: { size: 120, speed: 1.0, opacity: 1, zIndex: 3 },
-  background: { size: 70, speed: 0.5, opacity: 1, zIndex: 1 },
+  foreground: { size: 180, speed: 1.5, opacity: 1, zIndex: 19 },
+  middleground: { size: 120, speed: 1.0, opacity: 1, zIndex: 17 },
+  background: { size: 70, speed: 0.5, opacity: 1, zIndex: 15 },
 };
 
 // Track configurations - how each type moves
@@ -326,7 +326,7 @@ export function ParallaxBackground() {
         width: '100vw',
         height: '100vh',
         overflow: 'hidden',
-        zIndex: 1,
+        zIndex: 15,
       }}
       aria-hidden="true"
     >

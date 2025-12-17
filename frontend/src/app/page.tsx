@@ -19,17 +19,17 @@ export default function HomePage() {
 
       <Navbar />
 
-      <main className="relative z-10">
+      <main className="relative z-20">
         {/* Hero section with ebt-video.mp4 background */}
         <section className="relative">
           <DitheredVideoBackground videoSrc="/ebt-video.mp4" fixed={false} />
-          <div className="relative z-10">
+          <div className="relative z-20">
             <Hero />
           </div>
         </section>
 
         {/* Middle sections with black background */}
-        <section className="relative z-10 bg-black">
+        <section className="relative z-20 bg-black">
           <Stats />
           <Features />
           <MemeGallery />
@@ -42,7 +42,7 @@ export default function HomePage() {
             videoSrc="/backgrounds/Pixelated_Pie_Video_With_Sunrise.mp4"
             fixed={false}
           />
-          <div className="relative z-10">
+          <div className="relative z-20">
             <Tokenomics />
             <Footer />
           </div>
