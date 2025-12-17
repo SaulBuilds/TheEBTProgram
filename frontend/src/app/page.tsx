@@ -9,13 +9,17 @@ import { Tokenomics } from '@/components/landing/Tokenomics';
 import { Footer } from '@/components/landing/Footer';
 import { Navbar } from '@/components/layout/Navbar';
 import { DitheredVideoBackground } from '@/components/ui/DitheredVideoBackground';
+import { ParallaxBackground } from '@/components/ui/ParallaxBackground';
 
 export default function HomePage() {
   return (
     <div className="min-h-screen bg-black text-white overflow-x-hidden">
+      {/* Parallax characters in the margins - between background and content */}
+      <ParallaxBackground />
+
       <Navbar />
 
-      <main>
+      <main className="relative z-10">
         {/* Hero section with ebt-video.mp4 background */}
         <section className="relative">
           <DitheredVideoBackground videoSrc="/ebt-video.mp4" fixed={false} />
@@ -25,7 +29,7 @@ export default function HomePage() {
         </section>
 
         {/* Middle sections with black background */}
-        <section className="relative bg-black">
+        <section className="relative z-10 bg-black">
           <Stats />
           <Features />
           <MemeGallery />
