@@ -2,8 +2,9 @@
 
 import { motion } from 'framer-motion';
 import { CardCharacter, type CharacterKey, type AnchorPosition, type AnimationType } from '@/components/ui/CardCharacter';
+import { ScrollFrameCharacter } from '@/components/ui/ScrollFrameCharacter';
 
-// Character assignments for specific feature cards
+// Character assignments for specific feature cards (static characters only)
 const featureCharacters: Record<number, {
   character: CharacterKey;
   anchor: AnchorPosition;
@@ -20,14 +21,7 @@ const featureCharacters: Record<number, {
     size: 35,
     offsetY: 16,
   },
-  2: { // The Cliff - Pepe climbing (left 50% from right margin)
-    character: 'pepeClimbing',
-    anchor: 'corner-top-right',
-    animation: 'slide-in',
-    size: 35,
-    offsetX: 50,
-    offsetY: 13,
-  },
+  // Index 2 (The Cliff) uses ScrollFrameCharacter instead - handled separately
   4: { // The Score - Chad peeking
     character: 'chadPeaking',
     anchor: 'top-center',
@@ -110,6 +104,8 @@ export function Features() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
             const characterConfig = featureCharacters[index];
+            const isAnimatedPepe = index === 2; // The Cliff - animated Pepe
+
             return (
               <motion.div
                 key={feature.title}
@@ -120,8 +116,21 @@ export function Features() {
                 className="group relative"
                 style={{ overflow: 'visible' }}
               >
-                {/* Character attachment - positioned relative to card */}
-                {characterConfig && (
+                {/* Animated Pepe for The Cliff */}
+                {isAnimatedPepe && (
+                  <ScrollFrameCharacter
+                    animation="pepeClimbing"
+                    size={35}
+                    offsetX={50}
+                    offsetY={13}
+                    zIndex={20}
+                    scrollStart="top 95%"
+                    scrollEnd="top 20%"
+                  />
+                )}
+
+                {/* Static character attachments */}
+                {characterConfig && !isAnimatedPepe && (
                   <CardCharacter
                     character={characterConfig.character}
                     anchor={characterConfig.anchor}
