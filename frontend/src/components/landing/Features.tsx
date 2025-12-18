@@ -122,7 +122,7 @@ export function Features() {
                     animation="pepeClimbing"
                     size={35}
                     offsetX={50}
-                    offsetY={13}
+                    offsetY={11.5}
                     zIndex={20}
                     scrollStart="top 95%"
                     scrollEnd="top 20%"

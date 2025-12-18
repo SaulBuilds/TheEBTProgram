@@ -26,9 +26,14 @@ export function Footer() {
                 <Link href="/about" className="block text-sm text-gray-400 hover:text-ebt-gold">
                   Tokenomics
                 </Link>
-                <Link href="/about" className="block text-sm text-gray-400 hover:text-ebt-gold">
+                <a
+                  href="https://sepolia.etherscan.io/address/0xB225F65B6a297dfe3A11BAD6e19E6f2f5D4AB247#code"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-sm text-gray-400 hover:text-ebt-gold"
+                >
                   Smart Contracts
-                </Link>
+                </a>
               </div>
             </div>
 
@@ -37,7 +42,7 @@ export function Footer() {
               <h4 className="text-sm font-heading text-white mb-4 tracking-wide">COMMUNITY</h4>
               <div className="space-y-2">
                 <a
-                  href="https://twitter.com/ebtcard"
+                  href="https://x.com/TheEBTProgram"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-sm text-gray-400 hover:text-ebt-gold"
@@ -45,7 +50,7 @@ export function Footer() {
                   Propaganda
                 </a>
                 <a
-                  href="https://discord.gg/ebtcard"
+                  href="https://discord.gg/BhrV2F6PBw"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-sm text-gray-400 hover:text-ebt-gold"
@@ -53,7 +58,7 @@ export function Footer() {
                   Cult
                 </a>
                 <a
-                  href="https://github.com/ebtcard"
+                  href="https://github.com/SaulBuilds/TheEBTProgram"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="block text-sm text-gray-400 hover:text-ebt-gold"
