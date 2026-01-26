@@ -374,7 +374,7 @@ export function useSlotMachine(address: `0x${string}` | undefined) {
 // ============================================================================
 
 /**
- * Format $EBTC amount for display (18 decimals)
+ * Format $SNAP amount for display (18 decimals)
  */
 export function formatEBTC(amount: bigint | undefined): string {
   if (amount === undefined) return '0';

@@ -179,7 +179,7 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username, autoRedir
                   </button>
                 </div>
                 <p className="text-xs text-gray-400">
-                  Your EBT Card has its own wallet! $EBTC tokens will be deposited here.
+                  Your EBT Card has its own wallet! $SNAP tokens will be deposited here.
                 </p>
                 <a
                   href={getEtherscanAddressUrl(tbaAddress)}
@@ -213,7 +213,7 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username, autoRedir
               <ul className="text-sm text-gray-400 space-y-2 text-left">
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">1.</span>
-                  <span>Check your dashboard to see your $EBTC balance</span>
+                  <span>Check your dashboard to see your $SNAP balance</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <span className="text-ebt-gold">2.</span>
@@ -249,7 +249,7 @@ export function MintSuccess({ tokenId, txHash, cardImageUrl, username, autoRedir
               </Link>
               <button
                 onClick={() => {
-                  const text = `I just joined the blockchain breadline and got my EBT Card!\n\nCard #${tokenId?.toString() || '???'}\nToken Bound Account ready\n$EBTC incoming\n\n#EBTCard #Web3 #NFT`;
+                  const text = `I just joined the blockchain breadline and got my EBT Card!\n\nCard #${tokenId?.toString() || '???'}\nToken Bound Account ready\n$SNAP incoming\n\n#EBTCard #Web3 #NFT`;
                   window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`, '_blank');
                 }}
                 className="px-6 py-3 bg-gray-800 text-white font-heading tracking-wide rounded-lg hover:bg-gray-700 transition-colors"

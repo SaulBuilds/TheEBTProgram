@@ -110,7 +110,7 @@ export async function GET(request: NextRequest) {
         (app.email ? 50 : 0);
 
       let value = app.score ?? 0;
-      let valueLabel = '$FOOD';
+      let valueLabel = '$SNAP';
 
       if (category === 'streaks') {
         value = app.mintedTokenId ? 1 : 0;

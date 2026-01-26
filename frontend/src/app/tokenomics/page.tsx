@@ -42,7 +42,7 @@ export default function TokenomicsPage() {
             {/* Token Details */}
             <div className="p-6 bg-black/80 backdrop-blur-sm border border-ebt-gold/20 rounded-xl">
               <h3 className="text-xl font-heading text-ebt-gold mb-4 tracking-wide">
-                $FOOD TOKEN DETAILS
+                $SNAP TOKEN DETAILS
               </h3>
               <div className="space-y-3">
                 <div className="flex justify-between py-2 border-b border-gray-800">
@@ -51,7 +51,7 @@ export default function TokenomicsPage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-800">
                   <span className="text-gray-500">Symbol</span>
-                  <span className="text-white">$FOOD (EBT)</span>
+                  <span className="text-white">$SNAP</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-800">
                   <span className="text-gray-500">Max Supply</span>
@@ -59,7 +59,7 @@ export default function TokenomicsPage() {
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-800">
                   <span className="text-gray-500">Initial per Card</span>
-                  <span className="text-white">200K - 20M $FOOD</span>
+                  <span className="text-white">200K - 20M $SNAP</span>
                 </div>
                 <div className="flex justify-between py-2 border-b border-gray-800">
                   <span className="text-gray-500">Decimals</span>
@@ -128,12 +128,12 @@ export default function TokenomicsPage() {
                 <tbody>
                   <tr className="border-b border-gray-800">
                     <td className="py-3 text-white">Initial Mint</td>
-                    <td className="py-3 text-ebt-gold text-right">200K - 20M $FOOD</td>
+                    <td className="py-3 text-ebt-gold text-right">200K - 20M $SNAP</td>
                     <td className="py-3 text-gray-500 text-right">On NFT mint</td>
                   </tr>
                   <tr className="border-b border-gray-800">
                     <td className="py-3 text-white">Monthly Stipend</td>
-                    <td className="py-3 text-ebt-gold text-right">20K - 20M $FOOD</td>
+                    <td className="py-3 text-ebt-gold text-right">20K - 20M $SNAP</td>
                     <td className="py-3 text-gray-500 text-right">Every 30 days</td>
                   </tr>
                   <tr className="border-b border-gray-800">
@@ -177,7 +177,7 @@ export default function TokenomicsPage() {
             className="mt-8 p-4 bg-welfare-red/10 border border-welfare-red/30 rounded-lg"
           >
             <p className="text-sm text-gray-400 text-center">
-              $FOOD tokens are cryptocurrency with no guaranteed value. This is a satirical art project,
+              $SNAP tokens are cryptocurrency with no guaranteed value. This is a satirical art project,
               not financial advice. Do your own research and never invest more than you can afford to lose.
             </p>
           </motion.div>

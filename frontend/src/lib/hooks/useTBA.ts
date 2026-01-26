@@ -44,7 +44,7 @@ export function useTBAAddress(tokenId: bigint | undefined) {
 // ============================================================================
 
 /**
- * Get the EBTC ($FOOD) balance of a TBA
+ * Get the EBTC ($SNAP) balance of a TBA
  */
 export function useTBABalance(tbaAddress: `0x${string}` | undefined) {
   return useReadContract({

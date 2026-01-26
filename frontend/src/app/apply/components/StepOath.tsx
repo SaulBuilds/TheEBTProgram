@@ -14,7 +14,7 @@ const oathText = `I, the undersigned digital citizen, hereby declare my intentio
 
 I understand that:
 1. This is NOT real government assistance (obviously)
-2. $EBTC tokens have no guaranteed value (like the dollar, eventually)
+2. $SNAP tokens have no guaranteed value (like the dollar, eventually)
 3. I am minting an NFT that owns a wallet. Try explaining that to your parents.
 4. Gas fees are the new means testing
 5. We are all Linda now
@@ -129,7 +129,7 @@ export function StepOath({ data: initialData, onNext, onBack }: StepOathProps) {
                 I understand the tokenomics
               </p>
               <p className="text-xs font-mono text-gray-500 mt-1">
-                $EBTC on mint + monthly drops = the safety net they promised
+                $SNAP on mint + monthly drops = the safety net they promised
               </p>
             </div>
           </motion.label>

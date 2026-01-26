@@ -141,7 +141,7 @@ export function SlotMachine({ isSpinning, result, onSpin, disabled }: SlotMachin
                         JACKPOT!
                       </motion.div>
                       <div className="text-4xl font-heading text-green-400">
-                        +{result.payout.toLocaleString()} $EBTC
+                        +{result.payout.toLocaleString()} $SNAP
                       </div>
                     </>
                   ) : result.isBonus ? (
@@ -163,7 +163,7 @@ export function SlotMachine({ isSpinning, result, onSpin, disabled }: SlotMachin
                         WINNER!
                       </div>
                       <div className="text-3xl font-heading text-green-400">
-                        +{result.payout.toLocaleString()} $EBTC
+                        +{result.payout.toLocaleString()} $SNAP
                       </div>
                     </>
                   )}
@@ -187,7 +187,7 @@ export function SlotMachine({ isSpinning, result, onSpin, disabled }: SlotMachin
           <div className="mt-4 text-center">
             <p className="text-sm font-mono text-gray-500">Last Win</p>
             <p className="text-xl font-heading text-green-400">
-              +{result.payout.toLocaleString()} $EBTC
+              +{result.payout.toLocaleString()} $SNAP
             </p>
           </div>
         )}

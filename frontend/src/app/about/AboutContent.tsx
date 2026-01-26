@@ -327,7 +327,7 @@ function OverviewSection() {
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           {[
-            { label: 'Total Program Reserve', value: '20B $EBTC' },
+            { label: 'Total Program Reserve', value: '20B $SNAP' },
             { label: 'Initial Card Deposit', value: '200K-20M' },
             { label: 'Monthly Distribution', value: '20K-20M' },
             { label: 'Administrative Fee', value: '5%' },

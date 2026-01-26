@@ -66,7 +66,7 @@ export function JackpotCounter({ amount }: JackpotCounterProps) {
             >
               {displayAmount.toLocaleString()}
             </motion.span>
-            <span className="text-2xl font-heading text-gray-400">$EBTC</span>
+            <span className="text-2xl font-heading text-gray-400">$SNAP</span>
           </div>
           <p className="text-xs font-mono text-gray-500 mt-2">
             Triple 7s or Triple EBT Cards to win

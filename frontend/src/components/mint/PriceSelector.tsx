@@ -193,7 +193,7 @@ export function PriceSelector({ value, onChange, disabled = false }: PriceSelect
             <span className="font-heading text-ebt-gold text-lg tracking-wide">
               {formatTokens(tokensReceived)}
             </span>
-            <span className="text-gray-500 text-sm ml-1">$EBTC</span>
+            <span className="text-gray-500 text-sm ml-1">$SNAP</span>
           </div>
         </div>
       </div>
@@ -231,7 +231,7 @@ export function PriceSelector({ value, onChange, disabled = false }: PriceSelect
           </span>
         </div>
         <p className="text-xs text-gray-600 mt-2">
-          Higher contributions receive proportionally more $EBTC tokens.
+          Higher contributions receive proportionally more $SNAP tokens.
           Formula: tokens = (price / {minEth}) x {formatTokens(minTokens)}
         </p>
       </div>

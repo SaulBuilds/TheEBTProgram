@@ -205,7 +205,7 @@ export function FundraisingMechanics() {
             {[
               {
                 phase: 'Minting Opens',
-                desc: 'Users can mint EBT Cards for 0.02-2 ETH (you choose). NFTs and initial $EBTC distributed immediately.',
+                desc: 'Users can mint EBT Cards for 0.02-2 ETH (you choose). NFTs and initial $SNAP distributed immediately.',
                 icon: '1',
               },
               {

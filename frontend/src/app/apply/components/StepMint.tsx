@@ -122,7 +122,7 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
             <div className="flex justify-between font-mono">
               <span className="text-gray-400">You Receive</span>
               <span className="text-ebt-gold">
-                1 EBT Card NFT + {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $EBTC
+                1 EBT Card NFT + {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $SNAP
               </span>
             </div>
           </div>
@@ -135,9 +135,9 @@ export function StepMint({ data, onNext, onBack, updateData }: StepMintProps) {
             <li>• 1 EBT Card NFT (your welfare passport)</li>
             <li>• Token-bound account (ERC-6551)</li>
             <li className="text-ebt-gold">
-              • {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $EBTC tokens on mint
+              • {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $SNAP tokens on mint
             </li>
-            <li>• Monthly $EBTC distributions (3x total)</li>
+            <li>• Monthly $SNAP distributions (3x total)</li>
             <li>• Bragging rights on the breadline</li>
           </ul>
         </div>

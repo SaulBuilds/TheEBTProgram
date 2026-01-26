@@ -36,7 +36,7 @@ export default function LeaderboardPage() {
                 <ul className="text-sm font-mono text-gray-400 space-y-2">
                   <li className="flex items-center gap-2">
                     <span className="text-ebt-gold">&#x2022;</span>
-                    Total $FOOD holdings ranking
+                    Total $SNAP holdings ranking
                   </li>
                   <li className="flex items-center gap-2">
                     <span className="text-ebt-gold">&#x2022;</span>

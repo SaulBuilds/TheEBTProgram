@@ -30,7 +30,7 @@ const contracts: Contract[] = [
     ],
     functions: [
       { name: 'mint()', description: 'Mint your EBT Card NFT for 0.02-2 ETH (you choose your contribution)' },
-      { name: 'claimInstallment()', description: 'Claim monthly $FOOD allocation (every 30 days)' },
+      { name: 'claimInstallment()', description: 'Claim monthly $SNAP allocation (every 30 days)' },
       { name: 'withdraw()', description: 'Refund if soft cap not reached after fundraising' },
       { name: 'closeFundraisingPeriod()', description: 'Admin function to finalize fundraising' },
     ],
@@ -39,7 +39,7 @@ const contracts: Contract[] = [
   {
     id: 'food-stamps',
     name: 'FoodStamps.sol',
-    shortName: '$FOOD',
+    shortName: '$SNAP',
     standard: 'ERC-20',
     description: 'The token you receive in your EBT Card wallet. Represents your digital food stamps balance.',
     keyFeatures: [
@@ -188,7 +188,7 @@ export function ContractArchitecture() {
           </div>
           <div className="flex flex-wrap justify-center gap-2 text-xs font-mono">
             <span className="px-2 py-1 bg-[#FFD700]/20 text-[#FFD700] rounded">
-              EBT &rarr; $FOOD (mints tokens)
+              EBT &rarr; $SNAP (mints tokens)
             </span>
             <span className="px-2 py-1 bg-[#1A237E]/20 text-[#5C6BC0] rounded">
               EBT &rarr; TBA (creates wallets)

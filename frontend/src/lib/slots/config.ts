@@ -270,10 +270,10 @@ export const PAYOUT_RULES: PayoutRule[] = [
 export const GAME_CONFIG = {
   // Free spins
   FREE_SPIN_LIMIT: 10,
-  FREE_SPIN_PAYOUT_CAP: 5000,  // Max $EBTC from free spins
+  FREE_SPIN_PAYOUT_CAP: 5000,  // Max $SNAP from free spins
 
   // Jackpot
-  JACKPOT_BASE: 10000,          // 10k $EBTC base jackpot
+  JACKPOT_BASE: 10000,          // 10k $SNAP base jackpot
   JACKPOT_CONTRIBUTION: 0.01,   // 1% of each bet goes to jackpot pool
 
   // Spin mechanics
@@ -282,7 +282,7 @@ export const GAME_CONFIG = {
   REEL_STOP_DELAY_MS: 500,      // Delay between each reel stopping
 
   // Points integration
-  POINTS_PER_EBTC: 10,          // 10 points per $EBTC won
+  POINTS_PER_EBTC: 10,          // 10 points per $SNAP won
 
   // Bonus game
   BONUS_TRIGGER_COUNT: 3,       // Need 3 bonus symbols

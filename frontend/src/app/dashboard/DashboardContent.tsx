@@ -141,7 +141,7 @@ export default function DashboardContent() {
               CONNECT TO VIEW DASHBOARD
             </h1>
             <p className="text-gray-400 mb-8 font-sans">
-              Connect your wallet to view your EBT card and $EBTC balance.
+              Connect your wallet to view your EBT Card and $SNAP balance.
             </p>
             <button
               onClick={login}
@@ -472,9 +472,9 @@ export default function DashboardContent() {
               <div className="text-xs text-gray-600 mt-1">Sepolia Testnet</div>
             </div>
 
-            {/* $FOOD Balance */}
+            {/* $SNAP Balance */}
             <div className="p-6 bg-gray-900 border border-ebt-gold/30 rounded-lg">
-              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">$EBTC BALANCE</div>
+              <div className="text-sm font-heading text-gray-500 mb-2 tracking-wide">$SNAP BALANCE</div>
               <div className="text-2xl font-heading text-ebt-gold tracking-wide">
                 {foodBalance ? Number(formatEther(foodBalance)).toLocaleString() : '0'}
               </div>

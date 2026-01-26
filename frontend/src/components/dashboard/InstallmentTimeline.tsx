@@ -163,7 +163,7 @@ export function InstallmentTimeline({
               STIPEND #{installmentCount + 1} AVAILABLE
             </p>
             <p className="text-xs text-gray-400">
-              Claim your monthly $EBTC distribution now
+              Claim your monthly $SNAP distribution now
             </p>
           </div>
           {onClaim && (

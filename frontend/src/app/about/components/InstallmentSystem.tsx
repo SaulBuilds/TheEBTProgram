@@ -53,7 +53,7 @@ export function InstallmentSystem() {
           MONTHLY REWARDS SYSTEM
         </h2>
         <p className="text-gray-400 max-w-2xl mx-auto">
-          Keep your EBT Card to earn additional $FOOD every month.
+          Keep your EBT Card to earn additional $SNAP every month.
           Reapply every 3 months with proof of activity.
         </p>
       </div>
@@ -126,7 +126,7 @@ export function InstallmentSystem() {
             <div className="text-2xl font-heading text-ebt-gold tracking-wide">
               {totalFoodEarned.toLocaleString()}
             </div>
-            <div className="text-xs text-gray-500">Total $FOOD</div>
+            <div className="text-xs text-gray-500">Total $SNAP</div>
           </div>
           <div className="p-3 bg-gray-800 rounded-lg text-center">
             <div className="text-2xl font-heading text-green-500 tracking-wide">
@@ -155,7 +155,7 @@ export function InstallmentSystem() {
           {monthsClaimed >= SEASON_LENGTH
             ? 'Season Complete - Reapply Required'
             : canClaim
-            ? `Claim Month ${monthsClaimed + 1} (+${MONTHLY_STIPEND.toLocaleString()} $FOOD)`
+            ? `Claim Month ${monthsClaimed + 1} (+${MONTHLY_STIPEND.toLocaleString()} $SNAP)`
             : `Next claim available Day ${(monthsClaimed + 1) * 30}`}
         </button>
       </div>
@@ -165,14 +165,14 @@ export function InstallmentSystem() {
         {[
           {
             title: 'Initial Distribution',
-            amount: '200K-20M $FOOD',
+            amount: '200K-20M $SNAP',
             desc: 'Based on your mint contribution (0.02-2 ETH)',
             timing: 'Instant on mint',
             color: '#FFD700',
           },
           {
             title: 'Monthly Stipends',
-            amount: '20K-20M $FOOD',
+            amount: '20K-20M $SNAP',
             desc: 'Based on onchain + social activity each month',
             timing: 'Every 30 days',
             color: '#2E7D32',
@@ -244,7 +244,7 @@ export function InstallmentSystem() {
               <div>
                 <div className="font-heading text-white text-sm tracking-wide">Direct to Wallet</div>
                 <div className="text-xs text-gray-500">
-                  $FOOD goes directly to the token-bound account attached to your NFT.
+                  $SNAP goes directly to the token-bound account attached to your NFT.
                 </div>
               </div>
             </div>

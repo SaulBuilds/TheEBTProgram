@@ -49,17 +49,17 @@ const steps = [
   {
     number: '01',
     title: 'Accept the L',
-    description: 'You missed Bitcoin. You missed Nvidia. You\'re here because you\'re hungry. Hunger is clarity.',
+    description: 'Connect your wallet. Create your case file. The algorithm needs to know you exist. This is step one.',
   },
   {
     number: '02',
     title: 'Secure the Card',
-    description: 'Mint the EBT Card. It\'s your passport. Without it, you\'re just watching from the lobby.',
+    description: 'Mint your EBT Card (0.02 - 2 ETH). Bigger mint = bigger initial drop. Your card is your wallet. Your wallet holds your $SNAP.',
   },
   {
     number: '03',
     title: 'Collect the Bag',
-    description: 'Tokens deposit to your card automatically. Monthly drops. No action required. Just wait.',
+    description: 'Claim $SNAP monthly. Hold your card. The longer you hold, the bigger your multiplier. Paper hands get paper benefits.',
   },
   {
     number: '04',

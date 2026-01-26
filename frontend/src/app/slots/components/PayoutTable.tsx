@@ -49,11 +49,11 @@ export function PayoutTable() {
         <div className="space-y-1 text-xs font-mono">
           <div className="flex justify-between">
             <span className="text-gray-300">Triple {jackpotSymbol?.displayName || 'Bitcoin Pepe'}</span>
-            <span className="text-ebt-gold">10,000 $EBTC JACKPOT</span>
+            <span className="text-ebt-gold">10,000 $SNAP JACKPOT</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-300">Triple {wildSymbol?.displayName || 'Diamond Hands'} (Wild)</span>
-            <span className="text-ebt-gold">20,000 $EBTC MEGA JACKPOT</span>
+            <span className="text-ebt-gold">20,000 $SNAP MEGA JACKPOT</span>
           </div>
           <div className="flex justify-between">
             <span className="text-gray-300">Character Match (3 same character)</span>
@@ -119,7 +119,7 @@ export function PayoutTable() {
       {/* Footer */}
       <div className="mt-4 pt-4 border-t border-gray-700 text-center">
         <p className="text-[10px] font-mono text-gray-500">
-          All payouts are in $EBTC. Wild substitutes for any symbol except Bonus.
+          All payouts are in $SNAP. Wild substitutes for any symbol except Bonus.
           <br />
           Provably fair via Chainlink VRF.
         </p>

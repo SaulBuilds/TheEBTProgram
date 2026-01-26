@@ -34,7 +34,7 @@ const featureCharacters: Record<number, {
 const features = [
   {
     title: 'The Card',
-    description: 'Your EBT card is a wallet. It holds your tokens. The NFT owns the money. Try explaining that to your parents.',
+    description: 'Your EBT Card is an NFT wallet. It holds your $SNAP. The card IS the account. No exchanges. No custodians. Just you and your tokens.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
@@ -43,7 +43,7 @@ const features = [
   },
   {
     title: 'The Drop',
-    description: 'Distributions hit your card like clockwork. No forms. No caseworker. No means testing. Just vibes and smart contracts.',
+    description: 'Monthly $SNAP drops hit your card automatically. No forms. No caseworker. No means testing. Smart contracts don\'t care about your income.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
@@ -52,7 +52,7 @@ const features = [
   },
   {
     title: 'The Cliff',
-    description: 'Sell early, lose benefits. The welfare cliff protects the tribe. Stay comfy, stay fed. It\'s game theory.',
+    description: 'Sell early, smaller future drops. Hold strong, bigger rewards. Your benefit multiplier tracks your diamond hands. The cliff is real and on-chain.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6" />
@@ -70,7 +70,7 @@ const features = [
   },
   {
     title: 'The Score',
-    description: 'Check in. Click buttons. The algorithm rewards belief. Engagement farming, formalized.',
+    description: 'Participate. Engage. Get scored. Higher scores = bigger initial drops. Connect socials. Hold NFTs. Show up. The algorithm rewards believers.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4M7.835 4.697a3.42 3.42 0 001.946-.806 3.42 3.42 0 014.438 0 3.42 3.42 0 001.946.806 3.42 3.42 0 013.138 3.138 3.42 3.42 0 00.806 1.946 3.42 3.42 0 010 4.438 3.42 3.42 0 00-.806 1.946 3.42 3.42 0 01-3.138 3.138 3.42 3.42 0 00-1.946.806 3.42 3.42 0 01-4.438 0 3.42 3.42 0 00-1.946-.806 3.42 3.42 0 01-3.138-3.138 3.42 3.42 0 00-.806-1.946 3.42 3.42 0 010-4.438 3.42 3.42 0 00.806-1.946 3.42 3.42 0 013.138-3.138z" />
@@ -79,7 +79,7 @@ const features = [
   },
   {
     title: 'The Recert',
-    description: 'Re-apply quarterly. The DMV is a Discord server now. The paperwork is a signature.',
+    description: 'Reapply every 3 months. One signature. One tx. The DMV wishes they were this efficient.',
     icon: (
       <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />

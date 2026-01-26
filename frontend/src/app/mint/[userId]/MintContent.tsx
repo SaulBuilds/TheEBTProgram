@@ -470,9 +470,9 @@ export default function MintContent() {
             <li>1 Unique EBT Card NFT (pre-generated just for you)</li>
             <li>Token-bound account (ERC-6551 wallet)</li>
             <li className="text-ebt-gold font-medium">
-              {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $EBTC tokens on mint
+              {Number(calculateTokensForPrice(selectedPrice) / BigInt(10 ** 18)).toLocaleString()} $SNAP tokens on mint
             </li>
-            <li>Monthly $EBTC distributions (3 installments)</li>
+            <li>Monthly $SNAP distributions (3 installments)</li>
           </ul>
         </motion.div>
 
