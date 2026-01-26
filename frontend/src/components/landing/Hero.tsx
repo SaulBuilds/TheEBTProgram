@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { usePrivy } from '@privy-io/react-auth';
 import { useRouter } from 'next/navigation';
 import dynamic from 'next/dynamic';
-import { GlitchText } from '@/components/ui/GlitchText';
+import Image from 'next/image';
 import { Button } from '@/components/ui/Button';
 import { TypewriterText } from '@/components/ui/TypewriterText';
 
@@ -56,11 +56,15 @@ export function Hero() {
   return (
     <section className="relative min-h-screen flex items-center justify-center px-4 py-20 overflow-hidden">
       <div className="relative z-10 max-w-7xl mx-auto text-center">
-        {/* Glitch title */}
+        {/* Logo */}
         <div className="mb-8">
-          <GlitchText
-            text="EBT CARD"
-            className="text-7xl md:text-9xl font-heading text-ebt-gold tracking-wider"
+          <Image
+            src="/TheEBTProgram_Logo.svg"
+            alt="The EBT Program"
+            width={512}
+            height={168}
+            className="mx-auto w-full max-w-xl md:max-w-2xl h-auto"
+            priority
           />
         </div>
 
