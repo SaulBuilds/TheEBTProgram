@@ -80,6 +80,13 @@ export function Hero() {
         {/* EBT Card Meme Machine */}
         <MemeCardPreview onConnectClick={login} />
 
+        {/* One-liner value proposition */}
+        <div className="bg-black/80 backdrop-blur-sm border border-ebt-gold/40 rounded-xl p-4 max-w-3xl mx-auto mb-8">
+          <p className="text-lg md:text-xl font-heading text-white tracking-wide">
+            Mint an NFT wallet. Receive monthly token drops. Hold to earn. Sell early, lose benefits.
+          </p>
+        </div>
+
         {/* Tagline */}
         <div className="bg-black/60 backdrop-blur-sm border border-ebt-gold/20 rounded-xl p-6 max-w-2xl mx-auto mb-8">
           <p className="text-xl md:text-2xl mb-2 font-heading text-ebt-green tracking-wide">

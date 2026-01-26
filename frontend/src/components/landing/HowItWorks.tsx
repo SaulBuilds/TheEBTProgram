@@ -64,7 +64,7 @@ const steps = [
   {
     number: '04',
     title: 'Hold the Line',
-    description: 'If your early we feast, protocol handles the exit liquidity provisioning so losers can leave whenever and we stay liquid and well fed.',
+    description: 'If you\'re early, we feast. Protocol handles exit liquidity so paper hands can leave whenever. We stay liquid and well fed.',
   },
 ];
 
@@ -153,8 +153,7 @@ export function HowItWorks() {
               THE FINE PRINT
             </p>
             <p className="text-sm text-gray-500">
-              This is not financial advice. This is financial destiny. If you lose money, you simply lacked the vision.
-              We are not a government agency. We are a functional protocol...Barely. So yada yada yada... NFA. DYOR. Touch grass and all that jazz.
+              Not financial advice. Not government assistance. Just degens helping degens. NFA. DYOR. We are all Linda.
             </p>
           </div>
         </motion.div>

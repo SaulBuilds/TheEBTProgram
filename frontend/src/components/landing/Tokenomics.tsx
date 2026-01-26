@@ -13,7 +13,7 @@ const tokenData = [
 ];
 
 const stats = [
-  { label: 'Total Supply', value: '20B $EBTC' },
+  { label: 'Total Supply', value: '20B $SNAP' },
   { label: 'Initial Drop per Card', value: '200K - 20M' },
   { label: 'Monthly Stipend', value: '20K - 20M' },
   { label: 'Team Allocation', value: '1B (5%)' },
@@ -147,13 +147,13 @@ export function Tokenomics() {
             <div className="space-y-3">
               <h4 className="text-lg font-heading text-white tracking-wide">Initial Drop</h4>
               <p className="text-sm text-gray-400">
-                200K to 20M $EBTC tokens distributed to your EBT Card based on your application score, wallet holdings, and social connections.
+                200K to 20M $SNAP tokens distributed to your EBT Card based on your application score, wallet holdings, and social connections.
               </p>
             </div>
             <div className="space-y-3">
               <h4 className="text-lg font-heading text-white tracking-wide">Monthly Stipends</h4>
               <p className="text-sm text-gray-400">
-                20K to 20M $EBTC monthly based on onchain activity, Twitter engagement, Discord participation, and GitHub contributions.
+                20K to 20M $SNAP monthly based on onchain activity, Twitter engagement, Discord participation, and GitHub contributions.
               </p>
             </div>
             <div className="space-y-3">

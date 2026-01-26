@@ -139,7 +139,7 @@ export function Stats() {
               <div className="text-3xl md:text-4xl font-heading text-ebt-gold mb-2 group-hover:animate-pulse tracking-wide">
                 {(animatedStats.totalDistributed / 1000000).toFixed(1)}M
               </div>
-              <div className="text-sm text-gray-500 uppercase">$FOOD Distributed</div>
+              <div className="text-sm text-gray-500 uppercase">$SNAP Distributed</div>
             </div>
 
             <div className="text-center group">
