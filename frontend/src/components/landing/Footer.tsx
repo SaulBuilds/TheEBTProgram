@@ -34,6 +34,14 @@ export function Footer() {
                 >
                   Smart Contracts
                 </a>
+                <a
+                  href="https://citrate.ai"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="block text-sm text-gray-400 hover:text-ebt-gold"
+                >
+                  Infrastructure
+                </a>
               </div>
             </div>
 
@@ -89,7 +97,7 @@ export function Footer() {
           <div className="pt-8 border-t border-gray-800">
             <div className="flex flex-col md:flex-row justify-between items-center gap-4">
               <p className="text-xs text-gray-500">
-                2024 EBT Card. Not a government. Not a bank. Not financial advice. Definitely not your parents&apos; retirement plan.
+                2025 EBT Card. Not a government. Not a bank. Not financial advice. Definitely not your parents&apos; retirement plan.
               </p>
               <div className="flex items-center gap-4">
                 <span className="text-xs text-gray-500">

@@ -3,9 +3,13 @@
 import { Hero } from '@/components/landing/Hero';
 import { Stats } from '@/components/landing/Stats';
 import { Features } from '@/components/landing/Features';
+import { WelfareCliffExplainer } from '@/components/landing/WelfareCliffExplainer';
 import { MemeGallery } from '@/components/landing/MemeGallery';
 import { HowItWorks } from '@/components/landing/HowItWorks';
 import { Tokenomics } from '@/components/landing/Tokenomics';
+import { ScoringExplainer } from '@/components/landing/ScoringExplainer';
+import { CitrateConnection } from '@/components/landing/CitrateConnection';
+import { FAQ } from '@/components/landing/FAQ';
 import { Footer } from '@/components/landing/Footer';
 import { Navbar } from '@/components/layout/Navbar';
 import { DitheredVideoBackground } from '@/components/ui/DitheredVideoBackground';
@@ -32,6 +36,7 @@ export default function HomePage() {
         <section className="relative z-20 bg-black">
           <Stats />
           <Features />
+          <WelfareCliffExplainer />
           <MemeGallery />
           <HowItWorks />
         </section>
@@ -44,6 +49,9 @@ export default function HomePage() {
           />
           <div className="relative z-20">
             <Tokenomics />
+            <ScoringExplainer />
+            <CitrateConnection />
+            <FAQ />
             <Footer />
           </div>
         </section>
